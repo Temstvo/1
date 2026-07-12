@@ -14,7 +14,7 @@ Production-ready SaaS VPN platform with subscriptions, payments, Telegram bot, a
 # CURRENT STATUS
 
 Phase:
-1 - Foundation ✅ COMPLETE
+2 - Authentication ✅ COMPLETE
 
 Completed:
 
@@ -56,12 +56,33 @@ Phase 1:
 - @appi/sdk package (full typed API client)
 - Dockerfiles for all 5 apps (multi-stage, non-root users)
 
+Phase 2:
+- Auth module with register, login, logout, refresh endpoints
+- Argon2id password hashing (65536 memory, 3 iterations, 4 parallelism)
+- JWT access tokens (15min) with refresh tokens (7d)
+- Token rotation on refresh
+- Email verification flow with crypto tokens
+- Password reset flow (forgot + reset)
+- Change password (authenticated)
+- OAuth: Google and GitHub strategies (passport-google-oauth20, passport-github2)
+- Brute force protection (5 attempts = 15min account lock)
+- Security event logging (LOGIN_SUCCESS, LOGIN_FAILURE, TOKEN_REFRESH, etc.)
+- Audit logging (REGISTER, LOGIN, LOGOUT, PASSWORD_RESET, etc.)
+- Users module: CRUD, profile management, device/session management
+- Profiles service with upsert pattern
+- Sessions service with revocation
+- Auth DTOs: Register, Login, RefreshToken, ForgotPassword, ResetPassword, ChangePassword, VerifyEmail
+- Auth guards: JwtAuthGuard, GoogleAuthGuard, GitHubAuthGuard
+- RBAC guards with role-based access control
+- E2E tests for auth endpoints (14 test cases)
+- Unit tests for auth service
+
 Currently working on:
 
-- Ready for Phase 2: Authentication
+- Ready for Phase 3: User Platform
 
 Next phase:
-2. Authentication - Registration, Login, JWT, Refresh tokens, Sessions, Email verification, Password reset, OAuth, RBAC
+3. User Platform - Dashboard, Devices, Sessions, Settings, Notifications, Security
 
 ---
 
@@ -275,8 +296,49 @@ Problems:
 
 Next steps:
 
-- Phase 2: Authentication
 - Phase 3: User Platform
+
+## 2026-07-12 - Phase 2 Complete
+
+Completed:
+
+- Auth module with full authentication system
+- Register, login, logout, refresh endpoints
+- Argon2id password hashing
+- JWT access/refresh token pair with rotation
+- Email verification flow
+- Password reset and change flows
+- OAuth: Google and GitHub strategies
+- Brute force protection (5 attempts = 15min lock)
+- Security event and audit logging
+- Users module with profile, device, session management
+- Profiles and Sessions services
+- Auth DTOs with class-validator
+- JwtAuthGuard, GoogleAuthGuard, GitHubAuthGuard
+- E2E and unit tests (14 test cases)
+
+Changed:
+
+- 23 files created/modified (1800 insertions)
+- Commit: feat(auth): implement complete authentication system
+- Pushed to https://github.com/Temstvo/1
+
+Decisions:
+
+- Used Argon2id over bcrypt (OWASP recommendation)
+- Implemented brute force protection at service level
+- Used Passport strategies for OAuth
+- Created separate TokenService for JWT operations
+- Implemented security event logging for all auth actions
+
+Problems:
+
+- None
+
+Next steps:
+
+- Phase 3: User Platform
+- Phase 4: VPN Core
 - Phase 4: VPN Core
 
 ---
@@ -323,6 +385,22 @@ Reason: Premium feel, brand visibility on auth pages
 
 Solution: Left panel with gradient + branding, right panel with form
 
+## Decision 6: Argon2id for Password Hashing
+
+Date: 2026-07-12
+
+Reason: OWASP recommended, memory-hard, resistant to GPU attacks
+
+Solution: Argon2id with 65536 memory cost, 3 iterations, 4 parallelism
+
+## Decision 7: JWT with Refresh Token Rotation
+
+Date: 2026-07-12
+
+Reason: Stateless auth, scalable, industry standard
+
+Solution: 15min access tokens, 7d refresh tokens, rotation on refresh
+
 ---
 
 # DATABASE CHANGES
@@ -351,18 +429,25 @@ None yet.
 
 1. ✅ Phase 0: Initialize monorepo
 2. ✅ Phase 1: Foundation
-3. Phase 2: Authentication
-   - Implement auth module (register, login, logout, refresh)
-   - Implement JWT with access/refresh tokens
-   - Implement Argon2 password hashing
-   - Implement email verification
-   - Implement password reset flow
-   - Implement OAuth (Google, GitHub)
-   - Implement RBAC guards
-   - Implement session management
-   - Implement rate limiting for auth endpoints
-   - Write tests for auth module
+3. ✅ Phase 2: Authentication
+   - ✅ Auth module (register, login, logout, refresh)
+   - ✅ JWT with access/refresh tokens
+   - ✅ Argon2id password hashing
+   - ✅ Email verification
+   - ✅ Password reset flow
+   - ✅ OAuth (Google, GitHub)
+   - ✅ RBAC guards
+   - ✅ Session management
+   - ✅ Security event and audit logging
+   - ✅ Tests (E2E + unit)
 4. Phase 3: User Platform
+   - Implement subscriptions module
+   - Implement plans module
+   - Implement devices module
+   - Implement traffic tracking
+   - Implement notifications
+   - Implement settings pages
+   - Frontend dashboard pages
 5. Phase 4: VPN Core
 6. Phase 5: Subscriptions
 7. Phase 6: Payments

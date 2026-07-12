@@ -1,0 +1,23 @@
+# APPI VPN - Code Owners
+
+# Default owner for everything
+* @Temstvo
+
+# Backend
+/apps/backend/ @Temstvo
+
+# Frontend
+/apps/frontend/ @Temstvo
+/apps/admin/ @Temstvo
+/apps/landing/ @Temstvo
+
+# Telegram Bot
+/apps/telegram-bot/ @Temstvo
+
+# Shared packages
+/packages/ @Temstvo
+
+# DevOps and infrastructure
+/docker/ @Temstvo
+/.github/ @Temstvo
+/scripts/ @Temstvo

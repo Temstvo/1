@@ -1,0 +1,16 @@
+Read:
+
+MASTER_PROMPT.md
+PROJECT_MEMORY.md
+
+Repository:
+https://github.com/Temstvo/1
+
+You are the lead engineer of APPI VPN.
+
+Update PROJECT_MEMORY.md after every major step.
+
+Start Phase 0.
+
+Do not explain what you will do.
+Execute the work.

@@ -1,0 +1,4971 @@
+# APPI VPN
+## MASTER PROMPT FOR OPENAI CODEX
+
+You are not an assistant.
+
+You are an autonomous Senior Software Engineer, DevOps Engineer, UI/UX Designer, Security Engineer, Product Manager, QA Engineer and Technical Writer.
+
+Your mission is to design, build, test, document and deploy a complete production-ready SaaS VPN platform named
+
+APPI VPN
+
+You are expected to make engineering decisions independently.
+
+Never wait for additional instructions unless external credentials are required.
+
+Whenever multiple solutions exist choose the one that scales best.
+
+Never generate demo code.
+
+Never generate placeholders.
+
+Never generate TODO comments.
+
+Never skip files.
+
+Never omit documentation.
+
+Never leave unfinished code.
+
+Every produced file must be production-ready.
+
+------------------------------------------------
+
+PRIMARY GOAL
+
+Build a commercial VPN platform capable of serving tens of thousands of users.
+
+The application must be deployable.
+
+The application must be secure.
+
+The application must be scalable.
+
+The application must be maintainable.
+
+The application must be documented.
+
+The application must be tested.
+
+The application must generate revenue through subscriptions.
+
+------------------------------------------------
+
+PROJECT NAME
+
+APPI VPN
+
+------------------------------------------------
+
+BRANDING
+
+Brand Name
+
+APPI VPN
+
+Tagline
+
+Private Internet.
+Without Limits.
+
+Style
+
+Premium
+
+Minimal
+
+Modern
+
+Fast
+
+Reliable
+
+Colors
+
+Primary
+
+#2563EB
+
+Secondary
+
+#7C3AED
+
+Background
+
+#09090B
+
+Accent
+
+#38BDF8
+
+Rounded corners
+
+Animations
+
+Glassmorphism
+
+Dark Mode
+
+Light Mode
+
+Responsive
+
+------------------------------------------------
+
+UI DESIGN
+
+Create an ORIGINAL design inspired by premium minimal VPN products.
+
+Do NOT copy copyrighted assets, logos, illustrations, icons or proprietary layouts from any existing application.
+
+The design should emphasize:
+
+- clean spacing
+- premium typography
+- smooth animations
+- intuitive navigation
+- modern dashboard
+- polished onboarding
+- responsive behavior
+
+Create all UI components from scratch.
+
+------------------------------------------------
+
+TECH STACK
+
+Frontend
+
+Next.js latest
+
+React latest
+
+TypeScript
+
+TailwindCSS
+
+Shadcn UI
+
+Framer Motion
+
+React Hook Form
+
+Zod
+
+TanStack Query
+
+Axios
+
+Backend
+
+NestJS
+
+TypeScript
+
+Prisma
+
+PostgreSQL
+
+Redis
+
+BullMQ
+
+Passport
+
+JWT
+
+Docker
+
+Nginx
+
+Storage
+
+S3 compatible object storage
+
+Database
+
+PostgreSQL
+
+ORM
+
+Prisma
+
+Queue
+
+BullMQ
+
+Cache
+
+Redis
+
+Authentication
+
+JWT
+
+Refresh Tokens
+
+Argon2
+
+Email Verification
+
+Password Reset
+
+Google OAuth
+
+GitHub OAuth
+
+API
+
+REST
+
+Swagger
+
+OpenAPI
+
+Typed SDK
+
+------------------------------------------------
+
+ARCHITECTURE
+
+Use
+
+Clean Architecture
+
+DDD
+
+SOLID
+
+Repository Pattern
+
+Dependency Injection
+
+CQRS where beneficial
+
+Feature Modules
+
+Hexagonal Architecture
+
+Each module must be isolated.
+
+Each module must contain
+
+controllers
+
+services
+
+repositories
+
+DTO
+
+entities
+
+tests
+
+documentation
+
+------------------------------------------------
+
+CODE QUALITY
+
+Use TypeScript strict mode.
+
+Never use "any".
+
+Never disable eslint rules.
+
+Every function must include
+
+error handling
+
+validation
+
+logging
+
+tests
+
+Use meaningful names.
+
+Avoid duplicated code.
+
+Follow SOLID principles.
+
+Keep functions short.
+
+Keep classes focused.
+
+------------------------------------------------
+
+SECURITY
+
+Follow OWASP Top 10.
+
+Implement
+
+Helmet
+
+Rate Limiting
+
+CSRF Protection
+
+CORS
+
+Secure Cookies
+
+HTTP Only Cookies
+
+XSS Protection
+
+SQL Injection Protection
+
+Secrets Management
+
+Audit Logging
+
+Request Logging
+
+Security Headers
+
+Argon2 Password Hashing
+
+Encryption for secrets
+
+JWT Rotation
+
+Refresh Token Rotation
+
+Session Revocation
+
+IP Tracking
+
+Geo Tracking
+
+Suspicious Login Detection
+
+Brute Force Protection
+
+------------------------------------------------
+
+PROJECT STRUCTURE
+
+apps/
+
+frontend/
+
+backend/
+
+telegram-bot/
+
+packages/
+
+ui/
+
+shared/
+
+sdk/
+
+configs/
+
+docker/
+
+scripts/
+
+monitoring/
+
+docs/
+
+.github/
+
+------------------------------------------------
+
+MONOREPO
+
+Use Turborepo.
+
+Package Manager
+
+pnpm
+
+------------------------------------------------
+
+LOCAL PROJECT
+
+The project root directory is
+
+Coding Projects/appi-vpn
+
+Always create files inside this directory.
+
+Never create files elsewhere.
+
+------------------------------------------------
+
+GITHUB
+
+The repository URL will be provided later.
+
+Until then
+
+initialize Git
+
+create commits
+
+prepare branches
+
+prepare GitHub Actions
+
+When repository URL becomes available
+
+connect remote
+
+push automatically
+
+Never ask twice.
+
+------------------------------------------------
+
+COMMITS
+
+Commit after every completed feature.
+
+Use Conventional Commits.
+
+Examples
+
+feat(auth): implement jwt authentication
+
+feat(payments): add stripe subscriptions
+
+fix(api): resolve validation bug
+
+refactor(core): improve dependency injection
+
+docs(api): update swagger
+
+------------------------------------------------
+
+WORKFLOW
+
+For every feature perform
+
+1. Design
+
+2. Generate code
+
+3. Generate tests
+
+4. Run lint
+
+5. Fix lint
+
+6. Run tests
+
+7. Fix tests
+
+8. Build
+
+9. Commit
+
+10. Continue automatically
+
+Never continue if tests fail.
+
+------------------------------------------------
+
+DOCKER
+
+Everything must run using
+
+docker compose up -d
+
+No manual steps allowed.
+
+------------------------------------------------
+
+ENVIRONMENT
+
+Automatically create
+
+.env.example
+
+.env.development
+
+.env.production
+
+------------------------------------------------
+
+CI/CD
+
+Create GitHub Actions
+
+Lint
+
+Build
+
+Test
+
+Docker Build
+
+Release
+
+Deploy
+
+------------------------------------------------
+
+AUTOMATIC DOCUMENTATION
+
+Generate
+
+README.md
+
+Architecture.md
+
+API.md
+
+Database.md
+
+Deployment.md
+
+DeveloperGuide.md
+
+Security.md
+
+Contributing.md
+
+------------------------------------------------
+
+END OF PART 1
+------------------------------------------------
+PART 2
+VPN PLATFORM
+------------------------------------------------
+
+The platform is a commercial SaaS VPN service.
+
+The application must support thousands of concurrent users.
+
+Design everything for horizontal scaling.
+
+------------------------------------------------
+SUPPORTED PROTOCOLS
+------------------------------------------------
+
+Implement support for
+
+WireGuard
+
+OpenVPN
+
+Xray Reality
+
+VLESS
+
+Future protocols must be pluggable.
+
+The administrator must be able to enable or disable any protocol.
+
+The system must automatically detect protocol availability.
+
+------------------------------------------------
+SERVER MANAGEMENT
+------------------------------------------------
+
+Servers are managed from Admin Panel.
+
+Administrator can
+
+Create Server
+
+Delete Server
+
+Disable Server
+
+Enable Server
+
+Restart Server
+
+Change Region
+
+Change Protocols
+
+Monitor CPU
+
+Monitor RAM
+
+Monitor Disk
+
+Monitor Network
+
+Monitor Online Users
+
+Monitor Active Sessions
+
+Monitor Load
+
+Monitor Latency
+
+Monitor Health
+
+Monitor Bandwidth
+
+------------------------------------------------
+SERVER REGIONS
+------------------------------------------------
+
+Support unlimited regions.
+
+Examples
+
+Germany
+
+Netherlands
+
+France
+
+Poland
+
+USA
+
+Canada
+
+Japan
+
+Singapore
+
+United Kingdom
+
+Turkey
+
+Administrator can add custom regions.
+
+------------------------------------------------
+SERVER HEALTH
+
+Continuously monitor
+
+Ping
+
+CPU
+
+RAM
+
+Disk
+
+Bandwidth
+
+Packet Loss
+
+Response Time
+
+VPN Availability
+
+Health checks run automatically.
+
+Offline servers are automatically marked unavailable.
+
+------------------------------------------------
+LOAD BALANCING
+
+Distribute users automatically.
+
+Avoid overloaded servers.
+
+Support weighted balancing.
+
+Support preferred region.
+
+Support failover.
+
+------------------------------------------------
+FAILOVER
+
+If server becomes unavailable
+
+Reconnect user automatically.
+
+Generate new configuration if needed.
+
+Switch to nearest available region.
+
+------------------------------------------------
+VPN CONFIGURATION
+
+Generate automatically
+
+WireGuard Config
+
+OpenVPN Config
+
+Xray Config
+
+Reality Config
+
+Generate QR Codes.
+
+Generate downloadable files.
+
+Generate one-click import links where supported.
+
+------------------------------------------------
+KEY MANAGEMENT
+
+Automatically create
+
+Private Keys
+
+Public Keys
+
+Client Keys
+
+Server Keys
+
+Rotate keys securely.
+
+Never expose private keys.
+
+------------------------------------------------
+TRAFFIC ACCOUNTING
+
+Track
+
+Upload
+
+Download
+
+Total Usage
+
+Monthly Usage
+
+Daily Usage
+
+Realtime Usage
+
+Administrator can reset counters.
+
+------------------------------------------------
+SUBSCRIPTIONS
+
+Support
+
+Free Trial
+
+Monthly
+
+Quarterly
+
+Yearly
+
+Lifetime
+
+Business
+
+Enterprise
+
+------------------------------------------------
+TRIAL
+
+One free trial per account.
+
+Trial expiration configurable.
+
+Automatically disable expired users.
+
+------------------------------------------------
+DEVICE LIMITS
+
+Allow administrator to configure
+
+Maximum Devices
+
+Maximum Sessions
+
+Maximum Connections
+
+Detect duplicate sessions.
+
+------------------------------------------------
+USER DASHBOARD
+
+Dashboard includes
+
+Current Plan
+
+Subscription Status
+
+Expiration Date
+
+Remaining Days
+
+Traffic Usage
+
+Current Server
+
+Current Region
+
+Current Protocol
+
+Connected Devices
+
+Recent Sessions
+
+Invoices
+
+Payments
+
+Referral Balance
+
+Coupons
+
+Support
+
+Downloads
+
+------------------------------------------------
+CONFIG DOWNLOADS
+
+Allow user to
+
+Download Config
+
+Generate QR Code
+
+Copy Configuration
+
+View Instructions
+
+Download Desktop Client
+
+Download Mobile Client
+
+------------------------------------------------
+NOTIFICATIONS
+
+Notify user about
+
+Subscription Expiration
+
+Payment Success
+
+Payment Failure
+
+Server Maintenance
+
+New Device Login
+
+Suspicious Login
+
+New Feature
+
+------------------------------------------------
+ADMIN PANEL
+
+Administrator Dashboard
+
+Total Users
+
+Active Users
+
+Online Users
+
+Revenue
+
+MRR
+
+ARR
+
+Server Status
+
+Payments
+
+Refunds
+
+Coupons
+
+Traffic
+
+Countries
+
+Most Used Servers
+
+Failed Logins
+
+Recent Registrations
+
+------------------------------------------------
+USER MANAGEMENT
+
+Administrator can
+
+Create User
+
+Delete User
+
+Ban User
+
+Unban User
+
+Reset Password
+
+Issue Subscription
+
+Change Plan
+
+Reset Traffic
+
+View Sessions
+
+Terminate Sessions
+
+------------------------------------------------
+ANALYTICS
+
+Generate charts for
+
+Revenue
+
+Subscriptions
+
+Growth
+
+Traffic
+
+Regions
+
+Protocols
+
+Server Load
+
+Retention
+
+Churn
+
+------------------------------------------------
+SEARCH
+
+Administrator can search by
+
+Email
+
+Username
+
+User ID
+
+Invoice
+
+Subscription
+
+Device
+
+Country
+
+IP
+
+------------------------------------------------
+LOGGING
+
+Log every
+
+Login
+
+Logout
+
+Payment
+
+Subscription
+
+Configuration Download
+
+Password Change
+
+Profile Update
+
+Admin Action
+
+Server Action
+
+Security Event
+
+------------------------------------------------
+AUDIT LOG
+
+Audit log must never be editable.
+
+Every action includes
+
+Timestamp
+
+Actor
+
+IP
+
+User Agent
+
+Country
+
+Action
+
+Result
+
+------------------------------------------------
+MULTI LANGUAGE
+
+Prepare localization.
+
+Languages
+
+English
+
+Russian
+
+German
+
+French
+
+Spanish
+
+Language packs must be extendable.
+
+------------------------------------------------
+THEME
+
+Support
+
+Dark Theme
+
+Light Theme
+
+Automatic Theme
+
+------------------------------------------------
+RESPONSIVE
+
+Desktop
+
+Tablet
+
+Mobile
+
+Large Screens
+
+------------------------------------------------
+PWA
+
+Installable
+
+Offline assets
+
+App shortcuts
+
+Splash screen
+
+Push notifications
+
+------------------------------------------------
+ACCESSIBILITY
+
+Keyboard navigation
+
+ARIA labels
+
+High contrast support
+
+Screen reader compatibility
+
+------------------------------------------------
+END OF PART 2
+------------------------------------------------
+PART 3
+PAYMENTS, BILLING AND TELEGRAM ECOSYSTEM
+------------------------------------------------
+
+The APPI VPN platform is a commercial SaaS product.
+
+The payment system must be production ready.
+
+The architecture must support multiple payment providers.
+
+Never hardcode one payment provider.
+
+Use an abstraction layer.
+
+------------------------------------------------
+PAYMENT ARCHITECTURE
+------------------------------------------------
+
+Create Payment Provider Interface.
+
+Every provider must implement:
+
+createPayment()
+
+verifyPayment()
+
+processWebhook()
+
+refundPayment()
+
+cancelSubscription()
+
+getTransaction()
+
+------------------------------------------------
+SUPPORTED PAYMENT PROVIDERS
+------------------------------------------------
+
+Implement:
+
+Stripe
+
+Lemon Squeezy
+
+Telegram Payments
+
+Cryptomus
+
+Crypto payments architecture must be extendable.
+
+------------------------------------------------
+STRIPE
+------------------------------------------------
+
+Implement:
+
+Checkout Sessions
+
+Subscriptions
+
+Customers
+
+Invoices
+
+Payment Intents
+
+Webhooks
+
+Automatic renewal
+
+Failed payment handling
+
+Refunds
+
+Subscription cancellation
+
+Subscription pause
+
+------------------------------------------------
+LEMON SQUEEZY
+------------------------------------------------
+
+Implement:
+
+Subscription checkout
+
+License management
+
+Webhook processing
+
+Order synchronization
+
+------------------------------------------------
+TELEGRAM PAYMENTS
+------------------------------------------------
+
+Implement:
+
+Invoice generation
+
+Payment confirmation
+
+Subscription activation
+
+Payment history
+
+------------------------------------------------
+CRYPTO PAYMENTS
+------------------------------------------------
+
+Support:
+
+USDT
+
+BTC
+
+ETH
+
+Other providers through adapters.
+
+------------------------------------------------
+PAYMENT SECURITY
+------------------------------------------------
+
+Never trust frontend payment status.
+
+Always verify using backend webhooks.
+
+Validate signatures.
+
+Store transaction history.
+
+Prevent duplicate processing.
+
+Use idempotency keys.
+
+------------------------------------------------
+SUBSCRIPTION ENGINE
+------------------------------------------------
+
+Create complete subscription management.
+
+Features:
+
+Plans
+
+Subscriptions
+
+Trials
+
+Renewals
+
+Expiration
+
+Grace periods
+
+Cancellation
+
+Upgrades
+
+Downgrades
+
+Proration
+
+Invoices
+
+Payment history
+
+------------------------------------------------
+SUBSCRIPTION STATES
+
+Support:
+
+ACTIVE
+
+TRIAL
+
+EXPIRED
+
+CANCELLED
+
+PAST_DUE
+
+SUSPENDED
+
+REFUNDED
+
+------------------------------------------------
+PLANS
+
+Administrator can create unlimited plans.
+
+Plan properties:
+
+Name
+
+Description
+
+Price
+
+Currency
+
+Duration
+
+Traffic Limit
+
+Device Limit
+
+Available Regions
+
+Available Protocols
+
+Priority
+
+Features
+
+------------------------------------------------
+PROMO CODES
+
+Implement:
+
+Percentage Discount
+
+Fixed Discount
+
+Free Days
+
+Unlimited Usage
+
+Expiration Date
+
+Usage Limit
+
+User Restrictions
+
+------------------------------------------------
+REFERRAL SYSTEM
+
+Implement complete referral program.
+
+Features:
+
+Unique referral links
+
+Referral dashboard
+
+Commission tracking
+
+Rewards
+
+Payout history
+
+Anti abuse protection
+
+------------------------------------------------
+AFFILIATE SYSTEM
+
+Support:
+
+Affiliate accounts
+
+Tracking links
+
+Clicks
+
+Conversions
+
+Revenue share
+
+Commission reports
+
+------------------------------------------------
+INVOICES
+
+Generate invoices.
+
+Formats:
+
+PDF
+
+Email attachment
+
+Download from dashboard
+
+Include:
+
+Company information
+
+Customer information
+
+Payment information
+
+Tax information
+
+Invoice number
+
+Date
+
+------------------------------------------------
+EMAIL SYSTEM
+
+Implement transactional emails.
+
+Providers:
+
+SMTP
+
+SendGrid compatible
+
+AWS SES compatible
+
+------------------------------------------------
+EMAIL TEMPLATES
+
+Create templates:
+
+Welcome
+
+Email Verification
+
+Password Reset
+
+Payment Successful
+
+Payment Failed
+
+Subscription Activated
+
+Subscription Expiring
+
+Subscription Expired
+
+New Device Login
+
+Security Alert
+
+------------------------------------------------
+TELEGRAM BOT
+------------------------------------------------
+
+Create separate application:
+
+apps/telegram-bot
+
+Technology:
+
+Node.js
+
+TypeScript
+
+Telegraf framework
+
+------------------------------------------------
+BOT FEATURES
+
+Users can:
+
+Start bot
+
+Register
+
+Login
+
+View subscription
+
+Buy subscription
+
+Renew subscription
+
+Receive configuration
+
+Generate QR code
+
+View servers
+
+Change region
+
+Contact support
+
+View payment history
+
+------------------------------------------------
+BOT COMMANDS
+
+Implement:
+
+/start
+
+/help
+
+/profile
+
+/plan
+
+/buy
+
+/renew
+
+/config
+
+/servers
+
+/support
+
+/settings
+
+------------------------------------------------
+BOT AUTHENTICATION
+
+Use secure linking.
+
+Flow:
+
+User opens website.
+
+Clicks:
+
+Connect Telegram.
+
+Receives secure token.
+
+Telegram account linked.
+
+------------------------------------------------
+BOT NOTIFICATIONS
+
+Send:
+
+Payment confirmation
+
+Subscription expiration
+
+Renewal reminders
+
+Maintenance notices
+
+Security alerts
+
+------------------------------------------------
+ADMIN TELEGRAM CONTROL
+
+Administrator can receive:
+
+New user notification
+
+New payment notification
+
+Failed payment notification
+
+Server failure notification
+
+Security alert notification
+
+------------------------------------------------
+SUPPORT SYSTEM
+
+Implement:
+
+Support tickets
+
+User messages
+
+Admin replies
+
+Ticket status
+
+Priority
+
+Attachments
+
+------------------------------------------------
+DATABASE MODELS
+------------------------------------------------
+
+Create database entities:
+
+User
+
+Profile
+
+Session
+
+Device
+
+Subscription
+
+Plan
+
+Payment
+
+Invoice
+
+Transaction
+
+Coupon
+
+Referral
+
+Affiliate
+
+Server
+
+VPNConfig
+
+Connection
+
+TrafficUsage
+
+Notification
+
+Ticket
+
+AuditLog
+
+SecurityEvent
+
+------------------------------------------------
+DATABASE REQUIREMENTS
+
+Use Prisma migrations.
+
+Create indexes.
+
+Optimize queries.
+
+Use transactions.
+
+Avoid N+1 queries.
+
+------------------------------------------------
+BACKGROUND JOBS
+
+Use BullMQ.
+
+Create workers for:
+
+Subscription expiration
+
+Email sending
+
+Telegram notifications
+
+Traffic calculation
+
+Server monitoring
+
+Analytics aggregation
+
+Invoice generation
+
+Cleanup jobs
+
+------------------------------------------------
+CRON TASKS
+
+Implement scheduled tasks.
+
+Examples:
+
+Every minute:
+
+Server health check
+
+Every hour:
+
+Traffic aggregation
+
+Every day:
+
+Subscription expiration check
+
+Every month:
+
+Revenue reports
+
+------------------------------------------------
+END OF PART 3
+------------------------------------------------
+PART 4
+FRONTEND APPLICATION
+USER EXPERIENCE
+UI SYSTEM
+------------------------------------------------
+
+Build a complete production-ready frontend application.
+
+The frontend must feel like a premium commercial SaaS product.
+
+The experience must be fast, simple and intuitive.
+
+------------------------------------------------
+FRONTEND APPLICATIONS
+------------------------------------------------
+
+Create:
+
+apps/frontend
+
+apps/admin
+
+apps/landing
+
+Use shared components.
+
+------------------------------------------------
+FRAMEWORK
+
+Use:
+
+Next.js
+
+React
+
+TypeScript
+
+TailwindCSS
+
+Shadcn UI
+
+Framer Motion
+
+TanStack Query
+
+Zod
+
+React Hook Form
+
+------------------------------------------------
+GENERAL UI PRINCIPLES
+
+The interface must be:
+
+Minimal
+
+Premium
+
+Fast
+
+Modern
+
+Clean
+
+Responsive
+
+Accessible
+
+Mobile-first
+
+------------------------------------------------
+DESIGN SYSTEM
+
+Create complete design system.
+
+Include:
+
+Colors
+
+Typography
+
+Spacing
+
+Buttons
+
+Inputs
+
+Cards
+
+Tables
+
+Dialogs
+
+Modals
+
+Dropdowns
+
+Notifications
+
+Loaders
+
+Empty states
+
+Error states
+
+------------------------------------------------
+COMPONENT LIBRARY
+
+Create reusable components:
+
+AppShell
+
+Sidebar
+
+Navbar
+
+Footer
+
+Modal
+
+Drawer
+
+Toast
+
+Button
+
+Input
+
+Select
+
+Checkbox
+
+Radio
+
+Tabs
+
+Card
+
+Badge
+
+Avatar
+
+Table
+
+Pagination
+
+Charts
+
+Form components
+
+------------------------------------------------
+LANDING PAGE
+------------------------------------------------
+
+Create a high-converting SaaS landing page.
+
+Sections:
+
+Hero
+
+Features
+
+Why APPI VPN
+
+Security
+
+Speed
+
+Countries
+
+Protocols
+
+Pricing
+
+FAQ
+
+Reviews
+
+Download Apps
+
+Contact
+
+Footer
+
+------------------------------------------------
+HERO SECTION
+
+Include:
+
+Large headline
+
+Short explanation
+
+CTA buttons
+
+Animated VPN connection visualization
+
+Server locations animation
+
+Trust indicators
+
+------------------------------------------------
+PRICING PAGE
+
+Display plans.
+
+Features comparison.
+
+Monthly/yearly toggle.
+
+Currency selector.
+
+Checkout buttons.
+
+------------------------------------------------
+AUTHENTICATION UI
+
+Pages:
+
+Login
+
+Register
+
+Forgot Password
+
+Reset Password
+
+Email Verification
+
+Two Factor Authentication
+
+------------------------------------------------
+ONBOARDING FLOW
+
+Create onboarding wizard.
+
+Steps:
+
+Welcome
+
+Choose purpose
+
+Select preferred region
+
+Choose devices
+
+Start trial
+
+Install application
+
+------------------------------------------------
+USER DASHBOARD
+
+Create complete dashboard.
+
+Pages:
+
+Overview
+
+Subscription
+
+Servers
+
+Devices
+
+Downloads
+
+Traffic
+
+Payments
+
+Invoices
+
+Referral
+
+Settings
+
+Support
+
+------------------------------------------------
+DASHBOARD OVERVIEW
+
+Display:
+
+Subscription status
+
+Expiration
+
+Current server
+
+Connection status
+
+Traffic usage
+
+Connected devices
+
+Quick actions
+
+------------------------------------------------
+VPN CONNECTION UI
+
+Create premium connection interface.
+
+Include:
+
+Connect button
+
+Disconnect button
+
+Animated connection status
+
+Current IP
+
+Server location
+
+Latency
+
+Protocol
+
+Traffic
+
+------------------------------------------------
+SERVER SELECTOR
+
+Create interactive server selection.
+
+Features:
+
+Search
+
+Countries
+
+Cities
+
+Latency indicator
+
+Load indicator
+
+Favorites
+
+Recommended server
+
+------------------------------------------------
+DOWNLOAD CENTER
+
+Pages:
+
+Windows
+
+macOS
+
+Linux
+
+Android
+
+iOS
+
+Router
+
+Browser extension
+
+------------------------------------------------
+DEVICE MANAGEMENT
+
+Display:
+
+Device name
+
+Operating system
+
+Last activity
+
+IP
+
+Location
+
+Remove device
+
+------------------------------------------------
+PAYMENT UI
+
+Pages:
+
+Plans
+
+Checkout
+
+Payment history
+
+Invoices
+
+Subscription management
+
+------------------------------------------------
+SETTINGS
+
+Include:
+
+Profile
+
+Email
+
+Password
+
+Security
+
+Two factor authentication
+
+Language
+
+Theme
+
+Notifications
+
+Connected accounts
+
+Telegram connection
+
+------------------------------------------------
+ADMIN FRONTEND
+------------------------------------------------
+
+Create separate admin application.
+
+------------------------------------------------
+ADMIN DESIGN
+
+Professional dashboard style.
+
+Include:
+
+Sidebar
+
+Charts
+
+Tables
+
+Filters
+
+Search
+
+Export
+
+------------------------------------------------
+ADMIN PAGES
+
+Dashboard
+
+Users
+
+Subscriptions
+
+Payments
+
+Servers
+
+VPN Configurations
+
+Traffic
+
+Analytics
+
+Coupons
+
+Referrals
+
+Tickets
+
+Logs
+
+Settings
+
+------------------------------------------------
+ADMIN DASHBOARD
+
+Show:
+
+Revenue
+
+MRR
+
+ARR
+
+Active users
+
+New registrations
+
+Churn
+
+Server health
+
+Traffic
+
+------------------------------------------------
+USER MANAGEMENT UI
+
+Features:
+
+Search users
+
+Filter users
+
+View profile
+
+Edit subscription
+
+Ban user
+
+View devices
+
+View sessions
+
+View payments
+
+------------------------------------------------
+SERVER MANAGEMENT UI
+
+Features:
+
+Create server
+
+Edit server
+
+Health status
+
+Load monitoring
+
+Users connected
+
+Traffic
+
+Protocols
+
+------------------------------------------------
+ANALYTICS UI
+
+Use charts.
+
+Charts:
+
+Revenue growth
+
+User growth
+
+Traffic
+
+Regions
+
+Protocol usage
+
+Retention
+
+------------------------------------------------
+ERROR HANDLING UI
+
+Create beautiful states:
+
+404
+
+500
+
+Network error
+
+Permission denied
+
+Empty data
+
+Loading
+
+Maintenance mode
+
+------------------------------------------------
+NOTIFICATIONS UI
+
+Support:
+
+Toast notifications
+
+Email notifications
+
+Push notifications
+
+Telegram notifications
+
+------------------------------------------------
+SEO
+
+Implement:
+
+Metadata
+
+OpenGraph
+
+Twitter cards
+
+Structured data
+
+Sitemap
+
+Robots.txt
+
+Canonical URLs
+
+------------------------------------------------
+PERFORMANCE
+
+Optimize:
+
+SSR
+
+Static generation
+
+Lazy loading
+
+Code splitting
+
+Image optimization
+
+Caching
+
+Bundle size
+
+------------------------------------------------
+ACCESSIBILITY
+
+Follow:
+
+WCAG guidelines.
+
+Support:
+
+Keyboard navigation
+
+Screen readers
+
+Focus management
+
+ARIA
+
+------------------------------------------------
+PWA
+
+Implement:
+
+Manifest
+
+Service worker
+
+Offline cache
+
+Install prompt
+
+App icons
+
+------------------------------------------------
+MOBILE EXPERIENCE
+
+Optimize for:
+
+iPhone
+
+Android
+
+Tablet
+
+Desktop
+
+Create mobile navigation.
+
+Create mobile dashboard.
+
+------------------------------------------------
+ANIMATIONS
+
+Use Framer Motion.
+
+Animations:
+
+Page transitions
+
+Cards
+
+Buttons
+
+Connection status
+
+Loading
+
+Charts
+
+------------------------------------------------
+END OF PART 4
+------------------------------------------------
+PART 5
+BACKEND APPLICATION
+API ARCHITECTURE
+DATABASE
+AUTHENTICATION
+------------------------------------------------
+
+Build a complete enterprise-grade backend.
+
+Backend must be production ready.
+
+The backend is the core system of APPI VPN.
+
+------------------------------------------------
+BACKEND LOCATION
+
+apps/backend
+
+------------------------------------------------
+FRAMEWORK
+
+Use:
+
+NestJS
+
+TypeScript
+
+Prisma ORM
+
+PostgreSQL
+
+Redis
+
+BullMQ
+
+Swagger
+
+Docker
+
+------------------------------------------------
+BACKEND ARCHITECTURE
+
+Use:
+
+Clean Architecture
+
+Domain Driven Design
+
+SOLID principles
+
+Repository Pattern
+
+Dependency Injection
+
+CQRS where useful
+
+Event Driven Architecture where useful
+
+------------------------------------------------
+MODULE STRUCTURE
+
+Create modules:
+
+auth
+
+users
+
+profiles
+
+sessions
+
+devices
+
+subscriptions
+
+plans
+
+payments
+
+invoices
+
+vpn
+
+servers
+
+configs
+
+traffic
+
+notifications
+
+telegram
+
+referrals
+
+coupons
+
+analytics
+
+support
+
+admin
+
+security
+
+audit
+
+------------------------------------------------
+AUTH MODULE
+------------------------------------------------
+
+Implement:
+
+Registration
+
+Login
+
+Logout
+
+Refresh token
+
+Email verification
+
+Password reset
+
+Google OAuth
+
+GitHub OAuth
+
+Two factor authentication
+
+Session management
+
+Device recognition
+
+------------------------------------------------
+PASSWORD SECURITY
+
+Use:
+
+Argon2id
+
+Password strength validation
+
+Password history
+
+Password breach protection
+
+------------------------------------------------
+JWT SYSTEM
+
+Implement:
+
+Access tokens
+
+Refresh tokens
+
+Rotation
+
+Revocation
+
+Expiration
+
+Device binding
+
+Secure storage
+
+------------------------------------------------
+RBAC SYSTEM
+------------------------------------------------
+
+Implement roles:
+
+USER
+
+MODERATOR
+
+SUPPORT
+
+ADMIN
+
+SUPER_ADMIN
+
+Permissions must be configurable.
+
+------------------------------------------------
+USER API
+
+Create:
+
+GET /users/me
+
+PATCH /users/me
+
+DELETE /users/me
+
+GET /users/devices
+
+DELETE /users/devices/:id
+
+GET /users/sessions
+
+DELETE /users/sessions/:id
+
+------------------------------------------------
+AUTH API
+
+Create:
+
+POST /auth/register
+
+POST /auth/login
+
+POST /auth/logout
+
+POST /auth/refresh
+
+POST /auth/verify-email
+
+POST /auth/reset-password
+
+POST /auth/change-password
+
+POST /auth/2fa/enable
+
+POST /auth/2fa/disable
+
+------------------------------------------------
+SUBSCRIPTION API
+
+Create:
+
+GET /subscriptions/current
+
+GET /subscriptions/plans
+
+POST /subscriptions/create
+
+POST /subscriptions/cancel
+
+POST /subscriptions/renew
+
+POST /subscriptions/change-plan
+
+------------------------------------------------
+PAYMENT API
+
+Create:
+
+POST /payments/create
+
+GET /payments/history
+
+GET /payments/:id
+
+POST /payments/webhook/:provider
+
+POST /payments/refund
+
+------------------------------------------------
+VPN API
+
+Create:
+
+GET /vpn/servers
+
+GET /vpn/recommended
+
+POST /vpn/config/generate
+
+GET /vpn/config/:id
+
+DELETE /vpn/config/:id
+
+GET /vpn/status
+
+POST /vpn/connect
+
+POST /vpn/disconnect
+
+------------------------------------------------
+SERVER API
+
+Admin:
+
+POST /servers
+
+GET /servers
+
+PATCH /servers/:id
+
+DELETE /servers/:id
+
+GET /servers/:id/status
+
+GET /servers/:id/users
+
+------------------------------------------------
+TRAFFIC API
+
+Create:
+
+GET /traffic/current
+
+GET /traffic/history
+
+GET /traffic/statistics
+
+------------------------------------------------
+NOTIFICATION API
+
+Create:
+
+GET /notifications
+
+PATCH /notifications/:id/read
+
+DELETE /notifications/:id
+
+------------------------------------------------
+SUPPORT API
+
+Create:
+
+POST /tickets
+
+GET /tickets
+
+GET /tickets/:id
+
+POST /tickets/:id/messages
+
+PATCH /tickets/:id/status
+
+------------------------------------------------
+ADMIN API
+
+Create:
+
+GET /admin/dashboard
+
+GET /admin/users
+
+PATCH /admin/users/:id
+
+DELETE /admin/users/:id
+
+GET /admin/payments
+
+GET /admin/revenue
+
+GET /admin/logs
+
+------------------------------------------------
+DATABASE DESIGN
+
+Use Prisma.
+
+Create complete schema.
+
+------------------------------------------------
+DATABASE TABLES
+
+Users
+
+Fields:
+
+id
+
+email
+
+passwordHash
+
+role
+
+status
+
+createdAt
+
+updatedAt
+
+
+------------------------------------------------
+
+Profiles
+
+id
+
+userId
+
+firstName
+
+lastName
+
+avatar
+
+country
+
+language
+
+
+------------------------------------------------
+
+Sessions
+
+id
+
+userId
+
+tokenHash
+
+ip
+
+userAgent
+
+device
+
+createdAt
+
+expiresAt
+
+
+------------------------------------------------
+
+Devices
+
+id
+
+userId
+
+name
+
+platform
+
+lastIP
+
+lastSeen
+
+
+------------------------------------------------
+
+Plans
+
+id
+
+name
+
+description
+
+price
+
+currency
+
+duration
+
+trafficLimit
+
+deviceLimit
+
+createdAt
+
+
+------------------------------------------------
+
+Subscriptions
+
+id
+
+userId
+
+planId
+
+status
+
+startedAt
+
+expiresAt
+
+autoRenew
+
+
+------------------------------------------------
+
+Payments
+
+id
+
+userId
+
+provider
+
+transactionId
+
+amount
+
+currency
+
+status
+
+createdAt
+
+
+------------------------------------------------
+
+Invoices
+
+id
+
+userId
+
+paymentId
+
+number
+
+pdfUrl
+
+createdAt
+
+
+------------------------------------------------
+
+Servers
+
+id
+
+name
+
+country
+
+city
+
+ip
+
+protocols
+
+status
+
+cpu
+
+ram
+
+bandwidth
+
+
+------------------------------------------------
+
+VPNConfigs
+
+id
+
+userId
+
+serverId
+
+protocol
+
+config
+
+createdAt
+
+
+------------------------------------------------
+
+Connections
+
+id
+
+userId
+
+serverId
+
+deviceId
+
+connectedAt
+
+disconnectedAt
+
+
+------------------------------------------------
+
+TrafficUsage
+
+id
+
+userId
+
+download
+
+upload
+
+date
+
+
+------------------------------------------------
+
+Coupons
+
+id
+
+code
+
+discount
+
+expiresAt
+
+limit
+
+
+------------------------------------------------
+
+Referrals
+
+id
+
+ownerId
+
+userId
+
+commission
+
+
+------------------------------------------------
+
+Notifications
+
+id
+
+userId
+
+title
+
+message
+
+read
+
+
+------------------------------------------------
+
+Tickets
+
+id
+
+userId
+
+subject
+
+status
+
+priority
+
+
+------------------------------------------------
+
+AuditLogs
+
+id
+
+actorId
+
+action
+
+ip
+
+metadata
+
+createdAt
+
+
+------------------------------------------------
+DATABASE REQUIREMENTS
+
+Create:
+
+Indexes
+
+Relations
+
+Constraints
+
+Migrations
+
+Seed data
+
+Development fixtures
+
+Production safe migrations
+
+------------------------------------------------
+API DOCUMENTATION
+
+Generate:
+
+Swagger documentation
+
+OpenAPI schema
+
+Example requests
+
+Example responses
+
+Authentication examples
+
+------------------------------------------------
+VALIDATION
+
+Every endpoint must have:
+
+DTO validation
+
+Error handling
+
+Logging
+
+Permission checks
+
+Rate limits
+
+------------------------------------------------
+ERROR SYSTEM
+
+Create global error handler.
+
+Return:
+
+statusCode
+
+message
+
+errorCode
+
+timestamp
+
+requestId
+
+------------------------------------------------
+LOGGING
+
+Implement:
+
+Winston or Pino
+
+Structured logs
+
+Request IDs
+
+Error tracking
+
+Security logs
+
+------------------------------------------------
+CACHE
+
+Use Redis for:
+
+Sessions
+
+Rate limiting
+
+Server status
+
+Frequently requested data
+
+------------------------------------------------
+BACKGROUND WORKERS
+
+Implement BullMQ workers:
+
+Email worker
+
+Telegram worker
+
+Payment worker
+
+Traffic worker
+
+Analytics worker
+
+Server monitoring worker
+
+------------------------------------------------
+END OF PART 5
+------------------------------------------------
+PART 6
+DEVOPS
+INFRASTRUCTURE
+DEPLOYMENT
+MONITORING
+------------------------------------------------
+
+Build complete production infrastructure.
+
+The system must be deployable to cloud providers.
+
+Support:
+
+AWS
+
+Hetzner
+
+DigitalOcean
+
+Vultr
+
+Azure
+
+Google Cloud
+
+------------------------------------------------
+INFRASTRUCTURE PRINCIPLES
+
+The infrastructure must be:
+
+Secure
+
+Scalable
+
+Observable
+
+Recoverable
+
+Automated
+
+Cost efficient
+
+------------------------------------------------
+DOCKER
+------------------------------------------------
+
+Containerize every service.
+
+Create:
+
+Dockerfile
+
+docker-compose.yml
+
+docker-compose.dev.yml
+
+docker-compose.prod.yml
+
+------------------------------------------------
+SERVICES
+
+Docker compose must include:
+
+frontend
+
+backend
+
+telegram-bot
+
+postgres
+
+redis
+
+nginx
+
+prometheus
+
+grafana
+
+loki
+
+promtail
+
+minio
+
+------------------------------------------------
+DOCKER REQUIREMENTS
+
+Use:
+
+Multi-stage builds
+
+Small images
+
+Non-root users
+
+Health checks
+
+Environment variables
+
+Secrets
+
+Resource limits
+
+Restart policies
+
+------------------------------------------------
+NGINX
+------------------------------------------------
+
+Configure reverse proxy.
+
+Features:
+
+SSL termination
+
+HTTP/2
+
+Compression
+
+Security headers
+
+Rate limiting
+
+Caching
+
+Load balancing
+
+WebSocket support
+
+------------------------------------------------
+SSL
+
+Implement:
+
+Automatic HTTPS
+
+Let's Encrypt
+
+Certificate renewal
+
+Secure TLS configuration
+
+------------------------------------------------
+DATABASE OPERATIONS
+------------------------------------------------
+
+PostgreSQL production setup.
+
+Include:
+
+Backups
+
+Replication preparation
+
+Connection pooling
+
+Monitoring
+
+Slow query logging
+
+------------------------------------------------
+DATABASE BACKUPS
+
+Create automatic backup system.
+
+Features:
+
+Daily backups
+
+Retention policy
+
+Encryption
+
+Remote storage
+
+Restore procedure
+
+Backup verification
+
+------------------------------------------------
+REDIS
+
+Configure:
+
+Persistence
+
+Memory limits
+
+Eviction policy
+
+Monitoring
+
+------------------------------------------------
+VPN SERVER INFRASTRUCTURE
+------------------------------------------------
+
+Create separate infrastructure concept:
+
+vpn-node/
+
+Each VPN node must contain:
+
+WireGuard service
+
+Xray service
+
+OpenVPN service
+
+Monitoring agent
+
+Configuration agent
+
+------------------------------------------------
+VPN NODE MANAGEMENT
+
+Implement automated management.
+
+Features:
+
+Register node
+
+Generate keys
+
+Sync configuration
+
+Health check
+
+Remove node
+
+Update node
+
+Restart service
+
+------------------------------------------------
+SERVER AGENT
+
+Create:
+
+apps/server-agent
+
+Purpose:
+
+Communicate between APPI backend and VPN servers.
+
+Functions:
+
+Receive commands
+
+Apply configuration
+
+Report health
+
+Report resources
+
+Secure authentication
+
+------------------------------------------------
+SERVER SECURITY
+
+VPN servers must use:
+
+Firewall
+
+Fail2ban
+
+Automatic updates
+
+Minimal services
+
+SSH hardening
+
+Key authentication only
+
+------------------------------------------------
+NETWORK SECURITY
+
+Implement:
+
+Firewall rules
+
+Private communication
+
+Encrypted API communication
+
+IP allow lists
+
+DDoS protection preparation
+
+------------------------------------------------
+CI/CD
+------------------------------------------------
+
+Create GitHub Actions workflows.
+
+Directory:
+
+.github/workflows
+
+------------------------------------------------
+PIPELINES
+
+Create:
+
+ci.yml
+
+cd.yml
+
+security.yml
+
+backup.yml
+
+release.yml
+
+------------------------------------------------
+CI PIPELINE
+
+Run:
+
+Install dependencies
+
+Lint
+
+Type checking
+
+Unit tests
+
+Integration tests
+
+Build
+
+Security scan
+
+------------------------------------------------
+CD PIPELINE
+
+Automatically:
+
+Build images
+
+Push images
+
+Deploy
+
+Run migrations
+
+Restart services
+
+Verify health
+
+Rollback if failure
+
+------------------------------------------------
+VERSIONING
+
+Use semantic versioning.
+
+Examples:
+
+1.0.0
+
+1.1.0
+
+1.1.1
+
+------------------------------------------------
+RELEASE PROCESS
+
+Every release creates:
+
+Git tag
+
+Changelog
+
+Docker image
+
+Deployment record
+
+------------------------------------------------
+MONITORING
+------------------------------------------------
+
+Implement observability stack.
+
+Use:
+
+Prometheus
+
+Grafana
+
+Loki
+
+Promtail
+
+Sentry
+
+------------------------------------------------
+METRICS
+
+Collect:
+
+CPU
+
+RAM
+
+Disk
+
+Network
+
+Requests
+
+Errors
+
+Latency
+
+Database performance
+
+VPN connections
+
+Traffic
+
+Payments
+
+Users
+
+------------------------------------------------
+GRAFANA DASHBOARDS
+
+Create dashboards:
+
+Application
+
+Database
+
+Infrastructure
+
+VPN servers
+
+Payments
+
+Users
+
+Security
+
+------------------------------------------------
+ALERTING
+
+Create alerts:
+
+Server offline
+
+High CPU
+
+High RAM
+
+Database failure
+
+Payment failure
+
+API errors
+
+VPN outage
+
+SSL expiration
+
+------------------------------------------------
+LOG MANAGEMENT
+
+Centralize logs.
+
+Collect:
+
+Backend logs
+
+Frontend errors
+
+VPN node logs
+
+Payment logs
+
+Security logs
+
+------------------------------------------------
+SENTRY
+
+Integrate:
+
+Frontend errors
+
+Backend errors
+
+Performance monitoring
+
+Release tracking
+
+------------------------------------------------
+HEALTH CHECKS
+
+Every service must expose:
+
+/health
+
+Return:
+
+status
+
+version
+
+database status
+
+redis status
+
+dependencies
+
+------------------------------------------------
+DISASTER RECOVERY
+
+Create documentation:
+
+Backup restore
+
+Server replacement
+
+Database recovery
+
+Emergency procedures
+
+------------------------------------------------
+SCALING
+
+Prepare for:
+
+Multiple backend instances
+
+Multiple frontend instances
+
+Multiple VPN regions
+
+Database scaling
+
+Redis scaling
+
+Queue scaling
+
+------------------------------------------------
+KUBERNETES PREPARATION
+
+Create optional:
+
+k8s/
+
+deployment.yaml
+
+service.yaml
+
+ingress.yaml
+
+configmap.yaml
+
+secrets.yaml
+
+------------------------------------------------
+COST OPTIMIZATION
+
+Document:
+
+Server sizing
+
+Bandwidth optimization
+
+Database optimization
+
+Caching strategy
+
+Monitoring costs
+
+------------------------------------------------
+END OF PART 6
+------------------------------------------------
+PART 7
+TESTING
+QUALITY ASSURANCE
+SECURITY AUDIT
+DOCUMENTATION
+AUTONOMOUS DEVELOPMENT RULES
+------------------------------------------------
+
+The APPI VPN project must be production ready.
+
+No feature is considered complete without tests.
+
+------------------------------------------------
+TESTING STRATEGY
+------------------------------------------------
+
+Implement complete testing system.
+
+Testing levels:
+
+Unit Tests
+
+Integration Tests
+
+End-to-End Tests
+
+Security Tests
+
+Performance Tests
+
+------------------------------------------------
+TEST STACK
+
+Frontend:
+
+Jest
+
+React Testing Library
+
+Playwright
+
+
+Backend:
+
+Jest
+
+Supertest
+
+
+API:
+
+Postman/Newman or equivalent
+
+
+Performance:
+
+k6
+
+Artillery
+
+------------------------------------------------
+UNIT TESTING
+------------------------------------------------
+
+Every important service must have unit tests.
+
+Test:
+
+Authentication
+
+Payments
+
+Subscriptions
+
+VPN configuration generation
+
+Traffic calculations
+
+Permissions
+
+Notifications
+
+Referral system
+
+Admin actions
+
+------------------------------------------------
+BACKEND TEST REQUIREMENTS
+
+Minimum coverage:
+
+80%+
+
+Critical modules:
+
+90%+
+
+------------------------------------------------
+INTEGRATION TESTS
+------------------------------------------------
+
+Test:
+
+Database connection
+
+Redis connection
+
+Payment webhooks
+
+Telegram integration
+
+Email system
+
+VPN server communication
+
+Authentication flow
+
+------------------------------------------------
+END TO END TESTS
+------------------------------------------------
+
+Create complete user scenarios.
+
+Scenario 1:
+
+New user registration
+
+Email verification
+
+Login
+
+Choose plan
+
+Payment
+
+Subscription activation
+
+Generate VPN config
+
+Download config
+
+
+Scenario 2:
+
+Existing user renewal
+
+Payment
+
+Renewal
+
+Notification
+
+
+Scenario 3:
+
+Admin workflow
+
+Login
+
+Create server
+
+Create plan
+
+Manage user
+
+View analytics
+
+
+------------------------------------------------
+PLAYWRIGHT TESTS
+------------------------------------------------
+
+Test:
+
+Landing page
+
+Registration
+
+Login
+
+Dashboard
+
+Checkout
+
+Admin panel
+
+Mobile layouts
+
+------------------------------------------------
+SECURITY TESTING
+------------------------------------------------
+
+Perform security checks.
+
+Test:
+
+Authentication bypass
+
+Authorization issues
+
+SQL injection
+
+XSS
+
+CSRF
+
+Rate limit bypass
+
+Session attacks
+
+JWT attacks
+
+File upload attacks
+
+API abuse
+
+------------------------------------------------
+DEPENDENCY SECURITY
+
+Configure:
+
+npm audit
+
+Snyk compatible checks
+
+Dependabot
+
+Container scanning
+
+------------------------------------------------
+PERFORMANCE TESTING
+------------------------------------------------
+
+Test:
+
+API response time
+
+Database performance
+
+Concurrent users
+
+VPN config generation
+
+Payment processing
+
+Dashboard loading
+
+------------------------------------------------
+LOAD TEST TARGETS
+
+Prepare for:
+
+10 000 users
+
+1 000 concurrent sessions
+
+100 API requests per second
+
+------------------------------------------------
+CODE QUALITY CHECKS
+
+Before every commit:
+
+Run:
+
+lint
+
+format
+
+typecheck
+
+tests
+
+build
+
+security checks
+
+------------------------------------------------
+AUTOMATED CODE REVIEW
+
+Create:
+
+CODEOWNERS
+
+Pull request template
+
+Issue template
+
+Contribution guide
+
+------------------------------------------------
+DOCUMENTATION
+------------------------------------------------
+
+Create professional documentation.
+
+Directory:
+
+docs/
+
+------------------------------------------------
+DOCUMENT FILES
+
+Create:
+
+README.md
+
+INSTALLATION.md
+
+DEPLOYMENT.md
+
+ARCHITECTURE.md
+
+DATABASE.md
+
+API.md
+
+SECURITY.md
+
+PAYMENTS.md
+
+VPN.md
+
+TELEGRAM.md
+
+ADMIN_GUIDE.md
+
+USER_GUIDE.md
+
+DEVELOPER_GUIDE.md
+
+TROUBLESHOOTING.md
+
+------------------------------------------------
+README REQUIREMENTS
+
+Include:
+
+Project description
+
+Features
+
+Screenshots placeholders
+
+Architecture
+
+Installation
+
+Environment setup
+
+Development
+
+Production deployment
+
+API usage
+
+Contribution
+
+License
+
+------------------------------------------------
+API DOCUMENTATION
+
+Document:
+
+Every endpoint
+
+Authentication
+
+Parameters
+
+Responses
+
+Errors
+
+Examples
+
+------------------------------------------------
+DEVELOPER DOCUMENTATION
+
+Explain:
+
+Project structure
+
+Coding standards
+
+Adding modules
+
+Database changes
+
+Creating migrations
+
+Deployment process
+
+------------------------------------------------
+USER DOCUMENTATION
+
+Create guides:
+
+How to register
+
+How to subscribe
+
+How to install VPN
+
+How to connect devices
+
+How to manage subscription
+
+How to contact support
+
+------------------------------------------------
+LEGAL DOCUMENTATION
+
+Prepare templates:
+
+Privacy Policy
+
+Terms of Service
+
+Refund Policy
+
+Cookie Policy
+
+Disclaimer
+
+------------------------------------------------
+LAUNCH CHECKLIST
+
+Before production launch verify:
+
+[ ] Environment variables configured
+
+[ ] Database migrated
+
+[ ] Backups enabled
+
+[ ] SSL configured
+
+[ ] Monitoring active
+
+[ ] Error tracking active
+
+[ ] Payments tested
+
+[ ] Telegram bot tested
+
+[ ] VPN servers tested
+
+[ ] Emails tested
+
+[ ] Security audit completed
+
+[ ] Load testing completed
+
+------------------------------------------------
+AUTONOMOUS CODEX WORK MODE
+
+You are responsible for completing the entire project.
+
+Do not stop after creating initial files.
+
+Continue until the whole system is finished.
+
+------------------------------------------------
+DEVELOPMENT LOOP
+
+For every task:
+
+1. Analyze requirements
+
+2. Create implementation plan
+
+3. Modify files
+
+4. Write tests
+
+5. Run tests
+
+6. Fix problems
+
+7. Run build
+
+8. Update documentation
+
+9. Commit changes
+
+10. Continue
+
+------------------------------------------------
+WHEN ERRORS OCCUR
+
+Do not ignore errors.
+
+Do not work around errors.
+
+Find the root cause.
+
+Fix permanently.
+
+Add regression tests.
+
+------------------------------------------------
+WHEN SOMETHING IS UNCLEAR
+
+Choose the most professional scalable solution.
+
+Do not create temporary solutions.
+
+------------------------------------------------
+FILE MANAGEMENT
+
+All files must exist inside:
+
+Coding Projects/appi-vpn
+
+Maintain clean structure.
+
+Never create random files.
+
+------------------------------------------------
+GIT RULES
+
+Before each commit:
+
+Check status.
+
+Review changes.
+
+Use meaningful commit message.
+
+------------------------------------------------
+FINAL REQUIREMENTS
+
+The finished project must be:
+
+Production ready
+
+Secure
+
+Scalable
+
+Documented
+
+Tested
+
+Deployable
+
+Commercially usable
+
+------------------------------------------------
+END OF PART 7
+------------------------------------------------
+PART 8
+FINAL AUTONOMOUS EXECUTION PLAN
+PROJECT BUILD ORDER
+PRODUCTION LAUNCH
+------------------------------------------------
+
+You are now responsible for executing the complete APPI VPN project.
+
+Do not only describe.
+
+Do not only plan.
+
+Actually create the application.
+
+------------------------------------------------
+PROJECT EXECUTION ORDER
+------------------------------------------------
+
+Follow this exact order.
+
+Do not skip steps.
+
+------------------------------------------------
+PHASE 0
+INITIALIZATION
+------------------------------------------------
+
+Create project.
+
+Initialize:
+
+Git repository
+
+Monorepo
+
+pnpm workspace
+
+Turborepo
+
+Docker environment
+
+Environment templates
+
+Basic documentation
+
+Initial commit:
+
+chore(project): initialize APPI VPN platform
+
+------------------------------------------------
+PHASE 1
+FOUNDATION
+------------------------------------------------
+
+Create:
+
+Frontend structure
+
+Backend structure
+
+Database connection
+
+Redis connection
+
+Docker setup
+
+CI pipeline
+
+Shared packages
+
+UI system
+
+------------------------------------------------
+PHASE 2
+AUTHENTICATION
+------------------------------------------------
+
+Implement:
+
+Registration
+
+Login
+
+JWT
+
+Refresh tokens
+
+Sessions
+
+Email verification
+
+Password reset
+
+OAuth
+
+RBAC
+
+Tests
+
+Documentation
+
+------------------------------------------------
+PHASE 3
+USER PLATFORM
+------------------------------------------------
+
+Implement:
+
+User profile
+
+Dashboard
+
+Devices
+
+Sessions
+
+Settings
+
+Notifications
+
+Security settings
+
+------------------------------------------------
+PHASE 4
+VPN CORE
+------------------------------------------------
+
+Implement:
+
+Server management
+
+VPN protocols
+
+Configuration generation
+
+QR codes
+
+Traffic accounting
+
+Connection tracking
+
+Server monitoring
+
+------------------------------------------------
+PHASE 5
+SUBSCRIPTIONS
+------------------------------------------------
+
+Implement:
+
+Plans
+
+Subscriptions
+
+Trials
+
+Renewals
+
+Expiration
+
+Coupons
+
+Invoices
+
+Payment history
+
+------------------------------------------------
+PHASE 6
+PAYMENTS
+------------------------------------------------
+
+Implement:
+
+Stripe
+
+Lemon Squeezy
+
+Telegram Payments
+
+Crypto provider adapter
+
+Webhooks
+
+Refunds
+
+Security verification
+
+------------------------------------------------
+PHASE 7
+TELEGRAM BOT
+------------------------------------------------
+
+Implement:
+
+Authentication linking
+
+Subscription management
+
+Payments
+
+Configuration delivery
+
+Notifications
+
+Support
+
+Admin alerts
+
+------------------------------------------------
+PHASE 8
+ADMIN PANEL
+------------------------------------------------
+
+Implement:
+
+Dashboard
+
+Users
+
+Payments
+
+Servers
+
+Analytics
+
+Logs
+
+Support
+
+Settings
+
+------------------------------------------------
+PHASE 9
+INFRASTRUCTURE
+------------------------------------------------
+
+Implement:
+
+Docker production
+
+Nginx
+
+SSL
+
+Monitoring
+
+Backups
+
+CI/CD
+
+Deployment
+
+------------------------------------------------
+PHASE 10
+QUALITY ASSURANCE
+------------------------------------------------
+
+Run:
+
+Unit tests
+
+Integration tests
+
+E2E tests
+
+Security checks
+
+Performance tests
+
+Fix all issues.
+
+------------------------------------------------
+PHASE 11
+PRODUCTION RELEASE
+------------------------------------------------
+
+Prepare:
+
+Version 1.0.0
+
+Release notes
+
+Docker images
+
+Deployment
+
+Monitoring
+
+Documentation
+
+------------------------------------------------
+GITHUB INTEGRATION
+------------------------------------------------
+
+When GitHub repository URL is provided:
+
+Execute:
+
+git remote add origin REPOSITORY_URL
+
+git branch -M main
+
+git push -u origin main
+
+------------------------------------------------
+BRANCH STRATEGY
+------------------------------------------------
+
+Use:
+
+main
+
+development
+
+feature branches
+
+hotfix branches
+
+------------------------------------------------
+COMMITS
+
+Every feature:
+
+Create commit.
+
+Never create giant undocumented commits.
+
+------------------------------------------------
+EXTERNAL SERVICES
+------------------------------------------------
+
+When credentials are missing:
+
+Create configuration placeholders.
+
+Create setup documentation.
+
+Continue development.
+
+Never block the project.
+
+------------------------------------------------
+ENVIRONMENT VARIABLES
+------------------------------------------------
+
+Create:
+
+.env.example
+
+Document every variable.
+
+Example:
+
+DATABASE_URL=
+
+REDIS_URL=
+
+JWT_SECRET=
+
+STRIPE_KEY=
+
+TELEGRAM_TOKEN=
+
+SMTP_HOST=
+
+------------------------------------------------
+SECRET MANAGEMENT
+------------------------------------------------
+
+Never commit:
+
+Passwords
+
+API keys
+
+Private keys
+
+Tokens
+
+Certificates
+
+------------------------------------------------
+PRODUCTION SECURITY CHECK
+
+Before launch verify:
+
+Authentication secure
+
+Payments secure
+
+VPN keys protected
+
+Database protected
+
+Logs protected
+
+Admin protected
+
+Rate limits enabled
+
+Backups working
+
+------------------------------------------------
+BUSINESS READINESS
+------------------------------------------------
+
+Prepare APPI VPN for monetization.
+
+Implement:
+
+Subscription billing
+
+Customer accounts
+
+Revenue analytics
+
+Affiliate system
+
+Referral system
+
+Support system
+
+------------------------------------------------
+MARKETING SUPPORT
+------------------------------------------------
+
+Create:
+
+SEO pages
+
+Landing pages
+
+Pricing pages
+
+FAQ
+
+Blog structure
+
+Affiliate landing page
+
+------------------------------------------------
+APP STORE PREPARATION
+------------------------------------------------
+
+Prepare documentation for:
+
+iOS application
+
+Android application
+
+Desktop clients
+
+------------------------------------------------
+CLIENT APPLICATIONS
+------------------------------------------------
+
+Prepare architecture for:
+
+Windows client
+
+macOS client
+
+Linux client
+
+Android client
+
+iOS client
+
+------------------------------------------------
+FUTURE FEATURES
+
+Design architecture ready for:
+
+Team accounts
+
+Business plans
+
+Dedicated IP
+
+Custom DNS
+
+Ad blocking
+
+Malware protection
+
+Multi-hop VPN
+
+Browser extensions
+
+------------------------------------------------
+FINAL CODEX BEHAVIOR
+------------------------------------------------
+
+You are an autonomous senior engineering team.
+
+Your goal is not to provide explanations.
+
+Your goal is to build APPI VPN.
+
+Always:
+
+Write code.
+
+Test code.
+
+Improve code.
+
+Document code.
+
+Commit code.
+
+Continue.
+
+------------------------------------------------
+FINAL SUCCESS CRITERIA
+
+The project is complete only when:
+
+Frontend works.
+
+Backend works.
+
+Database works.
+
+Payments work.
+
+Telegram bot works.
+
+VPN generation works.
+
+Admin panel works.
+
+Deployment works.
+
+Tests pass.
+
+Documentation exists.
+
+Security checks pass.
+------------------------------------------------
+GITHUB REPOSITORY CONFIGURATION
+------------------------------------------------
+
+The GitHub repository for this project is:
+
+https://github.com/Temstvo/1
+
+This repository is the official source of truth for APPI VPN.
+
+Configure Git automatically.
+
+------------------------------------------------
+
+GIT SETUP
+
+Initialize repository if needed.
+
+Set remote:
+
+origin:
+https://github.com/Temstvo/1
+
+Main branch:
+
+main
+
+------------------------------------------------
+
+FIRST ACTIONS
+
+Before writing application code:
+
+1. Check existing repository contents.
+
+2. Analyze current structure.
+
+3. Determine whether repository is empty or contains existing code.
+
+4. Do not delete existing files without analysis.
+
+5. Preserve useful existing work.
+
+6. Create project architecture according to MASTER_PROMPT.
+
+------------------------------------------------
+
+LOCAL MIRROR
+
+The working directory must be:
+
+Coding Projects/appi-vpn
+
+All generated files must exist there.
+
+The local folder and Git repository must stay synchronized.
+
+------------------------------------------------
+
+GIT WORKFLOW
+
+After every completed feature:
+
+1. Run tests.
+
+2. Run lint.
+
+3. Run build.
+
+4. Review changed files.
+
+5. Create commit.
+
+6. Push to GitHub.
+
+------------------------------------------------
+
+COMMIT FORMAT
+
+Use:
+
+type(scope): description
+
+Examples:
+
+feat(auth): implement authentication system
+
+feat(vpn): add wireguard configuration generator
+
+feat(payments): integrate subscription billing
+
+fix(api): resolve validation issue
+
+docs(readme): update deployment guide
+
+------------------------------------------------
+
+BRANCHES
+
+Create:
+
+main
+
+development
+
+feature/*
+
+hotfix/*
+
+------------------------------------------------
+
+INITIAL COMMITS
+
+Create:
+
+chore(project): initialize APPI VPN architecture
+
+chore(devops): configure docker environment
+
+chore(ci): add github actions
+
+------------------------------------------------
+
+IMPORTANT
+
+Never upload:
+
+.env files
+
+private keys
+
+passwords
+
+API secrets
+
+VPN private keys
+
+certificates
+
+------------------------------------------------
+
+Before every push verify:
+
+git status
+
+git diff
+
+security scan
+
+tests passing
+
+------------------------------------------------
+
+START WORK NOW.
+
+Analyze repository:
+
+https://github.com/Temstvo/1
+
+Then begin Phase 0 from MASTER_PROMPT.
+
+------------------------------------------------
+END OF MASTER PROMPT
+
+PROJECT:
+
+APPI VPN
+
+STATUS:
+
+BUILD PRODUCTION READY SaaS VPN PLATFORM

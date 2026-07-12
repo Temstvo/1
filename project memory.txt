@@ -1,0 +1,168 @@
+# APPI VPN - PROJECT MEMORY
+
+Project:
+APPI VPN
+
+Repository:
+https://github.com/Temstvo/1
+
+Purpose:
+Production-ready SaaS VPN platform with subscriptions, payments, Telegram bot, admin panel and multi-protocol VPN infrastructure.
+
+---
+
+# CURRENT STATUS
+
+Phase:
+0 - Initialization
+
+Completed:
+
+- Project created
+- Repository connected
+- Architecture planning
+
+Currently working on:
+
+- Initial monorepo setup
+- Docker environment
+- Base project structure
+
+---
+
+# TECHNOLOGY STACK
+
+Frontend:
+
+- Next.js
+- React
+- TypeScript
+- TailwindCSS
+- Shadcn UI
+- Framer Motion
+
+Backend:
+
+- NestJS
+- TypeScript
+- Prisma
+- PostgreSQL
+- Redis
+- BullMQ
+
+Infrastructure:
+
+- Docker
+- Nginx
+- GitHub Actions
+- Prometheus
+- Grafana
+
+VPN:
+
+- WireGuard
+- OpenVPN
+- Xray Reality
+- VLESS
+
+---
+
+# PROJECT RULES
+
+Always:
+
+- Write production-ready code
+- Create tests
+- Update documentation
+- Commit changes
+- Keep architecture clean
+- Avoid temporary solutions
+
+Never:
+
+- Commit secrets
+- Commit .env files
+- Leave TODO placeholders
+- Skip tests
+
+---
+
+# DEVELOPMENT LOG
+
+## YYYY-MM-DD
+
+Completed:
+
+-
+
+Changed:
+
+-
+
+Decisions:
+
+-
+
+Problems:
+
+-
+
+Next steps:
+
+-
+
+---
+
+# ARCHITECTURE DECISIONS
+
+## Decision 1
+
+Date:
+
+Reason:
+
+Solution:
+
+
+---
+
+# DATABASE CHANGES
+
+Track all schema changes here.
+
+Date:
+
+Migration:
+
+Description:
+
+
+---
+
+# API CHANGES
+
+Track new endpoints.
+
+Date:
+
+Endpoint:
+
+Purpose:
+
+
+---
+
+# KNOWN ISSUES
+
+None yet.
+
+---
+
+# NEXT ACTIONS
+
+1. Analyze repository.
+2. Initialize monorepo.
+3. Setup Docker.
+4. Setup database.
+5. Create CI/CD.
+6. Begin authentication module.

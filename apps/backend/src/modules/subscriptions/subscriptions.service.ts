@@ -1,81 +1,104 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { ChangePlanDto } from './dto/change-plan.dto';
+import { PaymentsService } from '../payments/payments.service';
+import { CouponsService } from '../coupons/coupons.service';
 
 @Injectable()
 export class SubscriptionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(SubscriptionsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentsService: PaymentsService,
+    private readonly couponsService: CouponsService,
+  ) {}
 
   async getCurrentUserSubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
-      include: {
-        plan: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
+      include: { plan: true },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!subscription) {
-      throw new NotFoundException('No active subscription found');
-    }
-
-    return subscription;
+    return subscription || null;
   }
 
-  async create(userId: string, createSubscriptionDto: CreateSubscriptionDto) {
-    const plan = await this.prisma.plan.findUnique({
-      where: { id: createSubscriptionDto.planId },
-    });
-
-    if (!plan) {
-      throw new NotFoundException('Plan not found');
-    }
-
-    if (!plan.isActive) {
-      throw new BadRequestException('Plan is not active');
+  async create(userId: string, dto: { planId: string; couponCode?: string; paymentMethod?: string }) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
+    if (!plan || !plan.isActive) {
+      throw new NotFoundException('Plan not found or inactive');
     }
 
     const activeSubscription = await this.prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
+      where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
     });
 
     if (activeSubscription) {
       throw new ConflictException('User already has an active subscription');
     }
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + plan.durationDays);
+    let discount = 0;
+    if (dto.couponCode) {
+      const validation = await this.couponsService.validate(dto.couponCode, dto.planId, Number(plan.price));
+      if (validation.valid) {
+        if (validation.discount.type === 'PERCENTAGE') {
+          discount = Number(plan.price) * (validation.discount.value / 100);
+        } else if (validation.discount.type === 'FIXED') {
+          discount = validation.discount.value;
+        } else if (validation.discount.type === 'FREE_DAYS') {
+          discount = 0;
+        }
+        await this.couponsService.apply(dto.couponCode);
+      }
+    }
 
-    return this.prisma.subscription.create({
+    const finalAmount = Math.max(0, Number(plan.price) - discount);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + plan.duration);
+
+    const payment = await this.paymentsService.createPayment({
+      userId,
+      amount: finalAmount,
+      currency: plan.currency,
+      provider: 'STRIPE',
+      description: `Subscription: ${plan.name}`,
+      metadata: { planId: dto.planId, couponCode: dto.couponCode },
+    });
+
+    const subscription = await this.prisma.subscription.create({
       data: {
         userId,
-        planId: createSubscriptionDto.planId,
+        planId: dto.planId,
         status: 'ACTIVE',
+        startedAt: new Date(),
         expiresAt,
-        paymentMethod: createSubscriptionDto.paymentMethod,
-        transactionId: createSubscriptionDto.transactionId,
+        paymentMethod: dto.paymentMethod || 'card',
       },
-      include: {
-        plan: true,
-      },
+      include: { plan: true },
     });
+
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { subscriptionId: subscription.id },
+    });
+
+    this.logger.log(`Subscription created: ${subscription.id} for user ${userId}`);
+
+    return {
+      subscription,
+      payment: { id: payment.id, amount: finalAmount, currency: plan.currency },
+    };
   }
 
-  async cancel(userId: string) {
+  async cancel(userId: string, reason?: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!subscription) {
@@ -87,62 +110,105 @@ export class SubscriptionsService {
       data: {
         status: 'CANCELLED',
         cancelledAt: new Date(),
+        cancelReason: reason,
+        autoRenew: false,
       },
-      include: {
-        plan: true,
-      },
+      include: { plan: true },
     });
   }
 
-  async changePlan(userId: string, changePlanDto: ChangePlanDto) {
+  async changePlan(userId: string, newPlanId: string, couponCode?: string) {
     const currentSubscription = await this.prisma.subscription.findFirst({
-      where: {
-        userId,
-        status: 'ACTIVE',
-      },
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (!currentSubscription) {
       throw new NotFoundException('No active subscription found');
     }
 
-    const newPlan = await this.prisma.plan.findUnique({
-      where: { id: changePlanDto.planId },
-    });
-
-    if (!newPlan) {
-      throw new NotFoundException('New plan not found');
+    const newPlan = await this.prisma.plan.findUnique({ where: { id: newPlanId } });
+    if (!newPlan || !newPlan.isActive) {
+      throw new NotFoundException('New plan not found or inactive');
     }
 
-    if (!newPlan.isActive) {
-      throw new BadRequestException('New plan is not active');
-    }
-
-    if (currentSubscription.planId === changePlanDto.planId) {
+    if (currentSubscription.planId === newPlanId) {
       throw new BadRequestException('Cannot change to the same plan');
     }
 
+    let discount = 0;
+    if (couponCode) {
+      const validation = await this.couponsService.validate(couponCode, newPlanId, Number(newPlan.price));
+      if (validation.valid) {
+        if (validation.discount.type === 'PERCENTAGE') {
+          discount = Number(newPlan.price) * (validation.discount.value / 100);
+        } else if (validation.discount.type === 'FIXED') {
+          discount = validation.discount.value;
+        }
+        await this.couponsService.apply(couponCode);
+      }
+    }
+
+    const finalAmount = Math.max(0, Number(newPlan.price) - discount);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + newPlan.durationDays);
+    expiresAt.setDate(expiresAt.getDate() + newPlan.duration);
 
     await this.prisma.subscription.update({
       where: { id: currentSubscription.id },
-      data: {
-        status: 'CHANGED',
-      },
+      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'Plan changed' },
     });
 
-    return this.prisma.subscription.create({
+    const newSubscription = await this.prisma.subscription.create({
       data: {
         userId,
-        planId: changePlanDto.planId,
+        planId: newPlanId,
         status: 'ACTIVE',
+        startedAt: new Date(),
         expiresAt,
         paymentMethod: currentSubscription.paymentMethod,
       },
-      include: {
-        plan: true,
+      include: { plan: true },
+    });
+
+    const payment = await this.paymentsService.createPayment({
+      userId,
+      subscriptionId: newSubscription.id,
+      amount: finalAmount,
+      currency: newPlan.currency,
+      provider: 'STRIPE',
+      description: `Plan change: ${newPlan.name}`,
+      metadata: { previousPlanId: currentSubscription.planId, newPlanId, couponCode },
+    });
+
+    this.logger.log(`Plan changed: ${currentSubscription.planId} -> ${newPlanId} for user ${userId}`);
+
+    return {
+      subscription: newSubscription,
+      payment: { id: payment.id, amount: finalAmount },
+    };
+  }
+
+  async renew(userId: string) {
+    const subscription = await this.prisma.subscription.findFirst({
+      where: { userId, status: { in: ['ACTIVE', 'EXPIRED'] } },
+      include: { plan: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!subscription) {
+      throw new NotFoundException('No subscription found');
+    }
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + subscription.plan.duration);
+
+    return this.prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: 'ACTIVE',
+        expiresAt,
+        autoRenew: true,
       },
+      include: { plan: true },
     });
   }
 
@@ -150,21 +216,26 @@ export class SubscriptionsService {
     const expiredSubscriptions = await this.prisma.subscription.findMany({
       where: {
         status: 'ACTIVE',
-        expiresAt: {
-          lt: new Date(),
-        },
+        expiresAt: { lt: new Date() },
       },
     });
 
     for (const subscription of expiredSubscriptions) {
       await this.prisma.subscription.update({
         where: { id: subscription.id },
-        data: {
-          status: 'EXPIRED',
-        },
+        data: { status: 'EXPIRED' },
       });
     }
 
     return { updated: expiredSubscriptions.length };
+  }
+
+  async getAll(userId?: string) {
+    const where = userId ? { userId } : {};
+    return this.prisma.subscription.findMany({
+      where,
+      include: { plan: true, user: { select: { id: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }

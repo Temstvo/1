@@ -3,59 +3,118 @@ import {
   Get,
   Post,
   Body,
+  Param,
+  Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
-import { CreateSubscriptionDto } from './dto/create-subscription.dto';
-import { ChangePlanDto } from './dto/change-plan.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { IsString, IsOptional } from 'class-validator';
 
-@ApiTags('Subscriptions')
+class CreateSubscriptionDto {
+  @IsString()
+  planId: string;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+}
+
+class ChangePlanDto {
+  @IsString()
+  planId: string;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
+}
+
+class CancelDto {
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
+
+@ApiTags('subscriptions')
 @Controller('subscriptions')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Get('current')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user subscription' })
-  @ApiResponse({ status: 200, description: 'Subscription retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'No active subscription found' })
-  async getCurrentSubscription(@CurrentUser('id') userId: string) {
+  @ApiResponse({ status: 200, description: 'Current subscription' })
+  async getCurrent(@CurrentUser('id') userId: string) {
     return this.subscriptionsService.getCurrentUserSubscription(userId);
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Create a new subscription' })
-  @ApiResponse({ status: 201, description: 'Subscription created successfully' })
-  @ApiResponse({ status: 404, description: 'Plan not found' })
-  @ApiResponse({ status: 409, description: 'User already has an active subscription' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create subscription' })
+  @ApiResponse({ status: 201, description: 'Subscription created' })
   async create(
     @CurrentUser('id') userId: string,
-    @Body() createSubscriptionDto: CreateSubscriptionDto,
+    @Body() dto: CreateSubscriptionDto,
   ) {
-    return this.subscriptionsService.create(userId, createSubscriptionDto);
+    return this.subscriptionsService.create(userId, dto);
   }
 
   @Post('cancel')
-  @ApiOperation({ summary: 'Cancel current subscription' })
-  @ApiResponse({ status: 200, description: 'Subscription cancelled successfully' })
-  @ApiResponse({ status: 404, description: 'No active subscription found' })
-  async cancel(@CurrentUser('id') userId: string) {
-    return this.subscriptionsService.cancel(userId);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancel subscription' })
+  @ApiResponse({ status: 200, description: 'Subscription cancelled' })
+  async cancel(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CancelDto,
+  ) {
+    return this.subscriptionsService.cancel(userId, dto.reason);
   }
 
   @Post('change-plan')
-  @ApiOperation({ summary: 'Change current plan' })
-  @ApiResponse({ status: 200, description: 'Plan changed successfully' })
-  @ApiResponse({ status: 400, description: 'Cannot change to the same plan' })
-  @ApiResponse({ status: 404, description: 'Subscription or plan not found' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change plan' })
+  @ApiResponse({ status: 200, description: 'Plan changed' })
   async changePlan(
     @CurrentUser('id') userId: string,
-    @Body() changePlanDto: ChangePlanDto,
+    @Body() dto: ChangePlanDto,
   ) {
-    return this.subscriptionsService.changePlan(userId, changePlanDto);
+    return this.subscriptionsService.changePlan(userId, dto.planId, dto.couponCode);
+  }
+
+  @Post('renew')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Renew subscription' })
+  @ApiResponse({ status: 200, description: 'Subscription renewed' })
+  async renew(@CurrentUser('id') userId: string) {
+    return this.subscriptionsService.renew(userId);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all subscriptions (admin)' })
+  @ApiResponse({ status: 200, description: 'List of subscriptions' })
+  async getAll(@Query('userId') userId?: string) {
+    return this.subscriptionsService.getAll(userId);
   }
 }

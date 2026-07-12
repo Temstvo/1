@@ -9,28 +9,16 @@ export class InvoicesService {
     return this.prisma.invoice.findMany({
       where: { userId },
       include: {
-        subscription: {
-          include: {
-            plan: true,
-          },
-        },
+        payment: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async findById(id: string, userId: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
-      include: {
-        subscription: {
-          include: {
-            plan: true,
-          },
-        },
-      },
+      include: { payment: true },
     });
 
     if (!invoice) {
@@ -50,21 +38,45 @@ export class InvoicesService {
 
     const lastInvoice = await this.prisma.invoice.findFirst({
       where: {
-        invoiceNumber: {
+        number: {
           startsWith: `INV-${year}${month}`,
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
     });
 
     let sequence = 1;
     if (lastInvoice) {
-      const lastSequence = parseInt(lastInvoice.invoiceNumber.split('-')[2], 10);
+      const lastSequence = parseInt(lastInvoice.number.split('-')[2], 10);
       sequence = lastSequence + 1;
     }
 
     return `INV-${year}${month}-${String(sequence).padStart(4, '0')}`;
+  }
+
+  async create(data: {
+    userId: string;
+    paymentId: string;
+    subtotal: number;
+    tax?: number;
+    total: number;
+    currency?: string;
+    metadata?: Record<string, any>;
+  }) {
+    const number = await this.generateInvoiceNumber();
+
+    return this.prisma.invoice.create({
+      data: {
+        userId: data.userId,
+        paymentId: data.paymentId,
+        number,
+        subtotal: data.subtotal,
+        tax: data.tax || 0,
+        total: data.total,
+        currency: data.currency || 'USD',
+        dueDate: new Date(),
+        metadata: data.metadata,
+      },
+    });
   }
 }

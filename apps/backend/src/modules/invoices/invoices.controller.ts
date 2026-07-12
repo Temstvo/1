@@ -3,33 +3,37 @@ import {
   Get,
   Param,
   UseGuards,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { InvoicesService } from './invoices.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-@ApiTags('Invoices')
+@ApiTags('invoices')
 @Controller('invoices')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all user invoices' })
-  @ApiResponse({ status: 200, description: 'Invoices retrieved successfully' })
-  async findAll(@CurrentUser('id') userId: string) {
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user invoices' })
+  @ApiResponse({ status: 200, description: 'List of invoices' })
+  async getInvoices(@CurrentUser('id') userId: string) {
     return this.invoicesService.findByUserId(userId);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get invoice by ID' })
-  @ApiResponse({ status: 200, description: 'Invoice retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Invoice not found' })
-  async findById(
-    @Param('id') id: string,
+  @ApiResponse({ status: 200, description: 'Invoice details' })
+  async getInvoice(
     @CurrentUser('id') userId: string,
+    @Param('id') id: string,
   ) {
     return this.invoicesService.findById(id, userId);
   }

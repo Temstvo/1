@@ -14,7 +14,7 @@ Production-ready SaaS VPN platform with subscriptions, payments, Telegram bot, a
 # CURRENT STATUS
 
 Phase:
-4 - VPN Core ✅ COMPLETE
+5 - Subscriptions & Payments ✅ COMPLETE
 
 Completed:
 
@@ -97,10 +97,10 @@ Phase 3:
 
 Currently working on:
 
-- Ready for Phase 5: Subscriptions & Payments
+- Ready for Phase 6: Telegram Bot
 
 Next phase:
-5. Subscriptions & Payments - Payment processing, subscription management, invoice generation, coupon system
+6. Telegram Bot - Telegraf bot for subscription management, account info, quick connect
 
 ---
 
@@ -538,10 +538,16 @@ None yet.
    - ✅ Connection tracking service (connect/disconnect/traffic)
    - ✅ VPN REST API (generate, list, QR, delete, status, connect/disconnect)
    - ✅ Frontend VPN connection UI (connector, server list, config download)
-6. Phase 5: Subscriptions
-7. Phase 6: Payments
-8. Phase 7: Telegram Bot
-9. Phase 8: Admin Panel
-10. Phase 9: Infrastructure
-11. Phase 10: Quality Assurance
-12. Phase 11: Production Release
+6. ✅ Phase 5: Subscriptions & Payments
+   - ✅ Payments module (Stripe integration, checkout, webhooks, refunds)
+   - ✅ Coupons module (CRUD, validation, apply, percentage/fixed/free days)
+   - ✅ Referrals module (register, commission tracking, payout)
+   - ✅ Updated Subscriptions (integrated payments, coupons, renew)
+   - ✅ Invoices service (auto-numbering, CRUD)
+   - ✅ Frontend checkout page (plan selection, payment methods, coupon input)
+   - ✅ Frontend payment history page
+7. Phase 6: Telegram Bot
+8. Phase 7: Admin Panel
+9. Phase 8: Infrastructure
+10. Phase 9: Quality Assurance
+11. Phase 10: Production Release

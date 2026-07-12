@@ -1,0 +1,13 @@
+{
+  "name": "appi-vpn-load-test",
+  "version": "1.0.0",
+  "description": "Load testing for APPI VPN API",
+  "scripts": {
+    "test:load": "npx artillery run load-test.yml",
+    "test:stress": "npx artillery run stress-test.yml",
+    "test:spike": "npx artillery run spike-test.yml"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.0"
+  }
+}

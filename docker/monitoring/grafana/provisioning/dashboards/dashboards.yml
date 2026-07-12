@@ -1,12 +1,12 @@
 apiVersion: 1
 
 providers:
-  - name: "default"
+  - name: 'APPI VPN'
     orgId: 1
-    folder: "APPI VPN"
+    folder: 'APPI VPN'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 30
+    editable: true
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards/json
       foldersFromFilesStructure: false

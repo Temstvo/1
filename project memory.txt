@@ -14,7 +14,7 @@ Production-ready SaaS VPN platform with subscriptions, payments, Telegram bot, a
 # CURRENT STATUS
 
 Phase:
-3 - User Platform ✅ COMPLETE
+4 - VPN Core ✅ COMPLETE
 
 Completed:
 
@@ -97,10 +97,10 @@ Phase 3:
 
 Currently working on:
 
-- Ready for Phase 4: VPN Core
+- Ready for Phase 5: Subscriptions & Payments
 
 Next phase:
-4. VPN Core - Server management, VPN protocols, Configuration generation, QR codes, Traffic accounting, Connection tracking
+5. Subscriptions & Payments - Payment processing, subscription management, invoice generation, coupon system
 
 ---
 
@@ -387,8 +387,42 @@ Problems:
 
 Next steps:
 
-- Phase 4: VPN Core
-- Phase 5: Subscriptions
+- Phase 5: Subscriptions & Payments
+
+## 2026-07-12 - Phase 4 Complete
+
+Completed:
+
+- Servers module with CRUD, health monitoring, stats, countries, admin endpoints
+- VpnConfigService with WireGuard/OpenVPN/Xray Reality/VLESS config generation
+- Key pair, short ID, and client ID generation
+- ConnectionsService for connection tracking, traffic recording
+- VPN REST API (generate config, list configs, QR code, delete, status)
+- Connections REST API (connect, disconnect, disconnect all, history)
+- Frontend VPN page with connect button, server list, config download
+- VpnConnector component with status display
+- ServerList component with search and filtering
+- ConfigDownload component for config files
+
+Changed:
+
+- 11 files created/modified (980 insertions)
+- Commit: feat(vpn-core): implement VPN configuration and connection tracking
+- Pushed to https://github.com/Temstvo/1
+
+Decisions:
+
+- Used forwardRef in VpnModule to avoid circular dependency with ServersModule
+- Implemented connection tracking at service level for proper user count management
+- Created separate ConnectionsService for connection lifecycle management
+
+Problems:
+
+- None
+
+Next steps:
+
+- Phase 5: Subscriptions & Payments
 
 ---
 
@@ -497,15 +531,13 @@ None yet.
    - ✅ Notifications module (list, read, delete)
    - ✅ Invoices module (list, get, auto-numbering)
    - ✅ Frontend dashboard pages (10 pages)
-5. Phase 4: VPN Core
-   - Implement servers module
-   - Implement VPN configuration generation
-   - Implement WireGuard config generation
-   - Implement OpenVPN config generation
-   - Implement Xray Reality config
-   - Implement QR code generation
-   - Implement connection tracking
-   - Frontend VPN connection UI
+5. ✅ Phase 4: VPN Core
+   - ✅ Servers module (CRUD, health, stats, countries, admin)
+   - ✅ VPN configuration generation (WireGuard, OpenVPN, Xray Reality, VLESS)
+   - ✅ Key pair and short ID generation
+   - ✅ Connection tracking service (connect/disconnect/traffic)
+   - ✅ VPN REST API (generate, list, QR, delete, status, connect/disconnect)
+   - ✅ Frontend VPN connection UI (connector, server list, config download)
 6. Phase 5: Subscriptions
 7. Phase 6: Payments
 8. Phase 7: Telegram Bot

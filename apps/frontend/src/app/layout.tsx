@@ -8,17 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'APPI VPN - Private Internet. Without Limits.',
-  description: 'Premium VPN service with WireGuard, OpenVPN, Xray Reality. Fast, secure, unlimited.',
-  keywords: ['vpn', 'wireguard', 'openvpn', 'privacy', 'security', 'proxy'],
-  authors: [{ name: 'APPI VPN' }],
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    siteName: 'APPI VPN',
-    title: 'APPI VPN - Private Internet. Without Limits.',
-    description: 'Premium VPN service with WireGuard, OpenVPN, Xray Reality.',
-  },
+  title: 'APPI VPN',
+  description: 'Private Internet. Without Limits.',
 };
 
 export default function RootLayout({
@@ -27,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} dark`} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         {children}
       </body>

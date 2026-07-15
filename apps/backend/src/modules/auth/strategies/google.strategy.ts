@@ -10,8 +10,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     configService: ConfigService,
     private authService: AuthService,
   ) {
+    const clientID = configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!clientID) {
+      throw new Error('GOOGLE_CLIENT_ID is not configured');
+    }
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID', ''),
+      clientID,
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET', ''),
       callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL', '/api/auth/google/callback'),
       scope: ['email', 'profile'],

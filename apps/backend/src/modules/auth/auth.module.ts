@@ -6,8 +6,17 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { TokenService } from './token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
-import { GitHubStrategy } from './strategies/github.strategy';
+
+const authProviders: any[] = [];
+
+if (process.env.GOOGLE_CLIENT_ID) {
+  const { GoogleStrategy } = require('./strategies/google.strategy');
+  authProviders.push(GoogleStrategy);
+}
+if (process.env.GITHUB_CLIENT_ID) {
+  const { GitHubStrategy } = require('./strategies/github.strategy');
+  authProviders.push(GitHubStrategy);
+}
 
 @Module({
   imports: [
@@ -24,13 +33,7 @@ import { GitHubStrategy } from './strategies/github.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    TokenService,
-    JwtStrategy,
-    GoogleStrategy,
-    GitHubStrategy,
-  ],
+  providers: [AuthService, TokenService, JwtStrategy, ...authProviders],
   exports: [AuthService, TokenService, JwtModule],
 })
 export class AuthModule {}

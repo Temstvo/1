@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: appi-vpn-api
+    runtime: docker
+    dockerfilePath: apps/backend/Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: appi-vpn-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 15m
+      - key: JWT_REFRESH_EXPIRATION
+        value: 7d
+      - key: CORS_ORIGINS
+        value: https://appi-frontend.vercel.app,https://appi-admin.vercel.app
+      - key: API_PREFIX
+        value: api
+    healthCheckPath: /api
+    plan: free
+    autoDeploy: true
+
+databases:
+  - name: appi-vpn-db
+    plan: free
+    databaseName: appi_vpn
+    ipAllowList: []

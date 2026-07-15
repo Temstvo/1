@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, Min } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsOptional, Min, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePlanDto {
@@ -23,17 +23,32 @@ export class CreatePlanDto {
   @ApiProperty({ example: 30 })
   @IsNumber()
   @Min(1)
-  durationDays: number;
+  duration: number;
 
-  @ApiProperty({ example: 100 })
+  @ApiProperty({ example: 10737418240 })
   @IsNumber()
   @Min(0)
-  trafficLimitGb: number;
+  trafficLimit: number;
 
   @ApiProperty({ example: 5 })
   @IsNumber()
   @Min(1)
-  maxDevices: number;
+  deviceLimit: number;
+
+  @ApiPropertyOptional({ example: ['wireguard', 'openvpn'] })
+  @IsArray()
+  @IsOptional()
+  protocols?: string[];
+
+  @ApiPropertyOptional({ example: ['US', 'EU'] })
+  @IsArray()
+  @IsOptional()
+  regions?: string[];
+
+  @ApiPropertyOptional({ example: ['streaming', 'p2p'] })
+  @IsArray()
+  @IsOptional()
+  features?: string[];
 
   @ApiPropertyOptional({ example: true })
   @IsBoolean()

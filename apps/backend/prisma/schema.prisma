@@ -405,7 +405,7 @@ model Coupon {
   createdBy   String?    @map("created_by")
   createdAt   DateTime   @default(now()) @map("created_at")
 
-  creator User? @relation(fields: [createdBy], references: [id])
+  creator User? @relation("CouponCreator", fields: [createdBy], references: [id])
 
   @@index([code])
   @@index([isActive])

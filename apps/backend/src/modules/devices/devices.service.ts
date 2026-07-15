@@ -8,7 +8,7 @@ export class DevicesService {
   async findByUserId(userId: string) {
     return this.prisma.device.findMany({
       where: { userId },
-      orderBy: { lastSeenAt: 'desc' },
+      orderBy: { lastSeen: 'desc' },
     });
   }
 
@@ -48,7 +48,7 @@ export class DevicesService {
     return this.prisma.device.update({
       where: { id },
       data: {
-        lastSeenAt: new Date(),
+        lastSeen: new Date(),
       },
     });
   }

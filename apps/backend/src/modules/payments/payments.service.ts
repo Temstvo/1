@@ -86,10 +86,12 @@ export class PaymentsService {
 
         if (payment) {
           await this.updateStatus(payment.id, 'COMPLETED', true);
-          await this.prisma.subscription.update({
-            where: { id: payment.subscriptionId },
-            data: { status: 'ACTIVE' },
-          });
+          if (payment.subscriptionId) {
+            await this.prisma.subscription.update({
+              where: { id: payment.subscriptionId },
+              data: { status: 'ACTIVE' },
+            });
+          }
           this.logger.log(`Payment completed: ${payment.id}`);
         }
         break;
@@ -112,10 +114,12 @@ export class PaymentsService {
 
         if (payment) {
           await this.updateStatus(payment.id, 'FAILED', true);
-          await this.prisma.subscription.update({
-            where: { id: payment.subscriptionId },
-            data: { status: 'PAST_DUE' },
-          });
+          if (payment.subscriptionId) {
+            await this.prisma.subscription.update({
+              where: { id: payment.subscriptionId },
+              data: { status: 'PAST_DUE' },
+            });
+          }
           this.logger.log(`Subscription payment failed: ${payment.id}`);
         }
         break;

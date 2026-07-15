@@ -115,7 +115,7 @@ export class CouponsService {
 
     if (coupon.minAmount && amount && amount < Number(coupon.minAmount)) {
       throw new BadRequestException(
-        `Minimum order amount is ${coupon.minAmount} ${coupon.currency || 'USD'}`,
+        `Minimum order amount is ${coupon.minAmount} USD`,
       );
     }
 

@@ -21,27 +21,28 @@ export class TrafficService {
     }
 
     const currentPeriodStart = new Date();
-    currentPeriodStart.setDate(currentPeriodStart.getDate() - subscription.plan.durationDays);
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - subscription.plan.duration);
 
-    const usage = await this.prisma.traffic.aggregate({
+    const usage = await this.prisma.trafficUsage.aggregate({
       where: {
         userId,
-        createdAt: {
+        date: {
           gte: currentPeriodStart,
         },
       },
       _sum: {
-        bytesUsed: true,
+        download: true,
+        upload: true,
       },
     });
 
-    const totalBytesUsed = usage._sum.bytesUsed || 0;
-    const totalBytesLimit = subscription.plan.trafficLimitGb * 1024 * 1024 * 1024;
+    const totalBytesUsed = (usage._sum.download || BigInt(0)) + (usage._sum.upload || BigInt(0));
+    const totalBytesLimit = subscription.plan.trafficLimit;
 
     return {
       bytesUsed: totalBytesUsed,
       bytesLimit: totalBytesLimit,
-      percentage: (totalBytesUsed / totalBytesLimit) * 100,
+      percentage: totalBytesLimit > BigInt(0) ? Number((totalBytesUsed * BigInt(100)) / totalBytesLimit) : 0,
       planName: subscription.plan.name,
     };
   }
@@ -50,19 +51,19 @@ export class TrafficService {
     const where: any = { userId };
 
     if (startDate || endDate) {
-      where.createdAt = {};
+      where.date = {};
       if (startDate) {
-        where.createdAt.gte = new Date(startDate);
+        where.date.gte = new Date(startDate);
       }
       if (endDate) {
-        where.createdAt.lte = new Date(endDate);
+        where.date.lte = new Date(endDate);
       }
     }
 
-    return this.prisma.traffic.findMany({
+    return this.prisma.trafficUsage.findMany({
       where,
       orderBy: {
-        createdAt: 'desc',
+        date: 'desc',
       },
     });
   }
@@ -74,62 +75,91 @@ export class TrafficService {
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const [totalUsage, dailyUsage, weeklyUsage] = await Promise.all([
-      this.prisma.traffic.aggregate({
+      this.prisma.trafficUsage.aggregate({
         where: {
           userId,
-          createdAt: {
+          date: {
             gte: thirtyDaysAgo,
           },
         },
         _sum: {
-          bytesUsed: true,
+          download: true,
+          upload: true,
         },
         _count: true,
       }),
-      this.prisma.traffic.aggregate({
+      this.prisma.trafficUsage.aggregate({
         where: {
           userId,
-          createdAt: {
+          date: {
             gte: twentyFourHoursAgo,
           },
         },
         _sum: {
-          bytesUsed: true,
+          download: true,
+          upload: true,
         },
       }),
-      this.prisma.traffic.aggregate({
+      this.prisma.trafficUsage.aggregate({
         where: {
           userId,
-          createdAt: {
+          date: {
             gte: sevenDaysAgo,
           },
         },
         _sum: {
-          bytesUsed: true,
+          download: true,
+          upload: true,
         },
       }),
     ]);
 
     return {
       last30Days: {
-        totalBytes: totalUsage._sum.bytesUsed || 0,
+        totalBytes: (totalUsage._sum.download || BigInt(0)) + (totalUsage._sum.upload || BigInt(0)),
         sessions: totalUsage._count,
       },
       last7Days: {
-        totalBytes: weeklyUsage._sum.bytesUsed || 0,
+        totalBytes: (weeklyUsage._sum.download || BigInt(0)) + (weeklyUsage._sum.upload || BigInt(0)),
       },
       last24Hours: {
-        totalBytes: dailyUsage._sum.bytesUsed || 0,
+        totalBytes: (dailyUsage._sum.download || BigInt(0)) + (dailyUsage._sum.upload || BigInt(0)),
       },
     };
   }
 
-  async recordUsage(userId: string, bytesUsed: number, serverLocation?: string) {
-    return this.prisma.traffic.create({
+  async recordUsage(userId: string, download: number, upload: number, serverId?: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const hour = new Date().getHours();
+
+    const existing = await this.prisma.trafficUsage.findFirst({
+      where: {
+        userId,
+        serverId: serverId || null,
+        date: today,
+        hour,
+      },
+    });
+
+    if (existing) {
+      return this.prisma.trafficUsage.update({
+        where: { id: existing.id },
+        data: {
+          download: { increment: BigInt(download) },
+          upload: { increment: BigInt(upload) },
+        },
+      });
+    }
+
+    return this.prisma.trafficUsage.create({
       data: {
         userId,
-        bytesUsed,
-        serverLocation,
+        serverId,
+        download: BigInt(download),
+        upload: BigInt(upload),
+        date: today,
+        hour,
       },
     });
   }

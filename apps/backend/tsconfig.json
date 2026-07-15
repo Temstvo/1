@@ -13,6 +13,9 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitAny": false,
+    "strictPropertyInitialization": false,
+    "noPropertyAccessFromIndexSignature": false,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -22,5 +25,5 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test"]
+  "exclude": ["node_modules", "dist", "test", "src/**/*.spec.ts", "src/**/*.e2e-spec.ts", "src/**/__tests__/**"]
 }

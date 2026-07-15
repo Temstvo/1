@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 bg-gradient-to-br from-blue-600 to-purple-600 lg:flex lg:items-center lg:justify-center">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 rounded-2xl bg-white/20" />
+          <img src="/logo.svg" alt="APPI VPN" className="mx-auto h-16 w-16" />
           <h1 className="mt-6 text-4xl font-bold text-white">APPI VPN</h1>
           <p className="mt-2 text-lg text-white/80">Admin Panel</p>
         </div>

@@ -3,7 +3,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       <nav className="flex items-center justify-between px-8 py-6">
         <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-xl bg-blue-600" />
+          <img src="/logo.svg" alt="APPI VPN" className="h-10 w-10" />
           <span className="text-2xl font-bold text-white">APPI VPN</span>
         </div>
         <div className="flex gap-4">

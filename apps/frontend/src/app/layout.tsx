@@ -10,6 +10,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'APPI VPN',
   description: 'Private Internet. Without Limits.',
+  icons: { icon: '/logo.svg' },
 };
 
 export default function RootLayout({

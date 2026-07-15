@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none">
+  <defs>
+    <linearGradient id="shieldGrad" x1="100" y1="0" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1E40AF"/>
+    </linearGradient>
+    <linearGradient id="lockGrad" x1="100" y1="60" x2="100" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#93C5FD"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0" y1="90" x2="200" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#2563EB" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Shield -->
+  <path d="M100 10 L185 45 L185 95 C185 140 145 170 100 185 C55 170 15 140 15 95 L15 45 Z" 
+        fill="url(#shieldGrad)" stroke="#60A5FA" stroke-width="2" filter="url(#glow)"/>
+  
+  <!-- Shield inner highlight -->
+  <path d="M100 20 L175 50 L175 92 C175 133 140 160 100 173 C60 160 25 133 25 92 L25 50 Z" 
+        fill="none" stroke="#93C5FD" stroke-width="1" opacity="0.4"/>
+  
+  <!-- Orbital ring -->
+  <ellipse cx="100" cy="95" rx="95" ry="30" 
+           fill="none" stroke="url(#ringGrad)" stroke-width="3" 
+           transform="rotate(-20 100 95)" opacity="0.8"/>
+  
+  <!-- Lock body -->
+  <rect x="78" y="85" width="44" height="38" rx="6" 
+        fill="url(#lockGrad)" stroke="#BFDBFE" stroke-width="1.5"/>
+  
+  <!-- Lock shackle -->
+  <path d="M86 85 L86 72 C86 62 92 56 100 56 C108 56 114 62 114 72 L114 85" 
+        fill="none" stroke="#93C5FD" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Keyhole -->
+  <circle cx="100" cy="100" r="5" fill="#1E3A5F"/>
+  <rect x="98" y="100" width="4" height="12" rx="2" fill="#1E3A5F"/>
+  
+  <!-- Text -->
+  <text x="100" y="220" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" 
+        font-size="32" font-weight="700" fill="#E2E8F0" letter-spacing="-1">
+    <tspan fill="#CBD5E1">appi</tspan><tspan fill="#3B82F6">-</tspan><tspan fill="#60A5FA">vpn</tspan>
+  </text>
+</svg>

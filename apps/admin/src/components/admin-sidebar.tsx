@@ -20,7 +20,7 @@ export function AdminSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6 dark:border-gray-800">
-        <div className="h-8 w-8 rounded-lg bg-blue-600" />
+        <img src="/logo.svg" alt="APPI VPN" className="h-8 w-8" />
         <span className="text-lg font-bold text-gray-900 dark:text-white">APPI VPN</span>
         <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">
           Admin

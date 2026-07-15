@@ -27,11 +27,7 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-black">
       <aside className="fixed inset-y-0 left-0 w-64 border-r border-[#222] bg-[#0a0a0a]">
         <div className="flex h-16 items-center gap-3 border-b border-[#222] px-6">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" />
-            </svg>
-          </div>
+          <img src="/logo.svg" alt="APPI VPN" className="w-8 h-8" />
           <span className="text-lg font-bold text-white">APPI VPN</span>
         </div>
         <nav className="space-y-1 px-3 py-4">

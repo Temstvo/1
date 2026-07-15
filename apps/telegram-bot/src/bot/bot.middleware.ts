@@ -1,12 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { BotService } from './bot.service';
-import { Telegraf } from 'telegraf';
 
 @Injectable()
-export class BotMiddleware {
+export class BotMiddleware implements OnModuleInit {
   private readonly logger = new Logger(BotMiddleware.name);
 
-  constructor(private readonly botService: BotService) {
+  constructor(private readonly botService: BotService) {}
+
+  onModuleInit() {
+    if (!this.botService.isReady()) {
+      this.logger.warn('Bot not ready - skipping middleware');
+      return;
+    }
     this.registerMiddleware();
   }
 

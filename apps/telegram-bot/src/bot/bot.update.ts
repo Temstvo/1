@@ -17,6 +17,10 @@ export class BotUpdate implements OnModuleInit {
   constructor(private readonly botService: BotService) {}
 
   onModuleInit() {
+    if (!this.botService.isReady()) {
+      this.logger.warn('Bot not ready - skipping handlers');
+      return;
+    }
     this.registerHandlers();
   }
 

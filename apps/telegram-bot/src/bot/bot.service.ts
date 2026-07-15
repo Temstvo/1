@@ -1,18 +1,18 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Telegraf, Context } from 'telegraf';
+import { Telegraf } from 'telegraf';
 
 @Injectable()
-export class BotService implements OnModuleInit, OnModuleDestroy {
+export class BotService implements OnModuleDestroy {
   private readonly logger = new Logger(BotService.name);
-  private bot!: Telegraf;
+  private readonly bot: Telegraf;
 
-  constructor(private configService: ConfigService) {}
-
-  async onModuleInit() {
+  constructor(private configService: ConfigService) {
     const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     if (!token) {
-      throw new Error('TELEGRAM_BOT_TOKEN is not set');
+      this.logger.warn('TELEGRAM_BOT_TOKEN is not set - bot will not start');
+      this.bot = null as any;
+      return;
     }
 
     this.bot = new Telegraf(token);
@@ -33,6 +33,10 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
   getBot(): Telegraf {
     return this.bot;
+  }
+
+  isReady(): boolean {
+    return !!this.bot;
   }
 
   async sendMessage(chatId: number, text: string, extra?: any): Promise<any> {
@@ -61,6 +65,10 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   launch() {
+    if (!this.bot) {
+      this.logger.warn('Bot not initialized - skipping launch');
+      return;
+    }
     this.bot.launch();
     this.logger.log('Bot launched');
   }

@@ -7,11 +7,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     const databaseUrl = process.env.DATABASE_URL || '';
-    const url = databaseUrl.includes('sslmode=') ? databaseUrl : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=require`;
+    const params: string[] = [];
+    if (!databaseUrl.includes('sslmode=')) params.push('sslmode=require');
+    if (!databaseUrl.includes('connection_limit=')) params.push('connection_limit=5');
+    if (!databaseUrl.includes('pool_timeout=')) params.push('pool_timeout=10');
+    const sep = databaseUrl.includes('?') ? '&' : '?';
+    const url = params.length > 0 ? `${databaseUrl}${sep}${params.join('&')}` : databaseUrl;
     super({
       datasourceUrl: url,
       log: ['error', 'warn'],
     });
+    this.logger.log(`Connecting to database: ${url.replace(/:[^:@]+@/, ':***@')}`);
   }
 
   async onModuleInit() {

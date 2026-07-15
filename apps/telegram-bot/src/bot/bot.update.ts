@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { BotService } from './bot.service';
 import { Context } from 'telegraf';
 import {
@@ -10,11 +10,13 @@ import {
 } from './keyboards';
 
 @Injectable()
-export class BotUpdate {
+export class BotUpdate implements OnModuleInit {
   private readonly logger = new Logger(BotUpdate.name);
   private userStates = new Map<number, { action: string; data?: any }>();
 
-  constructor(private readonly botService: BotService) {
+  constructor(private readonly botService: BotService) {}
+
+  onModuleInit() {
     this.registerHandlers();
   }
 

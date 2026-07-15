@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
-    "prisma:generate": "prisma generate",
+    "prisma": "prisma",
     "prisma:migrate": "prisma migrate deploy",
     "start": "node dist/main",
     "start:prod": "node dist/main",

@@ -1,6 +1,4 @@
-import { InlineKeyboardButton } from 'telegraf/typings/markup';
-
-export const mainMenuKeyboard: InlineKeyboardButton[][] = [
+export const mainMenuKeyboard = [
   [
     { text: '🔑 My Subscription', callback_data: 'menu:subscription' },
     { text: '🖥️ Servers', callback_data: 'menu:servers' },
@@ -22,24 +20,24 @@ export const mainMenuKeyboard: InlineKeyboardButton[][] = [
   ],
 ];
 
-export const backButton: InlineKeyboardButton = {
+export const backButton = {
   text: '◀️ Back',
   callback_data: 'menu:main',
 };
 
-export const cancelButton: InlineKeyboardButton = {
+export const cancelButton = {
   text: '❌ Cancel',
   callback_data: 'menu:main',
 };
 
-export const confirmButton = (action: string): InlineKeyboardButton[][] => [
+export const confirmButton = (action: string) => [
   [
     { text: '✅ Confirm', callback_data: `confirm:${action}` },
     { text: '❌ Cancel', callback_data: 'menu:main' },
   ],
 ];
 
-export const protocolKeyboard: InlineKeyboardButton[][] = [
+export const protocolKeyboard = [
   [
     { text: 'WireGuard', callback_data: 'protocol:WIREGUARD' },
     { text: 'OpenVPN', callback_data: 'protocol:OPENVPN' },
@@ -51,7 +49,7 @@ export const protocolKeyboard: InlineKeyboardButton[][] = [
 ];
 
 export const serverKeyboard = (servers: Array<{ id: string; name: string; country: string; load: number }>) => {
-  const buttons: InlineKeyboardButton[][] = [];
+  const buttons: any[][] = [];
   for (const server of servers) {
     buttons.push([
       {
@@ -64,14 +62,14 @@ export const serverKeyboard = (servers: Array<{ id: string; name: string; countr
   return buttons;
 };
 
-export const paymentKeyboard: InlineKeyboardButton[][] = [
+export const paymentKeyboard = [
   [{ text: '💳 Credit Card', callback_data: 'pay:card' }],
   [{ text: '₿ Cryptocurrency', callback_data: 'pay:crypto' }],
   [{ text: '📱 Telegram Payment', callback_data: 'pay:telegram' }],
   [cancelButton],
 ];
 
-export const settingsKeyboard: InlineKeyboardButton[][] = [
+export const settingsKeyboard = [
   [{ text: '🌐 Language', callback_data: 'settings:language' }],
   [{ text: '🔔 Notifications', callback_data: 'settings:notifications' }],
   [{ text: '🔒 Two-Factor Auth', callback_data: 'settings:2fa' }],

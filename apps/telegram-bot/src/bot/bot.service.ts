@@ -5,7 +5,7 @@ import { Telegraf, Context } from 'telegraf';
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BotService.name);
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(private configService: ConfigService) {}
 
@@ -35,15 +35,15 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     return this.bot;
   }
 
-  async sendMessage(chatId: number, text: string, extra?: any) {
+  async sendMessage(chatId: number, text: string, extra?: any): Promise<any> {
     return this.bot.telegram.sendMessage(chatId, text, extra);
   }
 
-  async sendPhoto(chatId: number, photo: string, extra?: any) {
+  async sendPhoto(chatId: number, photo: string, extra?: any): Promise<any> {
     return this.bot.telegram.sendPhoto(chatId, photo, extra);
   }
 
-  async answerCbQuery(queryId: string, text?: string, showAlert = false) {
+  async answerCbQuery(queryId: string, text?: string, showAlert = false): Promise<any> {
     return this.bot.telegram.answerCbQuery(queryId, text, { show_alert: showAlert });
   }
 
@@ -52,11 +52,11 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     messageId: number,
     text: string,
     extra?: any,
-  ) {
+  ): Promise<any> {
     return this.bot.telegram.editMessageText(chatId, messageId, undefined, text, extra);
   }
 
-  async deleteMessage(chatId: number, messageId: number) {
+  async deleteMessage(chatId: number, messageId: number): Promise<any> {
     return this.bot.telegram.deleteMessage(chatId, messageId);
   }
 

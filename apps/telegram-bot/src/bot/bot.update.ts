@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BotService } from '../bot.service';
+import { BotService } from './bot.service';
 import { Context } from 'telegraf';
 import {
   mainMenuKeyboard,
@@ -301,7 +301,7 @@ Select a protocol:
     });
   }
 
-  private async handleProtocolSelect(ctx: Context) {
+  private async handleProtocolSelect(ctx: any) {
     const protocol = ctx.match?.[1];
     const protocolNames: Record<string, string> = {
       WIREGUARD: 'WireGuard',
@@ -343,7 +343,7 @@ Finding best server...
     });
   }
 
-  private async handleServerSelect(ctx: Context) {
+  private async handleServerSelect(ctx: any) {
     const serverId = ctx.match?.[1];
     const serverNames: Record<string, string> = {
       '1': 'Frankfurt, Germany',
@@ -366,7 +366,7 @@ Select protocol:
     });
   }
 
-  private async handleConnect(ctx: Context) {
+  private async handleConnect(ctx: any) {
     const serverId = ctx.match?.[1];
     await ctx.answerCbQuery('Connecting...');
   }
@@ -384,7 +384,7 @@ You have been disconnected from the VPN.
     });
   }
 
-  private async handleConfirm(ctx: Context) {
+  private async handleConfirm(ctx: any) {
     const action = ctx.match?.[1];
     await ctx.answerCbQuery('Confirmed!');
   }

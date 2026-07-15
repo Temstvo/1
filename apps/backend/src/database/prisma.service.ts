@@ -5,9 +5,23 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
+  constructor() {
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const url = databaseUrl.includes('sslmode=') ? databaseUrl : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=require`;
+    super({
+      datasourceUrl: url,
+      log: ['error', 'warn'],
+    });
+  }
+
   async onModuleInit() {
-    await this.$connect();
-    this.logger.log('Database connected');
+    try {
+      await this.$connect();
+      this.logger.log('Database connected');
+    } catch (error) {
+      this.logger.error('Database connection failed', error);
+      throw error;
+    }
   }
 
   async onModuleDestroy() {

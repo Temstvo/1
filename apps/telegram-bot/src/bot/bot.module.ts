@@ -4,7 +4,7 @@ import { BotUpdate } from './bot.update';
 import { BotMiddleware } from './bot.middleware';
 
 @Module({
-  providers: [BotService, BotUpdate, BotMiddleware],
+  providers: [BotService, BotMiddleware, BotUpdate],
   exports: [BotService],
 })
 export class BotModule {}

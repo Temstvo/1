@@ -1,65 +1,125 @@
+'use client';
+
+const plans = [
+  {
+    id: 'free',
+    name: 'Free Trial',
+    price: '$0',
+    duration: '7 days',
+    traffic: '10 GB',
+    devices: '2',
+    protocols: ['WireGuard', 'OpenVPN'],
+    current: false,
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: '$4.99',
+    duration: '/mo',
+    traffic: '50 GB',
+    devices: '3',
+    protocols: ['WireGuard', 'OpenVPN'],
+    current: false,
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: '$9.99',
+    duration: '/mo',
+    traffic: '200 GB',
+    devices: '5',
+    protocols: ['All'],
+    current: true,
+    popular: true,
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    price: '$19.99',
+    duration: '/mo',
+    traffic: '1 TB',
+    devices: '10',
+    protocols: ['All'],
+    current: false,
+  },
+];
+
 export default function SubscriptionPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Subscription
-        </h2>
-        <p className="text-muted-foreground">Manage your subscription and billing.</p>
-      </div>
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <h1 className="text-2xl font-bold text-[var(--foreground)]">Subscription</h1>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      {/* Current Plan */}
+      <div className="bg-[var(--card)] border border-[var(--primary)]/30 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Current Plan</h3>
-            <p className="text-sm text-muted-foreground">You are on the Pro plan</p>
+            <div className="text-xs text-[var(--primary)] mb-1">Current Plan</div>
+            <h2 className="text-xl font-bold text-[var(--foreground)]">Pro</h2>
           </div>
-          <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
-            Active
-          </span>
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div>
-            <p className="text-sm text-muted-foreground">Price</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">$9.99/mo</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Traffic Limit</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">100 GB</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Device Limit</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">5</p>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-[var(--foreground)]">$9.99<span className="text-sm font-normal text-[var(--muted-foreground)]">/mo</span></div>
+            <div className="text-xs text-[var(--muted-foreground)]">Renews on Aug 15, 2026</div>
           </div>
         </div>
-        <div className="mt-6 flex gap-3">
-          <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <span className="text-[var(--muted-foreground)]">Traffic</span>
+            <div className="font-medium text-[var(--foreground)]">200 GB</div>
+          </div>
+          <div>
+            <span className="text-[var(--muted-foreground)]">Devices</span>
+            <div className="font-medium text-[var(--foreground)]">5</div>
+          </div>
+          <div>
+            <span className="text-[var(--muted-foreground)]">Protocols</span>
+            <div className="font-medium text-[var(--foreground)]">All</div>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors">
             Change Plan
           </button>
-          <button className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800">
-            Cancel Subscription
+          <button className="px-4 py-2 bg-[var(--muted)] text-[var(--muted-foreground)] rounded-lg text-sm font-medium hover:text-[var(--foreground)] transition-colors">
+            Cancel
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Available Plans</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {[
-            { name: 'Basic', price: '$4.99/mo', traffic: '50 GB', devices: 3 },
-            { name: 'Pro', price: '$9.99/mo', traffic: '100 GB', devices: 5 },
-            { name: 'Premium', price: '$19.99/mo', traffic: 'Unlimited', devices: 10 },
-          ].map((plan) => (
+      {/* Available Plans */}
+      <div>
+        <h2 className="happ-section-header">Available Plans</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {plans.map((plan) => (
             <div
-              key={plan.name}
-              className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+              key={plan.id}
+              className={`bg-[var(--card)] border rounded-xl p-5 transition-all ${
+                plan.current
+                  ? 'border-[var(--primary)] ring-1 ring-[var(--primary)]/20'
+                  : 'border-[var(--border)] hover:border-[var(--primary)]/30'
+              }`}
             >
-              <h4 className="font-semibold text-gray-900 dark:text-white">{plan.name}</h4>
-              <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{plan.price}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{plan.traffic} traffic</p>
-              <p className="text-sm text-muted-foreground">{plan.devices} devices</p>
-              <button className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-                Select
+              {plan.popular && (
+                <div className="text-xs text-[var(--primary)] mb-2">Popular</div>
+              )}
+              <h3 className="font-semibold text-[var(--foreground)] mb-1">{plan.name}</h3>
+              <div className="flex items-baseline gap-1 mb-3">
+                <span className="text-xl font-bold text-[var(--foreground)]">{plan.price}</span>
+                <span className="text-xs text-[var(--muted-foreground)]">{plan.duration}</span>
+              </div>
+              <div className="space-y-2 text-xs text-[var(--muted-foreground)]">
+                <div>{plan.traffic} traffic</div>
+                <div>{plan.devices} devices</div>
+                <div>{plan.protocols.join(', ')}</div>
+              </div>
+              <button
+                className={`mt-4 w-full py-2 rounded-lg text-xs font-medium transition-colors ${
+                  plan.current
+                    ? 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-default'
+                    : 'bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90'
+                }`}
+                disabled={plan.current}
+              >
+                {plan.current ? 'Current' : 'Select'}
               </button>
             </div>
           ))}

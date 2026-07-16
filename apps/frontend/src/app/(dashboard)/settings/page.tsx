@@ -1,114 +1,187 @@
+'use client';
+
+import { useState } from 'react';
+
 export default function SettingsPage() {
+  const [language, setLanguage] = useState('Russian');
+  const [theme, setTheme] = useState('System');
+  const [fragmentation, setFragmentation] = useState(false);
+  const [multiplexor, setMultiplexor] = useState(false);
+  const [ipType, setIpType] = useState('IPv4');
+  const [lanAccess, setLanAccess] = useState(false);
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto p-6 space-y-8">
+      <h1 className="text-2xl font-bold text-[var(--foreground)]">Settings</h1>
+
+      {/* Interface Settings */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Settings</h2>
-        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-            <input
-              type="text"
-              defaultValue="John"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-            <input
-              type="text"
-              defaultValue="Doe"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <input
-              type="email"
-              defaultValue="john@example.com"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
-            <input
-              type="tel"
-              placeholder="+1 (555) 000-0000"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-        </div>
-        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
-          Save Changes
-        </button>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Password</h3>
-        <div className="mt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
-            <input
-              type="password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
-            <input
-              type="password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
-            <input
-              type="password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            />
-          </div>
-        </div>
-        <button className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
-          Change Password
-        </button>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Language & Theme</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
-            <select className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-              <option>English</option>
+        <h2 className="happ-section-header">Interface Settings</h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Language</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            >
               <option>Russian</option>
+              <option>English</option>
               <option>German</option>
               <option>French</option>
               <option>Spanish</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Theme</label>
-            <select className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Theme</span>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            >
               <option>System</option>
               <option>Light</option>
               <option>Dark</option>
             </select>
           </div>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Interface Settings</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm dark:border-red-800 dark:bg-red-950">
-        <h3 className="text-lg font-semibold text-red-900 dark:text-red-100">Danger Zone</h3>
-        <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-          Once you delete your account, there is no going back. Please be certain.
-        </p>
-        <button className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
-          Delete Account
-        </button>
+      {/* Tunnel Settings */}
+      <div>
+        <h2 className="happ-section-header">Tunnel Settings</h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Routing Rules</span>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </div>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">App Proxy Settings</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+              <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </div>
+          </button>
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Enable Fragmentation</span>
+            <button
+              onClick={() => setFragmentation(!fragmentation)}
+              className={`happ-toggle ${fragmentation ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+            >
+              <span className={`happ-toggle-knob ${fragmentation ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Enable Multiplexor</span>
+            <button
+              onClick={() => setMultiplexor(!multiplexor)}
+              className={`happ-toggle ${multiplexor ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+            >
+              <span className={`happ-toggle-knob ${multiplexor ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Preferred IP Type</span>
+            <select
+              value={ipType}
+              onChange={(e) => setIpType(e.target.value)}
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            >
+              <option>IPv4</option>
+              <option>IPv6</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Settings */}
+      <div>
+        <h2 className="happ-section-header">Additional Settings</h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Additional Settings</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Subscription</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Ping</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <div className="happ-settings-row">
+            <span className="happ-settings-label">Allow LAN Connections</span>
+            <button
+              onClick={() => setLanAccess(!lanAccess)}
+              className={`happ-toggle ${lanAccess ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+            >
+              <span className={`happ-toggle-knob ${lanAccess ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Others */}
+      <div>
+        <h2 className="happ-section-header">Other</h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">Logs</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="text-sm text-red-500">Reset</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* About */}
+      <div>
+        <h2 className="happ-section-header">About</h2>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">FAQ</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">URL Schemes</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
+            <span className="happ-settings-label">About App</span>
+            <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

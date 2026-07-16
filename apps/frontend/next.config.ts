@@ -1,10 +1,5 @@
 import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
-  transpilePackages: ['@appi/ui', '@appi/shared'],
-  experimental: {
-    optimizePackageImports: ['@appi/ui', 'lucide-react'],
-  },
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

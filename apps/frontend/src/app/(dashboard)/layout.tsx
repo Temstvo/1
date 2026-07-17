@@ -42,9 +42,6 @@ const topItems = [
       </svg>
     ),
   },
-];
-
-const bottomItems = [
   {
     label: 'Логи',
     href: '/logs',
@@ -113,16 +110,10 @@ export default function DashboardLayout({
 
         <div className="w-full h-px bg-[hsl(222,14%,16%)]" />
 
-        {/* Top nav */}
+        {/* Nav */}
         <nav className={`flex flex-col gap-1 flex-1 ${expanded ? 'px-2 py-3' : 'px-2 py-3 items-center'}`}>
           {topItems.map(renderItem)}
         </nav>
-
-        {/* Bottom nav */}
-        <div className={`${expanded ? 'px-2 pb-3' : 'px-2 pb-3 items-center'} flex flex-col gap-1`}>
-          <div className="w-full h-px bg-[hsl(222,14%,16%)] mb-2" />
-          {bottomItems.map(renderItem)}
-        </div>
       </aside>
 
       <main className="flex-1 overflow-y-auto">

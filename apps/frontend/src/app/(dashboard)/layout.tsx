@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const sidebarItems = [
+const topItems = [
   {
     label: 'VPN',
     href: '/vpn',
@@ -41,7 +41,9 @@ const sidebarItems = [
       </svg>
     ),
   },
-  <div key="spacer" className="flex-1" />,
+];
+
+const bottomItems = [
   {
     label: 'Logs',
     href: '/logs',
@@ -60,34 +62,33 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
+  const renderItem = (item: typeof topItems[0]) => {
+    const isActive = pathname === item.href;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        title={item.label}
+        className={`happ-sidebar-item ${isActive ? 'active text-white' : 'text-[var(--muted-foreground)]'}`}
+      >
+        {item.icon}
+      </Link>
+    );
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background)]">
-      {/* Narrow icon sidebar */}
       <aside className="flex flex-col items-center w-[52px] bg-[var(--card)] border-r border-[var(--border)] py-4 shrink-0">
         <div className="mb-6">
           <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
         </div>
         <nav className="flex flex-col items-center gap-1 flex-1 w-full">
-          {sidebarItems.map((item) => {
-            if (!item.href) {
-              return <div key={item.label} className="flex-1" />;
-            }
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={item.label}
-                className={`happ-sidebar-item ${isActive ? 'active text-white' : 'text-[var(--muted-foreground)]'}`}
-              >
-                {item.icon}
-              </Link>
-            );
-          })}
+          {topItems.map(renderItem)}
+          <div className="flex-1" />
+          {bottomItems.map(renderItem)}
         </nav>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         <div className="h-full">{children}</div>
       </main>

@@ -7,7 +7,7 @@ import api from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -30,8 +30,6 @@ export default function RegisterPage() {
       const { data } = await api.post('/auth/register', {
         email: form.email,
         password: form.password,
-        firstName: form.firstName || undefined,
-        lastName: form.lastName || undefined,
       });
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
@@ -55,28 +53,6 @@ export default function RegisterPage() {
             {error}
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">First Name</label>
-            <input
-              type="text"
-              value={form.firstName}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-              className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
-              placeholder="John"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Last Name</label>
-            <input
-              type="text"
-              value={form.lastName}
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
-              placeholder="Doe"
-            />
-          </div>
-        </div>
         <div>
           <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Email</label>
           <input

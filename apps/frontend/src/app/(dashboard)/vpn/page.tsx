@@ -104,27 +104,22 @@ export default function VpnPage() {
             <button
               key={server.id}
               onClick={() => setSelectedServer(server)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
                 selectedServer?.id === server.id
-                  ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/30'
-                  : 'hover:bg-[var(--muted)] border border-transparent'
+                  ? 'bg-white/10'
+                  : 'hover:bg-white/5'
               }`}
             >
-              <span className="text-lg shrink-0">{server.flag}</span>
+              <span className="text-2xl shrink-0">{server.flag}</span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-[var(--foreground)] truncate">
-                  {server.country}, {server.city}
+                <div className="text-sm font-semibold text-white truncate">
+                  {server.country}
                 </div>
-                <div className="text-xs text-[var(--muted-foreground)]">{server.protocol}</div>
+                <div className="text-xs text-[hsl(222,10%,55%)]">{server.protocol}</div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs ${server.ping < 50 ? 'text-green-400' : server.ping < 100 ? 'text-yellow-400' : 'text-red-400'}`}>
-                  {server.ping}ms
-                </span>
-                <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </div>
+              <svg className="w-5 h-5 text-[hsl(222,10%,55%)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+              </svg>
             </button>
           ))}
         </div>

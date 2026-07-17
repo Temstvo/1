@@ -110,7 +110,13 @@ export default function VpnPage() {
                   : 'hover:bg-white/5'
               }`}
             >
-              <span className="text-2xl shrink-0">{server.flag}</span>
+              <span className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-white/10">
+                <img
+                  src={`https://flagcdn.com/w80/${server.code.toLowerCase()}.png`}
+                  alt={server.country}
+                  className="w-full h-full object-cover"
+                />
+              </span>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-white truncate">
                   {server.country}

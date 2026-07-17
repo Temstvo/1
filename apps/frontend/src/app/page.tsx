@@ -92,16 +92,18 @@ export default function HomePage() {
           <p className="text-gray-400 text-center mb-12">High-speed servers in key locations for optimal connectivity</p>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { flag: '🇺🇸', name: 'USA', cities: 'New York, Los Angeles', ping: '15ms', speed: '25 Gbps', uptime: '99.9%' },
-              { flag: '🇬🇧', name: 'UK', cities: 'London, Manchester', ping: '12ms', speed: '25 Gbps', uptime: '99.8%' },
-              { flag: '🇩🇪', name: 'Germany', cities: 'Frankfurt, Berlin', ping: '8ms', speed: '25 Gbps', uptime: '99.9%' },
-              { flag: '🇯🇵', name: 'Japan', cities: 'Tokyo, Osaka', ping: '25ms', speed: '25 Gbps', uptime: '99.7%' },
-              { flag: '🇸🇬', name: 'Singapore', cities: 'Singapore', ping: '18ms', speed: '25 Gbps', uptime: '99.9%' },
-              { flag: '🇨🇦', name: 'Canada', cities: 'Toronto, Vancouver', ping: '20ms', speed: '25 Gbps', uptime: '99.8%' },
+              { code: 'us', name: 'USA', cities: 'New York, Los Angeles', ping: '15ms', speed: '25 Gbps', uptime: '99.9%' },
+              { code: 'gb', name: 'UK', cities: 'London, Manchester', ping: '12ms', speed: '25 Gbps', uptime: '99.8%' },
+              { code: 'de', name: 'Germany', cities: 'Frankfurt, Berlin', ping: '8ms', speed: '25 Gbps', uptime: '99.9%' },
+              { code: 'jp', name: 'Japan', cities: 'Tokyo, Osaka', ping: '25ms', speed: '25 Gbps', uptime: '99.7%' },
+              { code: 'sg', name: 'Singapore', cities: 'Singapore', ping: '18ms', speed: '25 Gbps', uptime: '99.9%' },
+              { code: 'ca', name: 'Canada', cities: 'Toronto, Vancouver', ping: '20ms', speed: '25 Gbps', uptime: '99.8%' },
             ].map((s, i) => (
               <div key={i} className="bg-[#141414] border border-white/5 rounded-2xl p-5 hover:border-purple-500/20 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{s.flag}</span>
+                  <span className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-white/10">
+                    <img src={`https://flagcdn.com/w80/${s.code}.png`} alt={s.name} className="w-full h-full object-cover" />
+                  </span>
                   <div>
                     <h3 className="font-semibold">{s.name}</h3>
                     <p className="text-xs text-gray-500">{s.cities}</p>

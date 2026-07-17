@@ -4,7 +4,7 @@ const plans = [
   {
     id: 'free',
     name: 'Free Trial',
-    price: '$0',
+    price: '₽0',
     duration: '7 days',
     traffic: '10 GB',
     devices: '2',
@@ -14,7 +14,7 @@ const plans = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '$4.99',
+    price: '₽499',
     duration: '/mo',
     traffic: '50 GB',
     devices: '3',
@@ -24,7 +24,7 @@ const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$9.99',
+    price: '₽1199',
     duration: '/mo',
     traffic: '200 GB',
     devices: '5',
@@ -35,7 +35,7 @@ const plans = [
   {
     id: 'business',
     name: 'Business',
-    price: '$19.99',
+    price: '₽3999',
     duration: '/mo',
     traffic: '1 TB',
     devices: '10',
@@ -57,7 +57,7 @@ export default function SubscriptionPage() {
             <h2 className="text-xl font-bold text-[var(--foreground)]">Pro</h2>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-[var(--foreground)]">$9.99<span className="text-sm font-normal text-[var(--muted-foreground)]">/mo</span></div>
+            <div className="text-2xl font-bold text-[var(--foreground)]">₽1199<span className="text-sm font-normal text-[var(--muted-foreground)]">/mo</span></div>
             <div className="text-xs text-[var(--muted-foreground)]">Renews on Aug 15, 2026</div>
           </div>
         </div>

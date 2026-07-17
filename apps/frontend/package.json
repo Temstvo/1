@@ -25,6 +25,8 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@serwist/next": "^9.5.11",
+    "@serwist/precaching": "^9.5.11",
     "@types/node": "20.17.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

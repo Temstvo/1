@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 const servers = [
   { id: '1', country: 'Germany', city: 'Nuremberg', code: 'DE', protocol: 'VLESS', flag: '🇩🇪', ping: 28, online: true },
@@ -28,6 +28,16 @@ export default function VpnPage() {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [connectionTime, setConnectionTime] = useState('00:00:00');
   const [mode, setMode] = useState<'Proxy' | 'TUN'>('Proxy');
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const secondsRef = useRef(0);
+
+  const clearTimer = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    secondsRef.current = 0;
+  }, []);
 
   const filteredServers = servers.filter(
     (s) =>
@@ -40,17 +50,18 @@ export default function VpnPage() {
       setStatus('connecting');
       setTimeout(() => {
         setStatus('connected');
-        let seconds = 0;
-        const timer = setInterval(() => {
-          seconds++;
-          const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-          const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-          const s = String(seconds % 60).padStart(2, '0');
+        secondsRef.current = 0;
+        intervalRef.current = setInterval(() => {
+          secondsRef.current++;
+          const sec = secondsRef.current;
+          const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+          const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+          const s = String(sec % 60).padStart(2, '0');
           setConnectionTime(`${h}:${m}:${s}`);
         }, 1000);
-        return () => clearInterval(timer);
       }, 1500);
     } else {
+      clearTimer();
       setStatus('disconnected');
       setConnectionTime('00:00:00');
     }

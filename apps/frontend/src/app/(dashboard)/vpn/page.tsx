@@ -72,14 +72,14 @@ export default function VpnPage() {
       {/* Left: Server list */}
       <div className="w-[420px] border-r border-[var(--border)] flex flex-col shrink-0">
         <div className="p-4">
-          <h1 className="text-lg font-semibold text-[var(--foreground)] mb-3">Servers</h1>
+          <h1 className="text-lg font-semibold text-[var(--foreground)] mb-3">Серверы</h1>
           <div className="relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
             <input
               type="text"
-              placeholder="Search servers..."
+              placeholder="Введите текст для поиска"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-[var(--muted)] border border-[var(--border)] rounded-lg pl-10 pr-10 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -90,13 +90,6 @@ export default function VpnPage() {
               </svg>
             </div>
           </div>
-        </div>
-
-        <div className="px-4 pb-2 flex items-center gap-2">
-          <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-          <span className="text-xs font-medium text-[var(--muted-foreground)]">Server List</span>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-4">
@@ -110,7 +103,7 @@ export default function VpnPage() {
                   : 'hover:bg-white/5'
               }`}
             >
-              <span className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-white/10">
+              <span className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/10">
                 <img
                   src={`https://flagcdn.com/w80/${server.code.toLowerCase()}.png`}
                   alt={server.country}
@@ -118,13 +111,13 @@ export default function VpnPage() {
                 />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-white truncate">
-                  {server.country}
+                <div className="text-sm font-medium text-white truncate">
+                  {server.country}, {server.city}
                 </div>
-                <div className="text-xs text-[hsl(222,10%,55%)]">{server.protocol}</div>
+                <div className="text-xs text-[hsl(222,10%,50%)]">{server.protocol}</div>
               </div>
-              <svg className="w-5 h-5 text-[hsl(222,10%,55%)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+              <svg className="w-4 h-4 text-[hsl(222,10%,40%)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </button>
           ))}
@@ -132,90 +125,95 @@ export default function VpnPage() {
       </div>
 
       {/* Right: Connection panel */}
-      <div className="flex-1 flex flex-col items-center justify-center relative">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--primary)]/5 via-transparent to-transparent pointer-events-none" />
+      <div className="flex-1 flex flex-col items-center justify-between py-10 px-6 relative">
+        {/* Subtle radial background */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 35%, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
 
-        {/* Connection circle */}
-        <div className="relative mb-8">
-          {/* Outer ring animation */}
-          {status === 'connected' && (
-            <div className="absolute inset-0 -m-4 rounded-full border border-[var(--primary)]/20 animate-connect-pulse" />
-          )}
-          {status === 'connecting' && (
-            <div className="absolute inset-0 -m-8 rounded-full border-2 border-t-transparent border-[var(--primary)] animate-connect-spin" />
-          )}
-
-          {/* Main circle */}
-          <button
-            onClick={handleConnect}
-            className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
-              status === 'disconnected'
-                ? 'bg-[var(--card)] border-2 border-[var(--border)] hover:border-[var(--primary)]/50 shadow-lg'
-                : status === 'connecting'
-                ? 'bg-[var(--primary)]/10 border-2 border-[var(--primary)]/50'
-                : 'bg-[var(--primary)]/10 border-2 border-[var(--primary)]'
-            }`}
-          >
-            <div className={`absolute inset-2 rounded-full flex flex-col items-center justify-center gap-1 ${
-              status === 'connected' ? 'animate-pulse-glow rounded-full' : ''
-            }`}>
+        {/* Power button — top area */}
+        <div className="flex-1 flex items-center justify-center w-full">
+          <div className="relative">
+            {/* Outermost subtle ring */}
+            <div className="absolute -inset-5 rounded-full" style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgba(100,100,120,0.15) 25%, transparent 50%, rgba(100,100,120,0.1) 75%, transparent 100%)' }} />
+            {/* Middle ring */}
+            <div className="absolute -inset-3 rounded-full bg-[#1e1e24] border border-[#2a2a32]" />
+            {/* Inner ring */}
+            <div className="absolute -inset-1 rounded-full bg-[#1a1a20] border border-[#252530]" />
+            {/* Connecting spinner */}
+            {status === 'connecting' && (
+              <div className="absolute -inset-1 rounded-full border-2 border-t-transparent border-[var(--primary)] animate-connect-spin" />
+            )}
+            {/* Connected glow */}
+            {status === 'connected' && (
+              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)] shadow-[0_0_20px_rgba(139,92,246,0.3)] animate-connect-pulse" />
+            )}
+            {/* Main button */}
+            <button
+              onClick={handleConnect}
+              className={`relative w-[180px] h-[180px] rounded-full flex items-center justify-center transition-all duration-500 z-10 ${
+                status === 'disconnected'
+                  ? 'bg-[#1a1a20] border border-[#2a2a32] hover:border-[#3a3a44] shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                  : status === 'connecting'
+                  ? 'bg-[#1a1a20] border border-[var(--primary)]/50'
+                  : 'bg-[#1a1a20] border border-[var(--primary)] shadow-[0_0_30px_rgba(139,92,246,0.2)]'
+              }`}
+            >
               {/* Power icon */}
               <svg
-                className={`w-10 h-10 transition-colors duration-300 ${
+                className={`w-16 h-16 transition-all duration-500 ${
                   status === 'disconnected'
-                    ? 'text-[var(--muted-foreground)]'
+                    ? 'text-[#555560]'
                     : status === 'connecting'
                     ? 'text-[var(--primary)] animate-connect-spin'
-                    : 'text-[var(--primary)]'
+                    : 'text-white drop-shadow-[0_0_12px_rgba(139,92,246,0.6)]'
                 }`}
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth="2"
+                strokeWidth="1.8"
                 stroke="currentColor"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
               </svg>
-              <span className={`text-xs font-medium ${
-                status === 'disconnected' ? 'text-[var(--muted-foreground)]' : 'text-[var(--primary)]'
-              }`}>
-                {status === 'disconnected' ? 'Disconnected' : status === 'connecting' ? 'Connecting...' : 'Connected'}
-              </span>
-              {status === 'connected' && (
-                <span className="text-xs text-[var(--primary)] font-mono">{connectionTime}</span>
-              )}
-            </div>
-          </button>
-        </div>
-
-        {/* Selected server info */}
-        <div className="text-center mb-6">
-          <div className="text-2xl mb-2">{selectedServer?.flag}</div>
-          <div className="text-sm font-medium text-[var(--foreground)]">
-            {selectedServer?.country}, {selectedServer?.city}
+            </button>
           </div>
         </div>
 
-        {/* Ping test button */}
-        <button className="w-64 mb-6 py-2.5 rounded-lg bg-[var(--primary)] text-white text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors">
-          Test Ping
-        </button>
+        {/* Bottom section */}
+        <div className="flex flex-col items-center gap-4 w-full max-w-[260px]">
+          {/* Server info */}
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+              <img
+                src={`https://flagcdn.com/w80/${selectedServer?.code.toLowerCase()}.png`}
+                alt={selectedServer?.country}
+                className="w-full h-full object-cover"
+              />
+            </span>
+            <div className="text-sm font-medium text-[var(--foreground)] text-center">
+              {selectedServer?.country} | {selectedServer?.code}
+            </div>
+          </div>
 
-        {/* Proxy / TUN toggle */}
-        <div className="flex gap-2">
-          {(['Proxy', 'TUN'] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                mode === m
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-[var(--muted)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+          {/* Ping test button */}
+          <button className="w-full py-3 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white text-sm font-semibold transition-all active:scale-[0.97]">
+            Тест пинга
+          </button>
+
+          {/* Proxy / TUN toggle */}
+          <div className="flex gap-2 w-full">
+            {(['Proxy', 'TUN'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  mode === m
+                    ? 'bg-[var(--primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.2)]'
+                    : 'bg-[#1e1e24] text-[var(--muted-foreground)] border border-[#2a2a32] hover:border-[#3a3a44]'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

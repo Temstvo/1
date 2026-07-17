@@ -299,10 +299,21 @@ export default function VpnPage() {
             <div className="text-sm font-medium text-[var(--foreground)] text-center">
               {selectedServer?.country} | {selectedServer?.code}
             </div>
+            {pings[selectedServer?.id] !== undefined && pings[selectedServer?.id] !== 'idle' && (
+              <div className="text-xs text-[var(--muted-foreground)] text-center">
+                {pings[selectedServer?.id] === 'loading' ? (
+                  <PingDots />
+                ) : pings[selectedServer?.id] === 'na' ? (
+                  'n/a'
+                ) : (
+                  `${pings[selectedServer?.id]}ms`
+                )}
+              </div>
+            )}
           </div>
 
           <button
-            onClick={pingAll}
+            onClick={() => pingServer(selectedServer?.id)}
             className="w-full py-3 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white text-sm font-semibold transition-all active:scale-[0.97]"
           >
             Тест пинга

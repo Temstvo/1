@@ -22,8 +22,19 @@ const platforms = [
   {
     name: 'Linux',
     icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C9.5 2 7.5 4 7.5 6.5V8c-1.5.5-2.5 1.5-3 3-.3 1 0 2 .5 2.5.3.3.3.7.2 1.1-.2.5-.5 1-.5 1.5 0 .8.5 1.5 1.2 1.8.5.2.7.7.5 1.2-.3.8.2 1.5 1 1.8h8.6c.8-.3 1.3-1 1-1.8-.2-.5 0-1 .5-1.2.7-.3 1.2-1 1.2-1.8 0-.5-.3-1-.5-1.5-.1-.4-.1-.8.2-1.1.5-.5.8-1.5.5-2.5-.5-1.5-1.5-2.5-3-3V6.5C16.5 4 14.5 2 12 2zm0 2c1.4 0 2.5 1.1 2.5 2.5V7h-5V6.5C9.5 5.1 10.6 4 12 4zm-3 6h6c.3 0 .5.2.5.5s-.2.5-.5.5h-6c-.3 0-.5-.2-.5-.5s.2-.5.5-.5zm1 2h4c.3 0 .5.2.5.5s-.2.5-.5.5h-4c-.3 0-.5-.2-.5-.5s.2-.5.5-.5zm1.5 3c-.4 0-.8.4-.8.8s.4.8.8.8.8-.4.8-.8-.4-.8-.8-.8zm3 0c-.4 0-.8.4-.8.8s.4.8.8.8.8-.4.8-.8-.4-.8-.8-.8z" />
+      <svg className="w-8 h-8" viewBox="0 0 100 100" fill="currentColor">
+        <ellipse cx="50" cy="62" rx="28" ry="35" />
+        <ellipse cx="50" cy="30" rx="18" ry="18" />
+        <ellipse cx="50" cy="70" rx="16" ry="12" fill="hsl(267,80%,60%,0.3)" />
+        <circle cx="43" cy="27" r="3" fill="white" />
+        <circle cx="57" cy="27" r="3" fill="white" />
+        <circle cx="43" cy="27" r="1.5" />
+        <circle cx="57" cy="27" r="1.5" />
+        <ellipse cx="50" cy="33" rx="5" ry="3" fill="hsl(267,80%,50%)" />
+        <ellipse cx="30" cy="55" rx="8" ry="14" transform="rotate(-15 30 55)" />
+        <ellipse cx="70" cy="55" rx="8" ry="14" transform="rotate(15 70 55)" />
+        <ellipse cx="40" cy="92" rx="10" ry="4" transform="rotate(-5 40 92)" />
+        <ellipse cx="60" cy="92" rx="10" ry="4" transform="rotate(5 60 92)" />
       </svg>
     ),
     versions: ['WireGuard', 'OpenVPN', 'Xray'],

@@ -1,87 +1,130 @@
+'use client';
+
+import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
+
 export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/register', {
+        email: form.email,
+        password: form.password,
+        firstName: form.firstName || undefined,
+        lastName: form.lastName || undefined,
+      });
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      router.push('/vpn');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div>
-      <div className="mb-8 text-center lg:text-left">
-        <h2 className="text-3xl font-bold text-white tracking-tight">Create account</h2>
-        <p className="mt-2 text-gray-400">Join APPI VPN for private internet access</p>
+    <>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white">Create account</h2>
+        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">Join APPI VPN for private internet access</p>
       </div>
-      <form className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              First Name
-            </label>
+            <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">First Name</label>
             <input
               type="text"
-              className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+              className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
+              placeholder="John"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Last Name
-            </label>
+            <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Last Name</label>
             <input
               type="text"
-              className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+              className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
+              placeholder="Doe"
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Email
-          </label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Email</label>
           <input
             type="email"
-            className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+            className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
             placeholder="you@example.com"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Password
-          </label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Password</label>
           <input
             type="password"
-            className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-            placeholder="••••••••"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+            className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
+            placeholder="Min 8 characters"
           />
+          <p className="mt-1 text-xs text-[hsl(222,10%,40%)]">Uppercase, lowercase, number, special character</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Confirm Password
-          </label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Confirm Password</label>
           <input
             type="password"
-            className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            value={form.confirmPassword}
+            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+            required
+            className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
             placeholder="••••••••"
           />
-        </div>
-        <div className="flex items-start gap-3">
-          <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-600 bg-[#111] text-purple-500 focus:ring-purple-500/20" />
-          <span className="text-sm text-gray-400">
-            I agree to the{' '}
-            <a href="/terms" className="text-purple-400 hover:text-purple-300 transition-colors">
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors">
-              Privacy Policy
-            </a>
-          </span>
         </div>
         <button
           type="submit"
-          className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          disabled={loading}
+          className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
         >
-          Create Account
+          {loading ? 'Creating account...' : 'Create Account'}
         </button>
       </form>
-      <p className="mt-8 text-center text-sm text-gray-400">
+      <p className="mt-6 text-center text-sm text-[hsl(222,10%,55%)]">
         Already have an account?{' '}
-        <a href="/login" className="font-semibold text-purple-400 hover:text-purple-300 transition-colors">
+        <Link href="/login" className="text-[hsl(267,80%,60%)] hover:underline font-medium">
           Sign in
-        </a>
+        </Link>
       </p>
-    </div>
+    </>
   );
 }

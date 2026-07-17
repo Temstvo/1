@@ -21,6 +21,7 @@ const servers = [
 ];
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+type VisualPhase = 'off' | 'spinning' | 'on' | 'fading';
 type PingState = Record<string, 'idle' | 'loading' | number | 'na'>;
 
 function PingDots() {
@@ -37,6 +38,7 @@ export default function VpnPage() {
   const [search, setSearch] = useState('');
   const [selectedServer, setSelectedServer] = useState(servers[0]);
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [visualPhase, setVisualPhase] = useState<VisualPhase>('off');
   const [connectionTime, setConnectionTime] = useState('00:00:00');
   const [mode, setMode] = useState<'Proxy' | 'TUN'>('Proxy');
   const [pings, setPings] = useState<PingState>({});
@@ -68,8 +70,10 @@ export default function VpnPage() {
   const handleConnect = () => {
     if (status === 'disconnected') {
       setStatus('connecting');
+      setVisualPhase('spinning');
       setTimeout(() => {
         setStatus('connected');
+        setVisualPhase('on');
         secondsRef.current = 0;
         intervalRef.current = setInterval(() => {
           secondsRef.current++;
@@ -82,7 +86,11 @@ export default function VpnPage() {
       }, 1500);
     } else {
       clearTimer();
-      setStatus('disconnected');
+      setVisualPhase('fading');
+      setTimeout(() => {
+        setStatus('disconnected');
+        setVisualPhase('off');
+      }, 400);
       setConnectionTime('00:00:00');
     }
   };
@@ -251,29 +259,40 @@ export default function VpnPage() {
             <div className="absolute -inset-5 rounded-full" style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgba(100,100,120,0.15) 25%, transparent 50%, rgba(100,100,120,0.1) 75%, transparent 100%)' }} />
             <div className="absolute -inset-3 rounded-full bg-[#1e1e24] border border-[#2a2a32]" />
             <div className="absolute -inset-1 rounded-full bg-[#1a1a20] border border-[#252530]" />
-            {status === 'connecting' && (
-              <div className="absolute -inset-1 rounded-full border-2 border-t-transparent border-r-transparent border-[var(--primary)]/50 animate-[spin_2s_linear_infinite]" />
+            {/* Outer ring — spin once while connecting */}
+            {visualPhase === 'spinning' && (
+              <div className="absolute -inset-1 rounded-full border-2 border-t-transparent border-r-transparent border-[var(--primary)]/60 animate-spin-once" />
             )}
-            {status === 'connected' && (
-              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)] shadow-[0_0_20px_rgba(139,92,246,0.3)] animate-connect-pulse" />
+            {/* Outer ring — glow in when connected */}
+            {visualPhase === 'on' && (
+              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)] shadow-[0_0_24px_rgba(139,92,246,0.4)] animate-glow-in" />
             )}
+            {/* Outer ring — glow out when disconnecting */}
+            {visualPhase === 'fading' && (
+              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)]/50 animate-glow-out" />
+            )}
+            {/* Main button */}
             <button
               onClick={handleConnect}
               className={`relative w-[180px] h-[180px] rounded-full flex items-center justify-center transition-all duration-500 z-10 ${
-                status === 'disconnected'
+                visualPhase === 'off'
                   ? 'bg-[#1a1a20] border border-[#2a2a32] hover:border-[#3a3a44] shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
-                  : status === 'connecting'
-                  ? 'bg-[#1a1a20] border border-[var(--primary)]/50'
-                  : 'bg-[#1a1a20] border border-[var(--primary)] shadow-[0_0_30px_rgba(139,92,246,0.2)]'
+                  : visualPhase === 'spinning'
+                  ? 'bg-[#1a1a20] border border-[var(--primary)]/40'
+                  : visualPhase === 'on'
+                  ? 'bg-[#1a1a20] border border-[var(--primary)] shadow-[0_0_30px_rgba(139,92,246,0.15)]'
+                  : 'bg-[#1a1a20] border border-[var(--primary)]/30'
               }`}
             >
               <svg
                 className={`w-16 h-16 transition-all duration-500 ${
-                  status === 'disconnected'
+                  visualPhase === 'off'
                     ? 'text-[#555560]'
-                    : status === 'connecting'
-                    ? 'text-[var(--primary)]/70'
-                    : 'text-white drop-shadow-[0_0_12px_rgba(139,92,246,0.6)]'
+                    : visualPhase === 'spinning'
+                    ? 'text-[var(--primary)]/60'
+                    : visualPhase === 'on'
+                    ? 'text-white drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]'
+                    : 'text-[var(--primary)]/40'
                 }`}
                 fill="none"
                 viewBox="0 0 24 24"

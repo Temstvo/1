@@ -1,12 +1,18 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
+import { YooKassaService } from './providers/yookassa.service';
+import { CryptomusService } from './providers/cryptomus.service';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly yookassaService: YooKassaService,
+    private readonly cryptomusService: CryptomusService,
+  ) {}
 
   async createPayment(data: {
     userId: string;
@@ -232,5 +238,196 @@ export class PaymentsService {
       failedPayments,
       refundedPayments,
     };
+  }
+
+  async createYooKassaPayment(userId: string, planId: string, couponCode?: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan || !plan.isActive) {
+      throw new NotFoundException('Plan not found or inactive');
+    }
+
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (coupon && coupon.isActive) {
+        if (coupon.type === 'PERCENTAGE') {
+          discount = Number(plan.price) * (Number(coupon.value) / 100);
+        } else if (coupon.type === 'FIXED') {
+          discount = Number(coupon.value);
+        }
+      }
+    }
+
+    const finalAmount = Math.max(0, Number(plan.price) - discount);
+
+    const payment = await this.createPayment({
+      userId,
+      amount: finalAmount,
+      currency: plan.currency || 'RUB',
+      provider: 'YOOKASSA',
+      description: `APPI VPN — ${plan.name}`,
+      metadata: { planId, couponCode: couponCode || null },
+    });
+
+    const yukResult = await this.yookassaService.createPayment({
+      amount: finalAmount,
+      currency: plan.currency || 'RUB',
+      description: `APPI VPN — ${plan.name}`,
+      metadata: { paymentId: payment.id, planId },
+      returnReturnUrl: 'https://appi-frontend.vercel.app/checkout/success',
+    });
+
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: yukResult.id },
+    });
+
+    return {
+      paymentId: payment.id,
+      confirmationUrl: yukResult.confirmationUrl,
+      amount: finalAmount,
+      currency: plan.currency || 'RUB',
+    };
+  }
+
+  async handleYooKassaWebhook(body: any) {
+    const event = body.event;
+    const paymentData = body.object;
+
+    if (!paymentData?.id) {
+      this.logger.warn('YooKassa webhook: missing payment id');
+      return;
+    }
+
+    const payment = await this.findByTransactionId(paymentData.id);
+    if (!payment) {
+      this.logger.warn(`YooKassa webhook: payment not found for ${paymentData.id}`);
+      return;
+    }
+
+    switch (event) {
+      case 'payment.succeeded': {
+        await this.updateStatus(payment.id, 'COMPLETED', true);
+        if (payment.subscriptionId) {
+          await this.prisma.subscription.update({
+            where: { id: payment.subscriptionId },
+            data: { status: 'ACTIVE' },
+          });
+        }
+        this.logger.log(`YooKassa payment succeeded: ${payment.id}`);
+        break;
+      }
+      case 'payment.canceled': {
+        await this.updateStatus(payment.id, 'FAILED', true);
+        if (payment.subscriptionId) {
+          await this.prisma.subscription.update({
+            where: { id: payment.subscriptionId },
+            data: { status: 'CANCELLED' },
+          });
+        }
+        this.logger.log(`YooKassa payment canceled: ${payment.id}`);
+        break;
+      }
+      case 'payment.waiting_for_capture': {
+        this.logger.log(`YooKassa payment waiting for capture: ${payment.id}`);
+        break;
+      }
+      default:
+        this.logger.warn(`YooKassa unhandled event: ${event}`);
+    }
+
+    return { event };
+  }
+
+  async createCryptomusPayment(userId: string, planId: string, couponCode?: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan || !plan.isActive) {
+      throw new NotFoundException('Plan not found or inactive');
+    }
+
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (coupon && coupon.isActive) {
+        if (coupon.type === 'PERCENTAGE') {
+          discount = Number(plan.price) * (Number(coupon.value) / 100);
+        } else if (coupon.type === 'FIXED') {
+          discount = Number(coupon.value);
+        }
+      }
+    }
+
+    const finalAmount = Math.max(0, Number(plan.price) - discount);
+
+    const payment = await this.createPayment({
+      userId,
+      amount: finalAmount,
+      currency: 'USDT',
+      provider: 'CRYPTOMUS',
+      description: `APPI VPN — ${plan.name}`,
+      metadata: { planId, couponCode: couponCode || null },
+    });
+
+    const cryptoResult = await this.cryptomusService.createPayment({
+      amount: finalAmount.toString(),
+      currency: 'USDT',
+      order_id: payment.id,
+      url_success: 'https://appi-frontend.vercel.app/checkout/success',
+      url_callback: 'https://appibackend-production.up.railway.app/api/payments/webhook/cryptomus',
+      currencies: ['USDT'],
+    });
+
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: cryptoResult.uuid },
+    });
+
+    return {
+      paymentId: payment.id,
+      paymentUrl: cryptoResult.payment_url,
+      amount: finalAmount,
+      currency: 'USDT',
+    };
+  }
+
+  async handleCryptomusWebhook(body: any, signature: string) {
+    if (!this.cryptomusService.verifyWebhook(body, signature)) {
+      this.logger.warn('Cryptomus webhook: invalid signature');
+      return;
+    }
+
+    const { status, order_id } = body;
+
+    const payment = await this.findById(order_id);
+    if (!payment) {
+      this.logger.warn(`Cryptomus webhook: payment not found for ${order_id}`);
+      return;
+    }
+
+    switch (status) {
+      case 'paid': {
+        await this.updateStatus(payment.id, 'COMPLETED', true);
+        if (payment.subscriptionId) {
+          await this.prisma.subscription.update({
+            where: { id: payment.subscriptionId },
+            data: { status: 'ACTIVE' },
+          });
+        }
+        this.logger.log(`Cryptomus payment completed: ${payment.id}`);
+        break;
+      }
+      case 'cancelled': {
+        await this.updateStatus(payment.id, 'FAILED', true);
+        break;
+      }
+      case 'expired': {
+        await this.updateStatus(payment.id, 'FAILED', true);
+        break;
+      }
+      default:
+        this.logger.log(`Cryptomus payment status: ${status} for ${payment.id}`);
+    }
+
+    return { status };
   }
 }

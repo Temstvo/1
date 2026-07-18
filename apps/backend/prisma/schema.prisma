@@ -215,6 +215,7 @@ enum PaymentProvider {
   LEMON_SQUEEZY
   TELEGRAM
   CRYPTOMUS
+  YOOKASSA
 }
 
 model Payment {

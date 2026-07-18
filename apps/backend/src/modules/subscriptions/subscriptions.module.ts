@@ -4,6 +4,7 @@ import { SubscriptionsController } from './subscriptions.controller';
 import { PrismaModule } from '../../database/prisma.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { CouponsModule } from '../coupons/coupons.module';
+import { SubscriptionsScheduler } from './subscriptions.scheduler';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { CouponsModule } from '../coupons/coupons.module';
     forwardRef(() => CouponsModule),
   ],
   controllers: [SubscriptionsController],
-  providers: [SubscriptionsService],
+  providers: [SubscriptionsService, SubscriptionsScheduler],
   exports: [SubscriptionsService],
 })
 export class SubscriptionsModule {}

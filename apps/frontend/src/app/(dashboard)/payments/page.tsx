@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 
 interface Payment {
   id: string;
@@ -10,108 +11,89 @@ interface Payment {
   provider: string;
   description: string;
   createdAt: string;
-  plan?: string;
+  plan?: { name: string };
 }
 
-const mockPayments: Payment[] = [
-  { id: '1', amount: 9.99, currency: 'USD', status: 'COMPLETED', provider: 'STRIPE', description: 'Pro Plan', createdAt: '2026-01-15', plan: 'Pro' },
-  { id: '2', amount: 9.99, currency: 'USD', status: 'COMPLETED', provider: 'STRIPE', description: 'Pro Plan', createdAt: '2025-12-15', plan: 'Pro' },
-  { id: '3', amount: 4.99, currency: 'USD', status: 'COMPLETED', provider: 'CRYPTOMUS', description: 'Basic Plan', createdAt: '2025-11-15', plan: 'Basic' },
-  { id: '4', amount: 9.99, currency: 'USD', status: 'REFUNDED', provider: 'STRIPE', description: 'Pro Plan', createdAt: '2025-10-15', plan: 'Pro' },
-  { id: '5', amount: 14.99, currency: 'USD', status: 'FAILED', provider: 'STRIPE', description: 'Premium Plan', createdAt: '2025-09-15', plan: 'Premium' },
-];
+export default function PaymentsPage() {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function PaymentHistoryPage() {
-  const [filter, setFilter] = useState<'all' | 'completed' | 'failed' | 'refunded'>('all');
+  useEffect(() => {
+    api.get('/payments')
+      .then((res) => {
+        const data = res.data;
+        setPayments(Array.isArray(data) ? data : data.payments || []);
+      })
+      .catch(() => setPayments([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filteredPayments = mockPayments.filter(
-    (p) => filter === 'all' || p.status.toLowerCase() === filter,
-  );
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'FAILED':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'REFUNDED':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+  const statusColor = (s: string) => {
+    switch (s) {
+      case 'COMPLETED': return 'text-green-400 bg-green-500/10';
+      case 'PENDING': return 'text-yellow-400 bg-yellow-500/10';
+      case 'FAILED': return 'text-red-400 bg-red-500/10';
+      case 'REFUNDED': return 'text-gray-400 bg-gray-500/10';
+      default: return 'text-gray-400 bg-gray-500/10';
     }
   };
+
+  const providerName = (p: string) => {
+    switch (p) {
+      case 'YOOKASSA': return 'YooKassa';
+      case 'CRYPTOMUS': return 'Crypto';
+      case 'STRIPE': return 'Card';
+      case 'TELEGRAM': return 'Telegram';
+      default: return p;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Payment History</h1>
-        <p className="text-muted-foreground">View all your transactions</p>
+        <h1 className="text-2xl font-bold text-white mb-1">Payments</h1>
+        <p className="text-sm text-gray-500">Your payment history</p>
       </div>
 
-      <div className="flex gap-2">
-        {(['all', 'completed', 'failed', 'refunded'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              filter === f
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Method
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {filteredPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {payment.createdAt}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {payment.description}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                    ${payment.amount.toFixed(2)} {payment.currency}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(payment.status)}`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-foreground">
-                    {payment.provider}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {payments.length === 0 ? (
+        <div className="bg-[#141414] border border-white/5 rounded-2xl p-8 text-center">
+          <div className="text-4xl mb-4">💳</div>
+          <h3 className="text-lg font-semibold text-white mb-2">No Payments Yet</h3>
+          <p className="text-sm text-gray-400">Your payment history will appear here</p>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {payments.map((p) => (
+            <div key={p.id} className="bg-[#141414] border border-white/5 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-sm">
+                  {p.status === 'COMPLETED' ? '✓' : p.status === 'PENDING' ? '...' : '✕'}
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">{p.description || p.plan?.name || 'Payment'}</div>
+                  <div className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleDateString()} · {providerName(p.provider)}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-white">₽{Number(p.amount).toLocaleString()}</div>
+                <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor(p.status)}`}>
+                  {p.status}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

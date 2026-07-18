@@ -117,4 +117,13 @@ export class SubscriptionsController {
   async getAll(@Query('userId') userId?: string) {
     return this.subscriptionsService.getAll(userId);
   }
+
+  @Post('trial')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Start free trial' })
+  async startTrial(@CurrentUser('id') userId: string) {
+    return this.subscriptionsService.createTrial(userId);
+  }
 }

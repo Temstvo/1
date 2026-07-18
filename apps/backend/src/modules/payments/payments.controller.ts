@@ -51,6 +51,32 @@ export class PaymentsController {
     return this.paymentsService.createCheckoutSession(userId, dto.planId, dto.couponCode);
   }
 
+  @Post('checkout/yookassa')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create YooKassa checkout' })
+  @ApiResponse({ status: 200, description: 'YooKassa checkout created' })
+  async createYooKassaCheckout(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateCheckoutDto,
+  ) {
+    return this.paymentsService.createYooKassaPayment(userId, dto.planId, dto.couponCode);
+  }
+
+  @Post('checkout/cryptomus')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create Cryptomus checkout' })
+  @ApiResponse({ status: 200, description: 'Cryptomus checkout created' })
+  async createCryptomusCheckout(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateCheckoutDto,
+  ) {
+    return this.paymentsService.createCryptomusPayment(userId, dto.planId, dto.couponCode);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -99,5 +125,22 @@ export class PaymentsController {
   ) {
     await this.paymentsService.handleStripeWebhook(body);
     return { received: true };
+  }
+
+  @Post('webhook/yookassa')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'YooKassa webhook handler' })
+  async yookassaWebhook(@Body() body: any) {
+    return this.paymentsService.handleYooKassaWebhook(body);
+  }
+
+  @Post('webhook/cryptomus')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cryptomus webhook handler' })
+  async cryptomusWebhook(
+    @Headers('sign') signature: string,
+    @Body() body: any,
+  ) {
+    return this.paymentsService.handleCryptomusWebhook(body, signature);
   }
 }

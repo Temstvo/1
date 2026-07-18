@@ -16,11 +16,13 @@ export class RegisterDto {
   password: string;
 
   @ApiProperty({ example: 'John', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(50)
   firstName?: string;
 
   @ApiProperty({ example: 'Doe', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(50)
   lastName?: string;

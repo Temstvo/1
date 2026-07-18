@@ -53,6 +53,33 @@ export class BotUpdate implements OnModuleInit {
     return data;
   }
 
+  private async apiWithRefresh(userId: number, path: string, options: { method?: string; body?: any } = {}) {
+    const user = this.linkedUsers.get(userId);
+    if (!user) throw new Error('Not logged in');
+
+    try {
+      return await this.api(path, { ...options, token: user.token });
+    } catch (e: any) {
+      if (e.message !== 'Unauthorized' && e.message !== 'User not found') throw e;
+
+      try {
+        const refreshed = await this.api('/auth/refresh', {
+          method: 'POST',
+          body: { refreshToken: user.refreshToken },
+        });
+
+        user.token = refreshed.accessToken;
+        user.refreshToken = refreshed.refreshToken;
+        this.linkedUsers.set(userId, user);
+
+        return await this.api(path, { ...options, token: user.token });
+      } catch {
+        this.linkedUsers.delete(userId);
+        throw new Error('Session expired. Send /start to log in again.');
+      }
+    }
+  }
+
   private registerHandlers() {
     const bot = this.botService.getBot();
 
@@ -137,11 +164,10 @@ export class BotUpdate implements OnModuleInit {
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     await ctx.answerCbQuery();
-    const { token } = this.linkedUsers.get(userId)!;
     try {
       const [user, sub] = await Promise.all([
-        this.api('/users/me', { token }),
-        this.api('/subscriptions/current', { token }).catch(() => null),
+        this.apiWithRefresh(userId, '/users/me'),
+        this.apiWithRefresh(userId, '/subscriptions/current').catch(() => null),
       ]);
 
       const planName = sub?.plan?.name || 'No plan';
@@ -156,7 +182,11 @@ export class BotUpdate implements OnModuleInit {
         { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
       );
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -165,9 +195,8 @@ export class BotUpdate implements OnModuleInit {
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     await ctx.answerCbQuery();
-    const { token } = this.linkedUsers.get(userId)!;
     try {
-      const sub = await this.api('/subscriptions/current', { token }).catch(() => null);
+      const sub = await this.apiWithRefresh(userId, '/subscriptions/current').catch(() => null);
 
       if (!sub) {
         await ctx.reply('You have no active subscription.', {
@@ -188,7 +217,11 @@ export class BotUpdate implements OnModuleInit {
         { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
       );
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -197,9 +230,8 @@ export class BotUpdate implements OnModuleInit {
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     await ctx.answerCbQuery();
-    const { token } = this.linkedUsers.get(userId)!;
     try {
-      const data = await this.api('/servers', { token });
+      const data = await this.apiWithRefresh(userId, '/servers');
       const servers = data.servers || data || [];
 
       if (!Array.isArray(servers) || servers.length === 0) {
@@ -220,7 +252,11 @@ export class BotUpdate implements OnModuleInit {
         reply_markup: { inline_keyboard: keyboard },
       });
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -230,10 +266,9 @@ export class BotUpdate implements OnModuleInit {
 
     await ctx.answerCbQuery();
     const serverId = ctx.match?.[1];
-    const { token } = this.linkedUsers.get(userId)!;
 
     try {
-      const server = await this.api(`/servers/${serverId}`, { token });
+      const server = await this.apiWithRefresh(userId, `/servers/${serverId}`);
       await ctx.reply(
         `🖥️ *${server.name || server.city}*\n\n` +
         `Country: ${server.country || server.code}\n` +
@@ -242,7 +277,11 @@ export class BotUpdate implements OnModuleInit {
         { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
       );
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -251,9 +290,8 @@ export class BotUpdate implements OnModuleInit {
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     await ctx.answerCbQuery();
-    const { token } = this.linkedUsers.get(userId)!;
     try {
-      const traffic = await this.api('/traffic/current', { token }).catch(() => null);
+      const traffic = await this.apiWithRefresh(userId, '/traffic/current').catch(() => null);
 
       if (!traffic) {
         await ctx.reply('No traffic data. Start using VPN to see statistics.', {
@@ -270,7 +308,11 @@ export class BotUpdate implements OnModuleInit {
         { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
       );
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -279,9 +321,8 @@ export class BotUpdate implements OnModuleInit {
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     await ctx.answerCbQuery();
-    const { token } = this.linkedUsers.get(userId)!;
     try {
-      const data = await this.api('/users/devices', { token });
+      const data = await this.apiWithRefresh(userId, '/users/devices');
       const devices = data.devices || data || [];
 
       if (!Array.isArray(devices) || devices.length === 0) {
@@ -300,7 +341,11 @@ export class BotUpdate implements OnModuleInit {
         reply_markup: { inline_keyboard: mainMenuKeyboard },
       });
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      if (e.message.includes('Session expired')) {
+        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
+      } else {
+        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
+      }
     }
   }
 
@@ -340,7 +385,7 @@ export class BotUpdate implements OnModuleInit {
           return;
         }
         this.userStates.set(userId, { action: 'register_password', data: { email } });
-        await ctx.reply('Create a password:\n• min 8 characters\n• uppercase + lowercase\n• number\n• special character (!@#$%^&*)');
+        await ctx.reply('Create a password:\n• min 8 characters\n• uppercase + lowercase\n• number\n• special character: @ $ ! % * ? &');
         return;
       }
 
@@ -391,7 +436,7 @@ export class BotUpdate implements OnModuleInit {
           } else if (msg.includes('Password must') || msg.includes('password must')) {
             this.userStates.set(userId, { action: 'register_password', data: { email } });
             await ctx.reply(
-              '❌ *Invalid password*\n\nPassword must contain:\n• uppercase letter\n• lowercase letter\n• number\n• special character (!@#$%^&*)\n\nTry again:',
+              '❌ *Invalid password*\n\nPassword must contain:\n• uppercase letter (A-Z)\n• lowercase letter (a-z)\n• number (0-9)\n• special character: @ $ ! % * ? &\n\nTry again:',
               { parse_mode: 'Markdown' },
             );
           } else {

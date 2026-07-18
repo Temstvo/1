@@ -43,12 +43,14 @@ export class BotUpdate implements OnModuleInit {
       body: body ? JSON.stringify(body) : undefined,
     });
 
+    const data = await res.json().catch(() => null);
+
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`API ${method} ${path} failed (${res.status}): ${text}`);
+      const msg = data?.message || data?.error || `Error ${res.status}`;
+      throw new Error(Array.isArray(msg) ? msg[0] : msg);
     }
 
-    return res.json();
+    return data;
   }
 
   private registerHandlers() {

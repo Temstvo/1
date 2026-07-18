@@ -68,4 +68,9 @@ export class PlansController {
   async delete(@Param('id') id: string) {
     return this.plansService.delete(id);
   }
+
+  @Post('cleanup')
+  async cleanup() {
+    return this.plansService.cleanupPlans();
+  }
 }

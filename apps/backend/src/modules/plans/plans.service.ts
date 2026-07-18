@@ -79,4 +79,35 @@ export class PlansService {
       where: { id },
     });
   }
+
+  async cleanupPlans() {
+    const allPlans = await this.prisma.plan.findMany({ orderBy: { createdAt: 'asc' } });
+    const toDelete: string[] = [];
+
+    for (const plan of allPlans) {
+      if (plan.currency !== 'RUB') {
+        toDelete.push(plan.id);
+      }
+    }
+
+    const rubPlans = allPlans.filter((p) => p.currency === 'RUB');
+    const seen = new Map<string, string[]>();
+    for (const plan of rubPlans) {
+      const key = `${plan.name}-${plan.price}-${plan.duration}`;
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(plan.id);
+    }
+
+    for (const [, ids] of seen) {
+      if (ids.length > 1) {
+        toDelete.push(...ids.slice(1));
+      }
+    }
+
+    if (toDelete.length > 0) {
+      await this.prisma.plan.deleteMany({ where: { id: { in: toDelete } } });
+    }
+
+    return { deleted: toDelete.length };
+  }
 }

@@ -6,7 +6,7 @@ import { useTranslations } from '@/lib/i18n';
 import api from '@/lib/api';
 
 type Step = 'plan' | 'details' | 'payment' | 'processing' | 'success';
-type PaymentMethod = 'yookassa' | 'sbp' | 'crypto' | 'trial';
+type PaymentMethod = 'yookassa' | 'sbp' | 'crypto';
 
 interface Plan {
   id: string;
@@ -57,12 +57,7 @@ export default function CheckoutPage() {
         if (list.length > 0) setSelectedPlan(list[0].id);
       })
       .catch(() => {
-        setPlans([
-          { id: 'trial', name: 'Trial', price: 0, currency: 'RUB', duration: 1, trafficLimit: 10 * 1024 * 1024 * 1024, deviceLimit: 2, features: ['24h access', 'All servers'] },
-          { id: 'monthly', name: '1 Month', price: 499, currency: 'RUB', duration: 30, trafficLimit: 50 * 1024 * 1024 * 1024, deviceLimit: 3, features: ['All protocols', 'All servers'] },
-          { id: 'quarterly', name: '3 Months', price: 1199, currency: 'RUB', duration: 90, trafficLimit: 200 * 1024 * 1024 * 1024, deviceLimit: 5, features: ['All protocols', 'All servers', 'Save 20%'] },
-          { id: 'annual', name: '1 Year', price: 3999, currency: 'RUB', duration: 365, trafficLimit: 1024 * 1024 * 1024 * 1024 * 100, deviceLimit: 10, features: ['All protocols', 'All servers', 'Dedicated IP', 'Save 33%'] },
-        ]);
+        setPlans([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -90,33 +85,9 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleStartTrial = async () => {
-    if (!isLoggedIn) {
-      window.location.href = '/register?redirect=/checkout';
-      return;
-    }
-    setProcessing(true);
-    try {
-      const res = await api.post('/subscriptions/trial');
-      if (res.data.subscription) {
-        setStep('success');
-      }
-    } catch (e: any) {
-      setError(e.response?.data?.message || 'Failed to start trial');
-      setTimeout(() => setError(''), 4000);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   const handlePay = async () => {
     if (!isLoggedIn) {
       window.location.href = '/register?redirect=/checkout';
-      return;
-    }
-
-    if (paymentMethod === 'trial') {
-      await handleStartTrial();
       return;
     }
 
@@ -196,32 +167,17 @@ export default function CheckoutPage() {
               <h1 className="text-2xl font-bold text-white mb-2 text-center">{t('checkout_step_plan')}</h1>
               <p className="text-gray-400 text-center mb-8">{t('checkout_step_plan_sub')}</p>
 
-              <button
-                onClick={() => { setSelectedPlan('trial'); setPaymentMethod('trial'); setStep('payment'); }}
-                className="w-full mb-3 p-5 rounded-xl border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 transition-all text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold text-sm">
-                      24h
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">Free Trial</div>
-                      <div className="text-xs text-gray-500">No card required · 10 GB · 2 devices</div>
-                    </div>
-                  </div>
-                  <span className="text-green-400 font-bold">Free</span>
-                </div>
-              </button>
-
               <div className="space-y-3">
+                {!loading && plans.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">No plans available</div>
+                )}
                 {loading ? (
                   <>
                     <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
                     <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
                     <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
                   </>
-                ) : plans.filter(p => p.price > 0).map((p) => (
+                ) : plans.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => setSelectedPlan(p.id)}
@@ -251,7 +207,7 @@ export default function CheckoutPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setStep('details')} className="w-full mt-6 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-colors" disabled={!selectedPlan || processing}>
+              <button onClick={() => setStep('details')} className="w-full mt-6 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-colors" disabled={!selectedPlan || loading || processing}>
                 {t('checkout_continue')}
               </button>
             </div>
@@ -294,74 +250,62 @@ export default function CheckoutPage() {
                   <span className="text-gray-400">{t('checkout_plan')}</span>
                   <span className="text-white font-medium">{plan.name}</span>
                 </div>
-                {plan.price > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">{t('checkout_price')}</span>
-                      <span className="text-white">₽{plan.price.toLocaleString()}</span>
-                    </div>
-                    {discount > 0 && (
-                      <div className="flex justify-between text-sm mb-2 text-green-400">
-                        <span>Discount</span>
-                        <span>-₽{discount.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
-                      <span className="font-semibold text-white">{t('checkout_total')}</span>
-                      <span className="font-bold text-lg text-white">₽{finalPrice.toLocaleString()}</span>
-                    </div>
-                  </>
-                )}
-                {plan.price === 0 && (
-                  <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
-                    <span className="font-semibold text-white">{t('checkout_total')}</span>
-                    <span className="font-bold text-lg text-green-400">Free</span>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">{t('checkout_price')}</span>
+                  <span className="text-white">₽{plan.price.toLocaleString()}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm mb-2 text-green-400">
+                    <span>Discount</span>
+                    <span>-₽{discount.toLocaleString()}</span>
                   </div>
                 )}
+                <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
+                  <span className="font-semibold text-white">{t('checkout_total')}</span>
+                  <span className="font-bold text-lg text-white">₽{finalPrice.toLocaleString()}</span>
+                </div>
               </div>
 
-              {plan.price > 0 && (
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setPaymentMethod('yookassa')}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                      paymentMethod === 'yookassa' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
-                    }`}
-                  >
-                    <span className="text-2xl">💳</span>
-                    <div className="text-left">
-                      <div className="font-medium text-white text-sm">Bank Card</div>
-                      <div className="text-xs text-gray-500">MIR, Visa, Mastercard</div>
-                    </div>
-                  </button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setPaymentMethod('yookassa')}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    paymentMethod === 'yookassa' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
+                  }`}
+                >
+                  <span className="text-2xl">💳</span>
+                  <div className="text-left">
+                    <div className="font-medium text-white text-sm">Bank Card</div>
+                    <div className="text-xs text-gray-500">MIR, Visa, Mastercard</div>
+                  </div>
+                </button>
 
-                  <button
-                    onClick={() => setPaymentMethod('sbp')}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                      paymentMethod === 'sbp' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
-                    }`}
-                  >
-                    <span className="text-2xl">⚡</span>
-                    <div className="text-left">
-                      <div className="font-medium text-white text-sm">СБП</div>
-                      <div className="text-xs text-gray-500">Система быстрых платежей</div>
-                    </div>
-                  </button>
+                <button
+                  onClick={() => setPaymentMethod('sbp')}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    paymentMethod === 'sbp' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
+                  }`}
+                >
+                  <span className="text-2xl">⚡</span>
+                  <div className="text-left">
+                    <div className="font-medium text-white text-sm">СБП</div>
+                    <div className="text-xs text-gray-500">Система быстрых платежей</div>
+                  </div>
+                </button>
 
-                  <button
-                    onClick={() => setPaymentMethod('crypto')}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                      paymentMethod === 'crypto' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
-                    }`}
-                  >
-                    <span className="text-2xl">₿</span>
-                    <div className="text-left">
-                      <div className="font-medium text-white text-sm">Crypto</div>
-                      <div className="text-xs text-gray-500">USDT, BTC, ETH</div>
-                    </div>
-                  </button>
-                </div>
-              )}
+                <button
+                  onClick={() => setPaymentMethod('crypto')}
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    paymentMethod === 'crypto' ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#141414] hover:border-white/10'
+                  }`}
+                >
+                  <span className="text-2xl">₿</span>
+                  <div className="text-left">
+                    <div className="font-medium text-white text-sm">Crypto</div>
+                    <div className="text-xs text-gray-500">USDT, BTC, ETH</div>
+                  </div>
+                </button>
+              </div>
 
               <div className="bg-[#141414] border border-white/5 rounded-xl p-4 mt-4">
                 <label className="text-xs text-gray-500 mb-2 block">Promo code</label>
@@ -395,7 +339,7 @@ export default function CheckoutPage() {
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                       Processing...
                     </span>
-                  ) : plan.price === 0 ? t('checkout_get_free') : `Pay ₽${finalPrice.toLocaleString()}`}
+                  ) : `Pay ₽${finalPrice.toLocaleString()}`}
                 </button>
               </div>
 

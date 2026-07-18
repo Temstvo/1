@@ -21,7 +21,7 @@ export class SubscriptionsService {
 
   async getCurrentUserSubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
+      where: { userId, status: 'ACTIVE' },
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -36,7 +36,7 @@ export class SubscriptionsService {
     }
 
     const activeSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
+      where: { userId, status: 'ACTIVE' },
     });
 
     if (activeSubscription) {
@@ -239,52 +239,4 @@ export class SubscriptionsService {
     });
   }
 
-  async createTrial(userId: string) {
-    const existingSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
-    });
-
-    if (existingSubscription) {
-      throw new ConflictException('User already has an active subscription');
-    }
-
-    let trialPlan = await this.prisma.plan.findFirst({ where: { name: 'Trial' } });
-    if (!trialPlan) {
-      trialPlan = await this.prisma.plan.create({
-        data: {
-          name: 'Trial',
-          description: '24-hour free trial',
-          price: 0,
-          currency: 'RUB',
-          duration: 1,
-          trafficLimit: BigInt(10 * 1024 * 1024 * 1024),
-          deviceLimit: 2,
-          protocols: ['WIREGUARD', 'OPENVPN'],
-          regions: ['ALL'],
-          features: ['24h trial', 'All servers'],
-          isActive: true,
-        },
-      });
-    }
-
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-
-    const subscription = await this.prisma.subscription.create({
-      data: {
-        userId,
-        planId: trialPlan.id,
-        status: 'TRIAL',
-        startedAt: new Date(),
-        expiresAt,
-        trialEndsAt: expiresAt,
-        paymentMethod: 'free',
-      },
-      include: { plan: true },
-    });
-
-    this.logger.log(`Trial created for user ${userId}`);
-
-    return { subscription };
-  }
 }

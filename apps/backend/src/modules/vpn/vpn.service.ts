@@ -35,7 +35,7 @@ export class VpnService {
     }
 
     const hasActiveSubscription = user.subscriptions.some(
-      (s) => s.status === 'ACTIVE' || s.status === 'TRIAL',
+      (s) => s.status === 'ACTIVE',
     );
 
     if (!hasActiveSubscription) {

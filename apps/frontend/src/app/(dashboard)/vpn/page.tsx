@@ -2,24 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
-
-const defaultServers = [
-  { id: '1', country: 'Germany', city: 'Nuremberg', code: 'DE', protocol: 'VLESS', flag: '🇩🇪', online: true },
-  { id: '2', country: 'Germany', city: 'Karlsruhe', code: 'DE', protocol: 'VLESS', flag: '🇩🇪', online: true },
-  { id: '3', country: 'Latvia', city: 'Riga', code: 'LV', protocol: 'VLESS', flag: '🇱🇻', online: true },
-  { id: '4', country: 'Serbia', city: 'Belgrade', code: 'RS', protocol: 'VLESS', flag: '🇷🇸', online: true },
-  { id: '5', country: 'Sweden', city: 'Stockholm', code: 'SE', protocol: 'VLESS', flag: '🇸🇪', online: true },
-  { id: '6', country: 'Netherlands', city: 'Amsterdam', code: 'NL', protocol: 'VLESS', flag: '🇳🇱', online: true },
-  { id: '7', country: 'United Kingdom', city: 'London', code: 'GB', protocol: 'VLESS', flag: '🇬🇧', online: true },
-  { id: '8', country: 'United States', city: 'Los Angeles', code: 'US', protocol: 'VLESS', flag: '🇺🇸', online: true },
-  { id: '9', country: 'United States', city: 'San Francisco', code: 'US', protocol: 'VLESS', flag: '🇺🇸', online: true },
-  { id: '10', country: 'United States', city: 'Washington D.C.', code: 'US', protocol: 'VLESS', flag: '🇺🇸', online: true },
-  { id: '11', country: 'Estonia', city: 'Tallinn', code: 'EE', protocol: 'VLESS', flag: '🇪🇪', online: true },
-  { id: '12', country: 'France', city: 'Paris', code: 'FR', protocol: 'WIREGUARD', flag: '🇫🇷', online: true },
-  { id: '13', country: 'Japan', city: 'Tokyo', code: 'JP', protocol: 'VLESS', flag: '🇯🇵', online: true },
-  { id: '14', country: 'Singapore', city: 'Singapore', code: 'SG', protocol: 'VLESS', flag: '🇸🇬', online: true },
-  { id: '15', country: 'Canada', city: 'Toronto', code: 'CA', protocol: 'OPENVPN', flag: '🇨🇦', online: true },
-];
+import api from '@/lib/api';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 type VisualPhase = 'off' | 'spinning' | 'on' | 'fading';
@@ -37,8 +20,9 @@ function PingDots() {
 
 export default function VpnPage() {
   const [search, setSearch] = useState('');
-  const [allServers, setAllServers] = useState(defaultServers);
-  const [selectedServer, setSelectedServer] = useState(defaultServers[0]);
+  const [allServers, setAllServers] = useState<any[]>([]);
+  const [selectedServer, setSelectedServer] = useState<any>(null);
+  const [loadingServers, setLoadingServers] = useState(true);
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [visualPhase, setVisualPhase] = useState<VisualPhase>('off');
   const [connectionTime, setConnectionTime] = useState('00:00:00');
@@ -53,15 +37,15 @@ export default function VpnPage() {
   const { t } = useTranslations();
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('appi-added-servers');
-      if (saved) {
-        const extra = JSON.parse(saved);
-        if (Array.isArray(extra) && extra.length > 0) {
-          setAllServers((prev) => [...prev, ...extra]);
-        }
-      }
-    } catch {}
+    api.get('/servers')
+      .then((res) => {
+        const data = res.data;
+        const list = Array.isArray(data) ? data : data.servers || [];
+        setAllServers(list.filter((s: any) => s.status === 'ONLINE'));
+        if (list.length > 0) setSelectedServer(list.find((s: any) => s.status === 'ONLINE') || list[0]);
+      })
+      .catch(() => setAllServers([]))
+      .finally(() => setLoadingServers(false));
   }, []);
 
   const clearTimer = useCallback(() => {
@@ -251,7 +235,11 @@ export default function VpnPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-4">
-          {filteredServers.map((server) => (
+          {loadingServers ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredServers.map((server) => (
             <button
               key={server.id}
               onClick={() => { setSelectedServer(server); setMobileView('connect'); }}
@@ -263,7 +251,7 @@ export default function VpnPage() {
             >
               <span className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/10">
                 <img
-                  src={`https://flagcdn.com/w80/${server.code.toLowerCase()}.png`}
+                  src={`https://flagcdn.com/w80/${server.code?.toLowerCase() || 'un'}.png`}
                   alt={server.country}
                   className="w-full h-full object-cover"
                 />
@@ -272,9 +260,8 @@ export default function VpnPage() {
                 <div className="text-sm font-medium text-white truncate">
                   {server.country}, {server.city}
                 </div>
-                <div className="text-xs text-[hsl(222,10%,50%)]">{server.protocol}</div>
+                <div className="text-xs text-[hsl(222,10%,50%)]">{Array.isArray(server.protocols) ? server.protocols[0] : server.protocol || 'VLESS'}</div>
               </div>
-              {/* Ping indicator */}
               {hasAnyPing && (
                 <span className="shrink-0 w-12 text-right">
                   {renderPing(server.id)}
@@ -349,7 +336,7 @@ export default function VpnPage() {
           <div className="flex flex-col items-center gap-1.5">
             <span className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
               <img
-                src={`https://flagcdn.com/w80/${selectedServer?.code.toLowerCase()}.png`}
+                src={`https://flagcdn.com/w80/${selectedServer?.code?.toLowerCase() || 'un'}.png`}
                 alt={selectedServer?.country}
                 className="w-full h-full object-cover"
               />

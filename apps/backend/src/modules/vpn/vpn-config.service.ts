@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes } from 'crypto';
+import { WireGuardKeys } from './wireguard-keys';
 
 export interface WireGuardConfig {
   interface: {
@@ -210,17 +211,14 @@ ${params.tlsAuthKey}
     userId: string;
     flow: string;
   }): Promise<string> {
-    const vlessUri = `vless://${params.userId}@${params.serverIp}:${params.serverPort}?encryption=none&flow=${params.flow}&type=tcp&security=reality&sni=www.google.com&fp=chrome&pbk=placeholder&sid=placeholder&allowInsecure=0#APPI-VPN`;
+    const keys = WireGuardKeys.generateKeyPair();
+    const shortId = randomBytes(8).toString('hex');
+    const vlessUri = `vless://${params.userId}@${params.serverIp}:${params.serverPort}?encryption=none&flow=${params.flow}&type=tcp&security=reality&sni=www.google.com&fp=chrome&pbk=${keys.publicKey}&sid=${shortId}&allowInsecure=0#APPI-VPN`;
     return vlessUri;
   }
 
   generateKeyPair(): { publicKey: string; privateKey: string } {
-    const privateKey = randomBytes(32);
-    const publicKey = createHash('sha256').update(privateKey).digest('hex');
-    return {
-      publicKey,
-      privateKey: privateKey.toString('hex'),
-    };
+    return WireGuardKeys.generateKeyPair();
   }
 
   generateShortId(): string {

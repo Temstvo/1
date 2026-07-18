@@ -254,7 +254,7 @@ export default function CheckoutPage() {
             <div>
               <h1 className="text-2xl font-bold text-white mb-2 text-center">{t('checkout_details_title')}</h1>
               <p className="text-gray-400 text-center mb-8">{t('checkout_details_sub')}</p>
-              <div className="bg-[#141414] border border-white/5 rounded-xl p-6 space-y-4">
+              <div className="bg-[#141414] border border-white/5 rounded-xl p-6">
                 <div>
                   <label className="text-sm text-gray-400 mb-1.5 block">{t('checkout_email')}</label>
                   <input
@@ -264,22 +264,6 @@ export default function CheckoutPage() {
                     placeholder="your@email.com"
                     className="w-full bg-[#0d0d0d] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
                   />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1.5 block">{t('checkout_promo')}</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder={t('checkout_promo_enter')}
-                      className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
-                    />
-                    <button onClick={handlePromo} className="px-5 py-3 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">
-                      {t('checkout_promo_apply')}
-                    </button>
-                  </div>
-                  {promoApplied && <p className="mt-2 text-xs text-green-400">Discount applied: -₽{discount.toLocaleString()}</p>}
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
@@ -371,6 +355,28 @@ export default function CheckoutPage() {
                   </button>
                 </div>
               )}
+
+              <div className="bg-[#141414] border border-white/5 rounded-xl p-4 mt-4">
+                <label className="text-xs text-gray-500 mb-2 block">Promo code</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Enter promo code"
+                    className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                  <button onClick={handlePromo} className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">
+                    Apply
+                  </button>
+                </div>
+                {promoApplied && (
+                  <p className="mt-2 text-xs text-green-400 flex items-center justify-between">
+                    <span>Promo applied: -₽{discount.toLocaleString()}</span>
+                    <button onClick={() => { setPromoCode(''); setPromoApplied(false); setDiscount(0); }} className="text-gray-500 hover:text-white">✕</button>
+                  </p>
+                )}
+              </div>
 
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setStep('details')} className="flex-1 py-3.5 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors" disabled={processing}>

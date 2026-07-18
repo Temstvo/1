@@ -340,14 +340,14 @@ export class BotUpdate implements OnModuleInit {
           return;
         }
         this.userStates.set(userId, { action: 'register_password', data: { email } });
-        await ctx.reply('Create a password (min 8 characters):');
+        await ctx.reply('Create a password:\n• min 8 characters\n• uppercase + lowercase\n• number\n• special character (!@#$%^&*)');
         return;
       }
 
       case 'register_password': {
         const password = text.trim();
         if (password.length < 8) {
-          await ctx.reply('Password must be at least 8 characters. Try again:');
+          await ctx.reply('Too short (min 8 characters). Try again:');
           return;
         }
         this.userStates.set(userId, { action: 'register_confirm', data: { ...state.data, password } });
@@ -357,12 +357,9 @@ export class BotUpdate implements OnModuleInit {
 
       case 'register_confirm': {
         const { email, password } = state.data;
-        this.userStates.delete(userId);
 
         if (text.trim() !== password) {
-          await ctx.reply('Passwords do not match. Send /start to try again.', {
-            reply_markup: { inline_keyboard: authKeyboard },
-          });
+          await ctx.reply('Passwords do not match. Try again:');
           return;
         }
 
@@ -372,6 +369,7 @@ export class BotUpdate implements OnModuleInit {
             body: { email, password },
           });
 
+          this.userStates.delete(userId);
           this.linkedUsers.set(userId, {
             email,
             token: data.accessToken,
@@ -383,10 +381,11 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          await ctx.reply(`❌ *Registration failed*\n\n${e.message}`, {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: authKeyboard },
-          });
+          this.userStates.set(userId, { action: 'register_password', data: { email } });
+          await ctx.reply(
+            `❌ *Error:* ${e.message}\n\nTry a different password:`,
+            { parse_mode: 'Markdown' },
+          );
         }
         return;
       }
@@ -404,7 +403,6 @@ export class BotUpdate implements OnModuleInit {
 
       case 'login_password': {
         const { email } = state.data;
-        this.userStates.delete(userId);
 
         try {
           const data = await this.api('/auth/login', {
@@ -412,6 +410,7 @@ export class BotUpdate implements OnModuleInit {
             body: { email, password: text.trim() },
           });
 
+          this.userStates.delete(userId);
           this.linkedUsers.set(userId, {
             email,
             token: data.accessToken,
@@ -423,10 +422,11 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          await ctx.reply(`❌ *Login failed*\n\n${e.message}`, {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: authKeyboard },
-          });
+          this.userStates.set(userId, { action: 'login_password', data: { email } });
+          await ctx.reply(
+            `❌ *Error:* ${e.message}\n\nTry again:`,
+            { parse_mode: 'Markdown' },
+          );
         }
         return;
       }

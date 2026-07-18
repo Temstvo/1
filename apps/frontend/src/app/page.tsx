@@ -41,27 +41,13 @@ export default function HomePage() {
           <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
             {t('landing_hero_desc')}
           </p>
-          <div className="flex gap-4 justify-center mb-16">
+          <div className="flex gap-4 justify-center">
             <Link href="/checkout" className="px-8 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
               {t('landing_get_key')}
             </Link>
             <Link href="/register" className="px-8 py-3.5 border border-white/10 rounded-xl font-semibold text-sm text-gray-300 hover:bg-white/5 transition-all">
               {t('landing_try_free')}
             </Link>
-          </div>
-          <div className="flex justify-center gap-12 text-center">
-            <div>
-              <div className="text-3xl font-bold">10M+</div>
-              <div className="text-sm text-gray-500">{t('landing_users')}</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">4.9</div>
-              <div className="text-sm text-gray-500">{t('landing_rating')}</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">50+</div>
-              <div className="text-sm text-gray-500">{t('landing_countries')}</div>
-            </div>
           </div>
         </div>
       </section>

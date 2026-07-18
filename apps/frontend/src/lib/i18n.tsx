@@ -78,6 +78,7 @@ const translations = {
     logs_antifilter: 'AntiFilter Log',
     logs_subscription: 'Subscription Log',
     logs_service: 'Service Log',
+    logs_empty: 'No logs',
 
     // Subscription page
     sub_title: 'Subscription',
@@ -299,6 +300,7 @@ const translations = {
     logs_antifilter: 'Лог AntiFilter',
     logs_subscription: 'Лог подписки',
     logs_service: 'Лог сервиса',
+    logs_empty: 'Нет логов',
 
     // Subscription page
     sub_title: 'Подписка',

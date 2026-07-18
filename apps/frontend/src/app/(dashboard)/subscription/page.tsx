@@ -54,38 +54,10 @@ export default function SubscriptionPage() {
       <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('sub_title')}</h1>
 
       {/* Current Plan */}
-      <div className="bg-[var(--card)] border border-[var(--primary)]/30 rounded-xl p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-[var(--primary)] mb-1">{t('sub_current_plan')}</div>
-            <h2 className="text-xl font-bold text-[var(--foreground)]">Pro</h2>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-[var(--foreground)]">₽1199<span className="text-sm font-normal text-[var(--muted-foreground)]">/mo</span></div>
-            <div className="text-xs text-[var(--muted-foreground)]">{t('sub_renews')}</div>
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-[var(--muted-foreground)]">{t('sub_traffic')}</span>
-            <div className="font-medium text-[var(--foreground)]">200 GB</div>
-          </div>
-          <div>
-            <span className="text-[var(--muted-foreground)]">{t('sub_devices')}</span>
-            <div className="font-medium text-[var(--foreground)]">5</div>
-          </div>
-          <div>
-            <span className="text-[var(--muted-foreground)]">{t('sub_protocols')}</span>
-            <div className="font-medium text-[var(--foreground)]">All</div>
-          </div>
-        </div>
-        <div className="mt-4 flex gap-2">
-          <button className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors">
-            {t('sub_change')}
-          </button>
-          <button className="px-4 py-2 bg-[var(--muted)] text-[var(--muted-foreground)] rounded-lg text-sm font-medium hover:text-[var(--foreground)] transition-colors">
-            {t('sub_cancel')}
-          </button>
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
+        <div className="text-center py-4">
+          <div className="text-xs text-[var(--muted-foreground)] mb-1">{t('sub_current_plan')}</div>
+          <div className="text-lg font-medium text-[var(--muted-foreground)]">{t('sub_no_active') || 'No active subscription'}</div>
         </div>
       </div>
 

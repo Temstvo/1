@@ -15,11 +15,11 @@ export default function TrafficPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_start_time')}</span>
-            <span className="happ-settings-value">18:32:46</span>
+            <span className="happ-settings-value">—</span>
           </div>
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_connection_time')}</span>
-            <span className="happ-settings-value">10:11:41</span>
+            <span className="happ-settings-value">—</span>
           </div>
         </div>
       </div>
@@ -30,11 +30,11 @@ export default function TrafficPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_download')}</span>
-            <span className="happ-settings-value text-green-400">205.0 B/s</span>
+            <span className="happ-settings-value text-green-400">—</span>
           </div>
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_upload')}</span>
-            <span className="happ-settings-value text-blue-400">4.5 KB/s</span>
+            <span className="happ-settings-value text-blue-400">—</span>
           </div>
         </div>
       </div>
@@ -45,11 +45,11 @@ export default function TrafficPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_download')}</span>
-            <span className="happ-settings-value">10.1 GB</span>
+            <span className="happ-settings-value">—</span>
           </div>
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_upload')}</span>
-            <span className="happ-settings-value">96.6 MB</span>
+            <span className="happ-settings-value">—</span>
           </div>
         </div>
       </div>
@@ -60,11 +60,11 @@ export default function TrafficPage() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_direct_download')}</span>
-            <span className="happ-settings-value">0.0 B</span>
+            <span className="happ-settings-value">—</span>
           </div>
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('stats_direct_upload')}</span>
-            <span className="happ-settings-value">0.0 B</span>
+            <span className="happ-settings-value">—</span>
           </div>
         </div>
       </div>

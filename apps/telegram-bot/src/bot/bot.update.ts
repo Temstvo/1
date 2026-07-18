@@ -110,6 +110,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId) return;
 
+    await ctx.answerCbQuery();
     this.userStates.set(userId, { action: 'login_email' });
     await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
   }
@@ -118,11 +119,13 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId) return;
 
+    await ctx.answerCbQuery();
     this.userStates.set(userId, { action: 'register_email' });
     await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
   }
 
   private async handleMainMenu(ctx: Context) {
+    await ctx.answerCbQuery();
     await ctx.editMessageText('🔐 *APPI VPN*\n\nSelect an option:', {
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: mainMenuKeyboard },
@@ -133,6 +136,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
+    await ctx.answerCbQuery();
     const { token } = this.linkedUsers.get(userId)!;
     try {
       const [user, sub] = await Promise.all([
@@ -160,6 +164,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
+    await ctx.answerCbQuery();
     const { token } = this.linkedUsers.get(userId)!;
     try {
       const sub = await this.api('/subscriptions/current', { token }).catch(() => null);
@@ -191,6 +196,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
+    await ctx.answerCbQuery();
     const { token } = this.linkedUsers.get(userId)!;
     try {
       const data = await this.api('/servers', { token });
@@ -222,6 +228,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return;
 
+    await ctx.answerCbQuery();
     const serverId = ctx.match?.[1];
     const { token } = this.linkedUsers.get(userId)!;
 
@@ -243,9 +250,17 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
+    await ctx.answerCbQuery();
     const { token } = this.linkedUsers.get(userId)!;
     try {
-      const traffic = await this.api('/traffic/current', { token });
+      const traffic = await this.api('/traffic/current', { token }).catch(() => null);
+
+      if (!traffic) {
+        await ctx.reply('No traffic data. Start using VPN to see statistics.', {
+          reply_markup: { inline_keyboard: mainMenuKeyboard },
+        });
+        return;
+      }
 
       await ctx.reply(
         `📊 *Traffic*\n\n` +
@@ -263,6 +278,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
+    await ctx.answerCbQuery();
     const { token } = this.linkedUsers.get(userId)!;
     try {
       const data = await this.api('/users/devices', { token });
@@ -292,6 +308,7 @@ export class BotUpdate implements OnModuleInit {
     const userId = ctx.from?.id;
     if (!userId) return;
 
+    await ctx.answerCbQuery();
     this.linkedUsers.delete(userId);
     this.userStates.delete(userId);
 
@@ -301,6 +318,7 @@ export class BotUpdate implements OnModuleInit {
   }
 
   private async requireLogin(ctx: Context) {
+    await ctx.answerCbQuery();
     await ctx.reply('Please log in first.', {
       reply_markup: { inline_keyboard: authKeyboard },
     });
@@ -365,7 +383,8 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          await ctx.reply('Registration failed. Send /start to try again.', {
+          await ctx.reply(`❌ *Registration failed*\n\n${e.message}`, {
+            parse_mode: 'Markdown',
             reply_markup: { inline_keyboard: authKeyboard },
           });
         }
@@ -404,7 +423,8 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          await ctx.reply('Login failed. Send /start to try again.', {
+          await ctx.reply(`❌ *Login failed*\n\n${e.message}`, {
+            parse_mode: 'Markdown',
             reply_markup: { inline_keyboard: authKeyboard },
           });
         }

@@ -35,7 +35,7 @@ export default function CheckoutPage() {
 
   const handlePay = async () => {
     if (paymentMethod === 'telegram') {
-      window.open(`https://t.me/AppiVPNBot?start=pay_${selectedPlan}`, '_blank');
+      window.location.href = `https://t.me/AppiVPNBot?start=pay_${selectedPlan}`;
       return;
     }
     setStep('success');

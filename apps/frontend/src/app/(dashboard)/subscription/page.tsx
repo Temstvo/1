@@ -106,10 +106,10 @@ export default function SubscriptionPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <Link href="/checkout" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors">
+            <Link href="/checkout" className="px-4 py-2.5 min-h-[44px] bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors">
               Upgrade Plan
             </Link>
-            <button onClick={handleCancel} className="px-4 py-2 border border-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/5 transition-colors">
+            <button onClick={handleCancel} className="px-4 py-2.5 min-h-[44px] border border-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/5 transition-colors">
               Cancel
             </button>
           </div>
@@ -140,7 +140,7 @@ export default function SubscriptionPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-white">₽{p.price.toLocaleString()}</span>
                   {subscription?.plan?.id !== p.id && (
-                    <button onClick={() => handleChangePlan(p.id)} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 transition-colors">
+                    <button onClick={() => handleChangePlan(p.id)} className="px-4 py-2.5 min-h-[44px] bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 transition-colors">
                       Switch
                     </button>
                   )}

@@ -31,21 +31,21 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <section className="pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-6 relative overflow-hidden">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
             {t('landing_hero_title')}<br />
             <span className="text-purple-400">{t('landing_hero_accent')}</span>
           </h1>
-          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-gray-400 mb-6 md:mb-8 max-w-2xl mx-auto">
             {t('landing_hero_desc')}
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/checkout" className="px-8 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/checkout" className="px-6 md:px-8 py-3 md:py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
               {t('landing_get_key')}
             </Link>
-            <Link href="/register" className="px-8 py-3.5 border border-white/10 rounded-xl font-semibold text-sm text-gray-300 hover:bg-white/5 transition-all">
+            <Link href="/register" className="px-6 md:px-8 py-3 md:py-3.5 border border-white/10 rounded-xl font-semibold text-sm text-gray-300 hover:bg-white/5 transition-all">
               {t('landing_try_free')}
             </Link>
           </div>
@@ -53,10 +53,10 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 px-6">
+      <section id="features" className="py-12 md:py-20 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('landing_features_title')}</h2>
-          <p className="text-gray-400 text-center mb-12">{t('landing_features_desc')}</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-3 md:mb-4">{t('landing_features_title')}</h2>
+          <p className="text-gray-400 text-center mb-8 md:mb-12">{t('landing_features_desc')}</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { icon: '⚡', title: t('landing_feature1_title'), desc: t('landing_feature1_desc') },
@@ -77,11 +77,11 @@ export default function HomePage() {
       </section>
 
       {/* Servers */}
-      <section id="servers" className="py-20 px-6 border-t border-white/5">
+      <section id="servers" className="py-12 md:py-20 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('landing_servers_title')}</h2>
-          <p className="text-gray-400 text-center mb-12">{t('landing_servers_desc')}</p>
-          <div className="grid md:grid-cols-3 gap-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-3 md:mb-4">{t('landing_servers_title')}</h2>
+          <p className="text-gray-400 text-center mb-8 md:mb-12">{t('landing_servers_desc')}</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { code: 'us', name: 'USA', cities: 'New York, Los Angeles', ping: '15ms', speed: '25 Gbps', uptime: '99.9%' },
               { code: 'gb', name: 'UK', cities: 'London, Manchester', ping: '12ms', speed: '25 Gbps', uptime: '99.8%' },
@@ -125,10 +125,10 @@ export default function HomePage() {
       </section>
 
       {/* Download */}
-      <section id="download" className="py-20 px-6 border-t border-white/5">
+      <section id="download" className="py-12 md:py-20 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">{t('landing_download_title')}</h2>
-          <p className="text-gray-400 text-center mb-12">{t('landing_download_desc')}</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-3 md:mb-4">{t('landing_download_title')}</h2>
+          <p className="text-gray-400 text-center mb-8 md:mb-12">{t('landing_download_desc')}</p>
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-4xl mx-auto">
             {[
               { icon: <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" /></svg>, name: 'Windows', note: 'Windows 10/11 (x64)', href: '#', primary: true },
@@ -154,9 +154,9 @@ export default function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-20 px-6 border-t border-white/5">
+      <section id="faq" className="py-12 md:py-20 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('landing_faq_title')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">{t('landing_faq_title')}</h2>
           <div className="space-y-4">
             {[
               { q: t('landing_faq_q1'), a: t('landing_faq_a1') },
@@ -182,19 +182,19 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 border-t border-white/5">
+      <section className="py-12 md:py-20 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">{t('landing_cta_title')}</h2>
-          <p className="text-gray-400 mb-8">{t('landing_cta_desc')}</p>
-          <Link href="/checkout" className="inline-flex px-10 py-4 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">{t('landing_cta_title')}</h2>
+          <p className="text-gray-400 mb-6 md:mb-8">{t('landing_cta_desc')}</p>
+          <Link href="/checkout" className="inline-flex px-8 md:px-10 py-3 md:py-4 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
             {t('landing_get_key')}
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-8">
+      <footer className="border-t border-white/5 py-8 md:py-12 px-4 md:px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-6 md:gap-8">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
@@ -202,7 +202,7 @@ export default function HomePage() {
             </div>
             <p className="text-sm text-gray-500">{t('landing_footer_desc')}</p>
           </div>
-          <div className="flex gap-12 text-sm">
+          <div className="flex gap-8 md:gap-12 text-sm">
             <div>
               <h4 className="font-semibold mb-3">{t('landing_footer_product')}</h4>
               <div className="space-y-2 text-gray-400">

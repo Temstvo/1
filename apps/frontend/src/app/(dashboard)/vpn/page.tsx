@@ -45,6 +45,7 @@ export default function VpnPage() {
   const [mode, setMode] = useState<'Proxy' | 'TUN'>('Proxy');
   const [pings, setPings] = useState<PingState>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'servers' | 'connect'>('servers');
   const [expanded, setExpanded] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const secondsRef = useRef(0);
@@ -155,9 +156,25 @@ export default function VpnPage() {
       : t('vpn_connected');
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
+      {/* Mobile toggle */}
+      <div className="md:hidden flex border-b border-[var(--border)]">
+        <button
+          onClick={() => setMobileView('servers')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'servers' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
+        >
+          {t('vpn_title')}
+        </button>
+        <button
+          onClick={() => setMobileView('connect')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'connect' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
+        >
+          {statusText}
+        </button>
+      </div>
+
       {/* Left: Server list */}
-      <div className="w-[420px] border-r border-[var(--border)] flex flex-col shrink-0">
+      <div className={`${mobileView === 'connect' ? 'hidden md:flex' : 'flex'} w-full md:w-[320px] lg:w-[420px] border-r border-[var(--border)] flex-col shrink-0`}>
         <div className="p-4">
           <h1 className="text-lg font-semibold text-[var(--foreground)] mb-3">{t('vpn_title')}</h1>
           <div className="relative">
@@ -237,7 +254,7 @@ export default function VpnPage() {
           {filteredServers.map((server) => (
             <button
               key={server.id}
-              onClick={() => setSelectedServer(server)}
+              onClick={() => { setSelectedServer(server); setMobileView('connect'); }}
               className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
                 selectedServer?.id === server.id
                   ? 'bg-white/10'
@@ -272,7 +289,7 @@ export default function VpnPage() {
       </div>
 
       {/* Right: Connection panel */}
-      <div className="flex-1 flex flex-col items-center justify-between py-10 px-6 relative">
+      <div className={`${mobileView === 'servers' ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-between py-6 md:py-10 px-4 md:px-6 relative`}>
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 35%, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
 
         {/* Power button */}
@@ -296,7 +313,7 @@ export default function VpnPage() {
             {/* Main button */}
             <button
               onClick={handleConnect}
-              className={`relative w-[180px] h-[180px] rounded-full flex items-center justify-center transition-all duration-500 z-10 ${
+              className={`relative w-[140px] h-[140px] md:w-[180px] md:h-[180px] rounded-full flex items-center justify-center transition-all duration-500 z-10 ${
                 visualPhase === 'off'
                   ? 'bg-[#1a1a20] border border-[#2a2a32] hover:border-[#3a3a44] shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
                   : visualPhase === 'spinning'
@@ -307,7 +324,7 @@ export default function VpnPage() {
               }`}
             >
               <svg
-                className={`w-16 h-16 transition-all duration-500 ${
+                className={`w-12 h-12 md:w-16 md:h-16 transition-all duration-500 ${
                   visualPhase === 'off'
                     ? 'text-[#555560]'
                     : visualPhase === 'spinning'
@@ -328,7 +345,7 @@ export default function VpnPage() {
         </div>
 
         {/* Bottom section */}
-        <div className="flex flex-col items-center gap-4 w-full max-w-[260px]">
+        <div className="flex flex-col items-center gap-4 w-full max-w-[260px] md:max-w-[260px]">
           <div className="flex flex-col items-center gap-1.5">
             <span className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
               <img

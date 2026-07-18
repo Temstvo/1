@@ -24,7 +24,7 @@ export default function SettingsPage() {
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value as 'en' | 'ru')}
-              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
             >
               <option value="en">English</option>
               <option value="ru">Русский</option>
@@ -35,7 +35,7 @@ export default function SettingsPage() {
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
             >
               <option>{t('settings_theme_system')}</option>
               <option>{t('settings_theme_light')}</option>
@@ -76,18 +76,18 @@ export default function SettingsPage() {
             <span className="happ-settings-label">{t('settings_fragmentation')}</span>
             <button
               onClick={() => setFragmentation(!fragmentation)}
-              className={`happ-toggle ${fragmentation ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+              className={`happ-toggle h-6 w-11 ${fragmentation ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
             >
-              <span className={`happ-toggle-knob ${fragmentation ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <span className={`happ-toggle-knob ${fragmentation ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
           <div className="happ-settings-row">
             <span className="happ-settings-label">{t('settings_multiplexor')}</span>
             <button
               onClick={() => setMultiplexor(!multiplexor)}
-              className={`happ-toggle ${multiplexor ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+              className={`happ-toggle h-6 w-11 ${multiplexor ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
             >
-              <span className={`happ-toggle-knob ${multiplexor ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <span className={`happ-toggle-knob ${multiplexor ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
           <div className="happ-settings-row">
@@ -95,7 +95,7 @@ export default function SettingsPage() {
             <select
               value={ipType}
               onChange={(e) => setIpType(e.target.value)}
-              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+              className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
             >
               <option>IPv4</option>
               <option>IPv6</option>
@@ -130,9 +130,9 @@ export default function SettingsPage() {
             <span className="happ-settings-label">{t('settings_lan')}</span>
             <button
               onClick={() => setLanAccess(!lanAccess)}
-              className={`happ-toggle ${lanAccess ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
+              className={`happ-toggle h-6 w-11 ${lanAccess ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
             >
-              <span className={`happ-toggle-knob ${lanAccess ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <span className={`happ-toggle-knob ${lanAccess ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
         </div>

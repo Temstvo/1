@@ -158,19 +158,19 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex flex-col">
       <header className="border-b border-white/5 bg-[#0d0d0d]/80 backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
             <span className="font-bold">APPI VPN</span>
           </Link>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-3 md:gap-4 text-sm">
             <Link href="/login" className="text-gray-400 hover:text-white transition-colors">{t('checkout_signin')}</Link>
             <Link href="/register" className="text-gray-400 hover:text-white transition-colors">{t('checkout_register')}</Link>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex items-start justify-center py-12 px-6">
+      <div className="flex-1 flex items-start justify-center py-6 md:py-12 px-4 md:px-6">
         <div className="w-full max-w-2xl">
           <div className="flex items-center justify-center gap-2 mb-10">
             {(['plan', 'details', 'payment'] as Step[]).map((s, i) => (
@@ -412,7 +412,7 @@ export default function CheckoutPage() {
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">{t('checkout_success')}</h1>
               <p className="text-gray-400 mb-8">{t('checkout_success_sub')}</p>
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/vpn" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
                   Go to VPN Dashboard
                 </Link>

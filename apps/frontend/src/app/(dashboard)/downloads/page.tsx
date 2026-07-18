@@ -89,7 +89,7 @@ export default function DownloadsPage() {
               <h3 className="font-semibold text-[var(--foreground)] mb-1">{platform.name}</h3>
               <div className="space-y-1.5 mt-3">
                 {platform.versions.map((v) => (
-                  <button key={v} className="w-full flex items-center justify-between px-3 py-2 bg-[var(--muted)] rounded-lg text-xs text-[var(--foreground)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-all">
+                  <button key={v} className="w-full flex items-center justify-between px-4 py-3 min-h-[44px] bg-[var(--muted)] rounded-lg text-xs text-[var(--foreground)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-all">
                     <span>{v}</span>
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />

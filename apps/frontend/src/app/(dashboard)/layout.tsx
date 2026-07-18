@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
 import AddSubscriptionModal from './add-subscription-modal';
 
@@ -13,8 +13,13 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const { t } = useTranslations();
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const sidebarWidth = expanded ? 180 : 52;
 
@@ -31,7 +36,7 @@ export default function DashboardLayout({
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       ),
-      action: () => setModalOpen(true),
+      action: () => { setModalOpen(true); setMobileOpen(false); },
     },
     {
       key: 'servers',
@@ -84,14 +89,36 @@ export default function DashboardLayout({
         onServersAdded={handleServersAdded}
       />
 
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="md:hidden fixed top-3 left-3 z-50 p-2.5 rounded-lg bg-[hsl(222,14%,10%)] border border-[hsl(222,14%,16%)] text-[hsl(222,10%,55%)] hover:text-white transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+          {mobileOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          )}
+        </svg>
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileOpen(false)} />
+      )}
+
+      {/* Sidebar */}
       <aside
-        className="flex flex-col shrink-0 bg-[hsl(222,14%,10%)] border-r border-[hsl(222,14%,16%)] transition-all duration-200"
+        className={`flex flex-col shrink-0 bg-[hsl(222,14%,10%)] border-r border-[hsl(222,14%,16%)] transition-all duration-200 z-40 ${
+          mobileOpen ? 'fixed inset-y-0 left-0' : 'hidden md:flex'
+        }`}
         style={{ width: sidebarWidth }}
       >
         {/* Toggle button */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-center h-12 text-[hsl(222,10%,55%)] hover:text-white transition-colors"
+          className="hidden md:flex items-center justify-center h-12 text-[hsl(222,10%,55%)] hover:text-white transition-colors"
         >
           {expanded ? (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -118,7 +145,7 @@ export default function DashboardLayout({
                   onClick={item.action}
                   title={expanded ? undefined : item.label}
                   className={`flex items-center gap-3 w-full rounded-lg transition-all ${
-                    expanded ? 'px-3 py-2' : 'justify-center px-0 py-2'
+                    expanded ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5'
                   } text-[hsl(222,10%,55%)] hover:bg-white/5 hover:text-white`}
                 >
                   {item.icon}
@@ -135,7 +162,7 @@ export default function DashboardLayout({
                 href={item.href!}
                 title={expanded ? undefined : item.label}
                 className={`flex items-center gap-3 w-full rounded-lg transition-all ${
-                  expanded ? 'px-3 py-2' : 'justify-center px-0 py-2'
+                  expanded ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5'
                 } ${
                   isActive
                     ? 'bg-white/10 text-white'
@@ -152,7 +179,7 @@ export default function DashboardLayout({
         </nav>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pt-12 md:pt-0">
         <div className="h-full">{children}</div>
       </main>
     </div>

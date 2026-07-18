@@ -16,15 +16,15 @@ export default function HomePage() {
             <span className="font-bold text-lg">APPI VPN</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
-            <a href="#features" className="hover:text-white transition-colors">{t('landing_features')}</a>
-            <a href="#servers" className="hover:text-white transition-colors">{t('landing_servers')}</a>
-            <a href="#download" className="hover:text-white transition-colors">{t('landing_download')}</a>
-            <a href="#faq" className="hover:text-white transition-colors">{t('landing_faq')}</a>
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#servers" className="hover:text-white transition-colors">Servers</a>
+            <a href="#download" className="hover:text-white transition-colors">Download</a>
+            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">{t('landing_signin')}</Link>
+            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign In</Link>
             <Link href="/checkout" className="px-5 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium transition-colors">
-              {t('landing_get_key')}
+              Get Key
             </Link>
           </div>
         </div>

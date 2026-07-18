@@ -1,3 +1,10 @@
+export const authKeyboard = [
+  [
+    { text: '🔑 Sign In', callback_data: 'auth:login' },
+    { text: '📝 Create Account', callback_data: 'auth:register' },
+  ],
+];
+
 export const mainMenuKeyboard = [
   [
     { text: '📊 Account', callback_data: 'menu:status' },

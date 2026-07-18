@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BotService } from './bot.service';
 import { Context } from 'telegraf';
-import { mainMenuKeyboard, backButton } from './keyboards';
+import { mainMenuKeyboard, authKeyboard, backButton } from './keyboards';
 
 interface UserData {
   email: string;
@@ -57,6 +57,9 @@ export class BotUpdate implements OnModuleInit {
     bot.start((ctx) => this.handleStart(ctx));
     bot.help((ctx) => this.handleHelp(ctx));
 
+    bot.action('auth:login', (ctx) => this.handleLoginStart(ctx));
+    bot.action('auth:register', (ctx) => this.handleRegisterStart(ctx));
+
     bot.action('menu:main', (ctx) => this.handleMainMenu(ctx));
     bot.action('menu:status', (ctx) => this.handleStatus(ctx));
     bot.action('menu:subscription', (ctx) => this.handleSubscription(ctx));
@@ -70,15 +73,11 @@ export class BotUpdate implements OnModuleInit {
     bot.on('text', (ctx) => this.handleText(ctx));
   }
 
-  private isLinked(userId: number): boolean {
-    return this.linkedUsers.has(userId);
-  }
-
   private async handleStart(ctx: Context) {
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    if (this.isLinked(userId)) {
+    if (this.linkedUsers.has(userId)) {
       await ctx.reply('🔐 *APPI VPN*\n\nYou are already logged in.', {
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: mainMenuKeyboard },
@@ -86,10 +85,12 @@ export class BotUpdate implements OnModuleInit {
       return;
     }
 
-    this.userStates.set(userId, { action: 'wait_email' });
     await ctx.reply(
-      '🔐 *APPI VPN*\n\nTo get started, enter your account email:',
-      { parse_mode: 'Markdown' },
+      '🔐 *Welcome to APPI VPN!*\n\nCreate an account or sign in to get started.',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: authKeyboard },
+      },
     );
   }
 
@@ -103,6 +104,22 @@ export class BotUpdate implements OnModuleInit {
     );
   }
 
+  private async handleLoginStart(ctx: Context) {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    this.userStates.set(userId, { action: 'login_email' });
+    await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
+  }
+
+  private async handleRegisterStart(ctx: Context) {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    this.userStates.set(userId, { action: 'register_email' });
+    await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
+  }
+
   private async handleMainMenu(ctx: Context) {
     await ctx.editMessageText('🔐 *APPI VPN*\n\nSelect an option:', {
       parse_mode: 'Markdown',
@@ -112,7 +129,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleStatus(ctx: Context) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return this.requireLogin(ctx);
+    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     const { token } = this.linkedUsers.get(userId)!;
     try {
@@ -139,7 +156,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleSubscription(ctx: Context) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return this.requireLogin(ctx);
+    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     const { token } = this.linkedUsers.get(userId)!;
     try {
@@ -170,7 +187,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleServers(ctx: Context) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return this.requireLogin(ctx);
+    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     const { token } = this.linkedUsers.get(userId)!;
     try {
@@ -201,7 +218,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleServerSelect(ctx: any) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return;
+    if (!userId || !this.linkedUsers.has(userId)) return;
 
     const serverId = ctx.match?.[1];
     const { token } = this.linkedUsers.get(userId)!;
@@ -222,7 +239,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleTraffic(ctx: Context) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return this.requireLogin(ctx);
+    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     const { token } = this.linkedUsers.get(userId)!;
     try {
@@ -242,7 +259,7 @@ export class BotUpdate implements OnModuleInit {
 
   private async handleDevices(ctx: Context) {
     const userId = ctx.from?.id;
-    if (!userId || !this.isLinked(userId)) return this.requireLogin(ctx);
+    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
 
     const { token } = this.linkedUsers.get(userId)!;
     try {
@@ -276,14 +293,14 @@ export class BotUpdate implements OnModuleInit {
     this.linkedUsers.delete(userId);
     this.userStates.delete(userId);
 
-    await ctx.reply('Logged out. Send /start to re-login.', {
-      reply_markup: { inline_keyboard: mainMenuKeyboard },
+    await ctx.reply('Logged out.', {
+      reply_markup: { inline_keyboard: authKeyboard },
     });
   }
 
   private async requireLogin(ctx: Context) {
-    await ctx.reply('Please log in first. Send /start', {
-      reply_markup: { inline_keyboard: [[{ text: '/start', callback_data: 'menu:main' }]] },
+    await ctx.reply('Please log in first.', {
+      reply_markup: { inline_keyboard: authKeyboard },
     });
   }
 
@@ -296,26 +313,82 @@ export class BotUpdate implements OnModuleInit {
     if (!state) return;
 
     switch (state.action) {
-      case 'wait_email': {
+      case 'register_email': {
         const email = text.trim();
         if (!email.includes('@')) {
           await ctx.reply('Invalid email. Try again:');
           return;
         }
-        this.userStates.set(userId, { action: 'wait_password', data: { email } });
+        this.userStates.set(userId, { action: 'register_password', data: { email } });
+        await ctx.reply('Create a password (min 8 characters):');
+        return;
+      }
+
+      case 'register_password': {
+        const password = text.trim();
+        if (password.length < 8) {
+          await ctx.reply('Password must be at least 8 characters. Try again:');
+          return;
+        }
+        this.userStates.set(userId, { action: 'register_confirm', data: { ...state.data, password } });
+        await ctx.reply('Confirm your password:');
+        return;
+      }
+
+      case 'register_confirm': {
+        const { email, password } = state.data;
+        this.userStates.delete(userId);
+
+        if (text.trim() !== password) {
+          await ctx.reply('Passwords do not match. Send /start to try again.', {
+            reply_markup: { inline_keyboard: authKeyboard },
+          });
+          return;
+        }
+
+        try {
+          const data = await this.api('/auth/register', {
+            method: 'POST',
+            body: { email, password },
+          });
+
+          this.linkedUsers.set(userId, {
+            email,
+            token: data.accessToken,
+            refreshToken: data.refreshToken,
+          });
+
+          await ctx.reply(
+            `✅ *Account created!*\n\nEmail: ${email}`,
+            { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
+          );
+        } catch (e: any) {
+          await ctx.reply('Registration failed. Send /start to try again.', {
+            reply_markup: { inline_keyboard: authKeyboard },
+          });
+        }
+        return;
+      }
+
+      case 'login_email': {
+        const email = text.trim();
+        if (!email.includes('@')) {
+          await ctx.reply('Invalid email. Try again:');
+          return;
+        }
+        this.userStates.set(userId, { action: 'login_password', data: { email } });
         await ctx.reply('Enter your password:');
         return;
       }
 
-      case 'wait_password': {
+      case 'login_password': {
         const { email } = state.data;
-        const password = text.trim();
         this.userStates.delete(userId);
 
         try {
           const data = await this.api('/auth/login', {
             method: 'POST',
-            body: { email, password },
+            body: { email, password: text.trim() },
           });
 
           this.linkedUsers.set(userId, {
@@ -329,8 +402,8 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          await ctx.reply('Login failed. Check your credentials and send /start to try again.', {
-            reply_markup: { inline_keyboard: mainMenuKeyboard },
+          await ctx.reply('Login failed. Send /start to try again.', {
+            reply_markup: { inline_keyboard: authKeyboard },
           });
         }
         return;

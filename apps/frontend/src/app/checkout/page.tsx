@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from '@/lib/i18n';
 
 type Step = 'plan' | 'details' | 'payment' | 'success';
 type PaymentMethod = 'card' | 'crypto' | 'telegram';
@@ -14,6 +15,7 @@ const plans = [
 ];
 
 export default function CheckoutPage() {
+  const { t } = useTranslations();
   const [step, setStep] = useState<Step>('plan');
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
@@ -41,7 +43,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex flex-col">
-      {/* Header */}
       <header className="border-b border-white/5 bg-[#0d0d0d]/80 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -49,15 +50,14 @@ export default function CheckoutPage() {
             <span className="font-bold">APPI VPN</span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <Link href="/login" className="text-gray-400 hover:text-white transition-colors">Sign In</Link>
-            <Link href="/register" className="text-gray-400 hover:text-white transition-colors">Register</Link>
+            <Link href="/login" className="text-gray-400 hover:text-white transition-colors">{t('checkout_signin')}</Link>
+            <Link href="/register" className="text-gray-400 hover:text-white transition-colors">{t('checkout_register')}</Link>
           </div>
         </div>
       </header>
 
       <div className="flex-1 flex items-start justify-center py-12 px-6">
         <div className="w-full max-w-2xl">
-          {/* Steps indicator */}
           <div className="flex items-center justify-center gap-2 mb-10">
             {(['plan', 'details', 'payment'] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
@@ -73,8 +73,8 @@ export default function CheckoutPage() {
 
           {step === 'plan' && (
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2 text-center">Choose a Plan</h1>
-              <p className="text-gray-400 text-center mb-8">Select the plan that suits you</p>
+              <h1 className="text-2xl font-bold text-white mb-2 text-center">{t('checkout_step_plan')}</h1>
+              <p className="text-gray-400 text-center mb-8">{t('checkout_step_plan_sub')}</p>
               <div className="space-y-3">
                 {plans.map((p) => (
                   <button
@@ -99,7 +99,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="text-right">
                       {p.price === 0 ? (
-                        <span className="text-green-400 font-bold">Free</span>
+                        <span className="text-green-400 font-bold">{t('checkout_free')}</span>
                       ) : (
                         <div>
                           <span className="text-lg font-bold text-white">₽{p.price.toLocaleString()}</span>
@@ -111,18 +111,18 @@ export default function CheckoutPage() {
                 ))}
               </div>
               <button onClick={() => setStep('details')} className="w-full mt-6 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-colors">
-                Continue
+                {t('checkout_continue')}
               </button>
             </div>
           )}
 
           {step === 'details' && (
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2 text-center">Your Details</h1>
-              <p className="text-gray-400 text-center mb-8">Enter your email to receive the VPN key</p>
+              <h1 className="text-2xl font-bold text-white mb-2 text-center">{t('checkout_details_title')}</h1>
+              <p className="text-gray-400 text-center mb-8">{t('checkout_details_sub')}</p>
               <div className="bg-[#141414] border border-white/5 rounded-xl p-6 space-y-4">
                 <div>
-                  <label className="text-sm text-gray-400 mb-1.5 block">Email</label>
+                  <label className="text-sm text-gray-400 mb-1.5 block">{t('checkout_email')}</label>
                   <input
                     type="email"
                     value={email}
@@ -132,28 +132,28 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1.5 block">Promo Code</label>
+                  <label className="text-sm text-gray-400 mb-1.5 block">{t('checkout_promo')}</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Enter promo code"
+                      placeholder={t('checkout_promo_enter')}
                       className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
                     />
                     <button onClick={handlePromo} className="px-5 py-3 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">
-                      Apply
+                      {t('checkout_promo_apply')}
                     </button>
                   </div>
-                  {promoApplied && <p className="mt-2 text-xs text-green-400">Promo code applied! 10% discount</p>}
+                  {promoApplied && <p className="mt-2 text-xs text-green-400">{t('checkout_promo_ok')}</p>}
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setStep('plan')} className="flex-1 py-3.5 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
-                  Back
+                  {t('checkout_back')}
                 </button>
                 <button onClick={() => setStep('payment')} className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-colors">
-                  Continue
+                  {t('checkout_continue')}
                 </button>
               </div>
             </div>
@@ -161,42 +161,40 @@ export default function CheckoutPage() {
 
           {step === 'payment' && (
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2 text-center">Payment</h1>
-              <p className="text-gray-400 text-center mb-8">Choose a payment method</p>
+              <h1 className="text-2xl font-bold text-white mb-2 text-center">{t('checkout_payment_title')}</h1>
+              <p className="text-gray-400 text-center mb-8">{t('checkout_payment_sub')}</p>
 
-              {/* Order summary */}
               <div className="bg-[#141414] border border-white/5 rounded-xl p-5 mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Plan</span>
+                  <span className="text-gray-400">{t('checkout_plan')}</span>
                   <span className="text-white font-medium">{plan.name}</span>
                 </div>
                 {plan.price > 0 && (
                   <>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Price</span>
+                      <span className="text-gray-400">{t('checkout_price')}</span>
                       <span className="text-white">₽{plan.price.toLocaleString()}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between text-sm mb-2 text-green-400">
-                        <span>Discount (10%)</span>
+                        <span>{t('checkout_discount')}</span>
                         <span>-₽{discount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
-                      <span className="font-semibold text-white">Total</span>
+                      <span className="font-semibold text-white">{t('checkout_total')}</span>
                       <span className="font-bold text-lg text-white">₽{finalPrice.toLocaleString()}</span>
                     </div>
                   </>
                 )}
                 {plan.price === 0 && (
                   <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
-                    <span className="font-semibold text-white">Total</span>
-                    <span className="font-bold text-lg text-green-400">Free</span>
+                    <span className="font-semibold text-white">{t('checkout_total')}</span>
+                    <span className="font-bold text-lg text-green-400">{t('checkout_free')}</span>
                   </div>
                 )}
               </div>
 
-              {/* Payment methods */}
               <div className="space-y-3">
                 <button
                   onClick={() => setPaymentMethod('card')}
@@ -206,8 +204,8 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">💳</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">Bank Card (SBP / Visa / Mastercard)</div>
-                    <div className="text-xs text-gray-500">Instant payment via YooKassa</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_card')}</div>
+                    <div className="text-xs text-gray-500">{t('checkout_card_desc')}</div>
                   </div>
                 </button>
 
@@ -219,8 +217,8 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">₿</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">Cryptocurrency</div>
-                    <div className="text-xs text-gray-500">BTC, ETH, USDT, LTC and other</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_crypto')}</div>
+                    <div className="text-xs text-gray-500">{t('checkout_crypto_desc')}</div>
                   </div>
                 </button>
 
@@ -232,22 +230,22 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">📱</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">Telegram Bot</div>
-                    <div className="text-xs text-gray-500">Pay via @AppiVPNBot</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_telegram')}</div>
+                    <div className="text-xs text-gray-500">{t('checkout_telegram_desc')}</div>
                   </div>
                 </button>
               </div>
 
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setStep('details')} className="flex-1 py-3.5 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
-                  Back
+                  {t('checkout_back')}
                 </button>
                 <button onClick={handlePay} className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-semibold text-sm transition-colors">
-                  {plan.price === 0 ? 'Get Free Key' : `Pay ₽${finalPrice.toLocaleString()}`}
+                  {plan.price === 0 ? t('checkout_get_free') : `${t('checkout_pay')} ₽${finalPrice.toLocaleString()}`}
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-600 mt-4">Secure payment. 30-day money-back guarantee.</p>
+              <p className="text-center text-xs text-gray-600 mt-4">{t('checkout_secure')}</p>
             </div>
           )}
 
@@ -258,21 +256,21 @@ export default function CheckoutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">Payment Successful!</h1>
-              <p className="text-gray-400 mb-8">Your VPN key has been sent to <span className="text-white">{email}</span></p>
+              <h1 className="text-2xl font-bold text-white mb-2">{t('checkout_success')}</h1>
+              <p className="text-gray-400 mb-8">{t('checkout_success_sub')} <span className="text-white">{email}</span></p>
               <div className="bg-[#141414] border border-white/5 rounded-xl p-6 mb-8 max-w-md mx-auto">
-                <div className="text-xs text-gray-500 mb-2">Your VPN Key</div>
+                <div className="text-xs text-gray-500 mb-2">{t('checkout_your_key')}</div>
                 <div className="font-mono text-lg text-purple-400 break-all">appi-xxxx-xxxx-xxxx-xxxx</div>
                 <button className="mt-3 text-xs text-gray-400 hover:text-white transition-colors">
-                  Copy key
+                  {t('checkout_copy')}
                 </button>
               </div>
               <div className="flex gap-3 justify-center">
                 <Link href="/login" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
-                  Sign In
+                  {t('checkout_signin')}
                 </Link>
                 <Link href="/" className="px-6 py-3 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
-                  Home
+                  {t('checkout_home')}
                 </Link>
               </div>
             </div>

@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { useTranslations } from '@/lib/i18n';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export default function LoginPage() {
       localStorage.setItem('refreshToken', data.refreshToken);
       router.push('/vpn');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      setError(err.response?.data?.message || t('login_error'));
     } finally {
       setLoading(false);
     }
@@ -31,8 +33,8 @@ export default function LoginPage() {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white">Welcome back</h2>
-        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">Sign in to your APPI VPN account</p>
+        <h2 className="text-2xl font-bold text-white">{t('login_welcome')}</h2>
+        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">{t('login_subtitle')}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -41,7 +43,7 @@ export default function LoginPage() {
           </div>
         )}
         <div>
-          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Email</label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('login_email')}</label>
           <input
             type="email"
             value={email}
@@ -53,9 +55,9 @@ export default function LoginPage() {
         </div>
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm text-[hsl(222,10%,55%)]">Password</label>
+            <label className="text-sm text-[hsl(222,10%,55%)]">{t('login_password')}</label>
             <Link href="/forgot-password" className="text-xs text-[hsl(267,80%,60%)] hover:underline">
-              Forgot password?
+              {t('login_forgot')}
             </Link>
           </div>
           <input
@@ -72,13 +74,13 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? t('login_loading') : t('login_submit')}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-[hsl(222,10%,55%)]">
-        Don&apos;t have an account?{' '}
+        {t('login_no_account')}{' '}
         <Link href="/register" className="text-[hsl(267,80%,60%)] hover:underline font-medium">
-          Create one
+          {t('login_create')}
         </Link>
       </p>
     </>

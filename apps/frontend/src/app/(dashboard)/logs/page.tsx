@@ -1,17 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from '@/lib/i18n';
 
 type LogTab = 'main' | 'core' | 'tunnel' | 'antifilter' | 'subscription' | 'service';
-
-const logTabs: { id: LogTab; label: string }[] = [
-  { id: 'main', label: 'Main Log' },
-  { id: 'core', label: 'Core Log' },
-  { id: 'tunnel', label: 'Tunnel Log' },
-  { id: 'antifilter', label: 'AntiFilter Log' },
-  { id: 'subscription', label: 'Subscription Log' },
-  { id: 'service', label: 'Service Log' },
-];
 
 const mockLogs: Record<LogTab, string[]> = {
   main: [
@@ -59,14 +51,24 @@ const mockLogs: Record<LogTab, string[]> = {
 };
 
 export default function LogsPage() {
+  const { t } = useTranslations();
   const [activeTab, setActiveTab] = useState<LogTab>('main');
+
+  const logTabs: { id: LogTab; label: string }[] = [
+    { id: 'main', label: t('logs_main') },
+    { id: 'core', label: t('logs_core') },
+    { id: 'tunnel', label: t('logs_tunnel') },
+    { id: 'antifilter', label: t('logs_antifilter') },
+    { id: 'subscription', label: t('logs_subscription') },
+    { id: 'service', label: t('logs_service') },
+  ];
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-[var(--border)]">
-        <h1 className="text-lg font-semibold text-[var(--foreground)] mb-1">Logs</h1>
+        <h1 className="text-lg font-semibold text-[var(--foreground)] mb-1">{t('logs_title')}</h1>
         <p className="text-xs text-[var(--muted-foreground)]">
-          Press Ctrl+R to create a report
+          {t('logs_hint')}
         </p>
       </div>
 

@@ -4,6 +4,7 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
 import './globals.css';
+import Providers from './providers';
 
 const inter = 'inter';
 
@@ -44,7 +45,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased overscroll-none">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

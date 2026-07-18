@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from '@/lib/i18n';
+
 const platforms = [
   {
     name: 'Windows',
@@ -72,12 +74,14 @@ const platforms = [
 ];
 
 export default function DownloadsPage() {
+  const { t } = useTranslations();
+
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold text-[var(--foreground)]">Downloads</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('downloads_title')}</h1>
 
       <div>
-        <h2 className="happ-section-header">VPN Clients</h2>
+        <h2 className="happ-section-header">{t('downloads_clients')}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {platforms.map((platform) => (
             <div key={platform.name} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 hover:border-[var(--primary)]/30 transition-all">

@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from '@/lib/i18n';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslations();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
@@ -20,9 +22,9 @@ export default function ForgotPasswordPage() {
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#8B5CF6"/><path d="M10 16l4 4 8-8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             APPI VPN
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-6">Reset password</h1>
+          <h1 className="text-2xl font-bold text-white mt-6">{t('forgot_title')}</h1>
           <p className="text-[hsl(222,10%,55%)] mt-2">
-            Enter your email and we&apos;ll send you a reset link
+            {t('forgot_subtitle')}
           </p>
         </div>
 
@@ -33,18 +35,18 @@ export default function ForgotPasswordPage() {
                 <path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4z"/>
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Check your email</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">{t('forgot_check')}</h2>
             <p className="text-[hsl(222,10%,55%)] text-sm">
-              We sent a password reset link to <span className="text-white">{email}</span>
+              {t('forgot_sent')} <span className="text-white">{email}</span>
             </p>
             <Link href="/login" className="inline-block mt-6 text-sm text-[hsl(267,80%,60%)] hover:underline">
-              Back to login
+              {t('forgot_back')}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="bg-[hsl(222,14%,12%)] rounded-2xl p-8 space-y-4">
             <div>
-              <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Email</label>
+              <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('forgot_email')}</label>
               <input
                 type="email"
                 value={email}
@@ -55,10 +57,10 @@ export default function ForgotPasswordPage() {
               />
             </div>
             <button type="submit" className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] text-white font-semibold rounded-xl transition-colors">
-              Send reset link
+              {t('forgot_submit')}
             </button>
             <p className="text-center text-sm text-[hsl(222,10%,55%)]">
-              Remember your password? <Link href="/login" className="text-[hsl(267,80%,60%)] hover:underline">Log in</Link>
+              {t('forgot_remember')} <Link href="/login" className="text-[hsl(267,80%,60%)] hover:underline">{t('forgot_login')}</Link>
             </p>
           </form>
         )}

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from '@/lib/i18n';
 
 export default function SettingsPage() {
-  const [language, setLanguage] = useState('Russian');
+  const { lang, setLang, t } = useTranslations();
   const [theme, setTheme] = useState('System');
   const [fragmentation, setFragmentation] = useState(false);
   const [multiplexor, setMultiplexor] = useState(false);
@@ -12,40 +13,37 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold text-[var(--foreground)]">Settings</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('settings_title')}</h1>
 
       {/* Interface Settings */}
       <div>
-        <h2 className="happ-section-header">Interface Settings</h2>
+        <h2 className="happ-section-header">{t('settings_interface')}</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Language</span>
+            <span className="happ-settings-label">{t('settings_language')}</span>
             <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              value={lang}
+              onChange={(e) => setLang(e.target.value as 'en' | 'ru')}
               className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
             >
-              <option>Russian</option>
-              <option>English</option>
-              <option>German</option>
-              <option>French</option>
-              <option>Spanish</option>
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
             </select>
           </div>
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Theme</span>
+            <span className="happ-settings-label">{t('settings_theme')}</span>
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
               className="bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
             >
-              <option>System</option>
-              <option>Light</option>
-              <option>Dark</option>
+              <option>{t('settings_theme_system')}</option>
+              <option>{t('settings_theme_light')}</option>
+              <option>{t('settings_theme_dark')}</option>
             </select>
           </div>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Interface Settings</span>
+            <span className="happ-settings-label">{t('settings_interface_settings')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
@@ -55,10 +53,10 @@ export default function SettingsPage() {
 
       {/* Tunnel Settings */}
       <div>
-        <h2 className="happ-section-header">Tunnel Settings</h2>
+        <h2 className="happ-section-header">{t('settings_tunnel')}</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Routing Rules</span>
+            <span className="happ-settings-label">{t('settings_routing_rules')}</span>
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -66,7 +64,7 @@ export default function SettingsPage() {
             </div>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">App Proxy Settings</span>
+            <span className="happ-settings-label">{t('settings_app_proxy')}</span>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--primary)]" />
               <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -75,7 +73,7 @@ export default function SettingsPage() {
             </div>
           </button>
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Enable Fragmentation</span>
+            <span className="happ-settings-label">{t('settings_fragmentation')}</span>
             <button
               onClick={() => setFragmentation(!fragmentation)}
               className={`happ-toggle ${fragmentation ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
@@ -84,7 +82,7 @@ export default function SettingsPage() {
             </button>
           </div>
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Enable Multiplexor</span>
+            <span className="happ-settings-label">{t('settings_multiplexor')}</span>
             <button
               onClick={() => setMultiplexor(!multiplexor)}
               className={`happ-toggle ${multiplexor ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
@@ -93,7 +91,7 @@ export default function SettingsPage() {
             </button>
           </div>
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Preferred IP Type</span>
+            <span className="happ-settings-label">{t('settings_ip_type')}</span>
             <select
               value={ipType}
               onChange={(e) => setIpType(e.target.value)}
@@ -108,28 +106,28 @@ export default function SettingsPage() {
 
       {/* Additional Settings */}
       <div>
-        <h2 className="happ-section-header">Additional Settings</h2>
+        <h2 className="happ-section-header">{t('settings_additional')}</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Additional Settings</span>
+            <span className="happ-settings-label">{t('settings_additional_settings')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Subscription</span>
+            <span className="happ-settings-label">{t('settings_subscription')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Ping</span>
+            <span className="happ-settings-label">{t('settings_ping')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <div className="happ-settings-row">
-            <span className="happ-settings-label">Allow LAN Connections</span>
+            <span className="happ-settings-label">{t('settings_lan')}</span>
             <button
               onClick={() => setLanAccess(!lanAccess)}
               className={`happ-toggle ${lanAccess ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
@@ -142,16 +140,16 @@ export default function SettingsPage() {
 
       {/* Others */}
       <div>
-        <h2 className="happ-section-header">Other</h2>
+        <h2 className="happ-section-header">{t('settings_other')}</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">Logs</span>
+            <span className="happ-settings-label">{t('settings_logs')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="text-sm text-red-500">Reset</span>
+            <span className="text-sm text-red-500">{t('settings_reset')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
@@ -161,22 +159,22 @@ export default function SettingsPage() {
 
       {/* About */}
       <div>
-        <h2 className="happ-section-header">About</h2>
+        <h2 className="happ-section-header">{t('settings_about')}</h2>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">FAQ</span>
+            <span className="happ-settings-label">{t('settings_faq')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">URL Schemes</span>
+            <span className="happ-settings-label">{t('settings_url_schemes')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>
           </button>
           <button className="happ-settings-row w-full text-left hover:bg-[var(--muted)]/50 transition-colors">
-            <span className="happ-settings-label">About App</span>
+            <span className="happ-settings-label">{t('settings_about_app')}</span>
             <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
             </svg>

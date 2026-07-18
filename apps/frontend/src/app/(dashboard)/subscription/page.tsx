@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from '@/lib/i18n';
+
 const plans = [
   {
     id: 'free',
@@ -45,49 +47,51 @@ const plans = [
 ];
 
 export default function SubscriptionPage() {
+  const { t } = useTranslations();
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold text-[var(--foreground)]">Subscription</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('sub_title')}</h1>
 
       {/* Current Plan */}
       <div className="bg-[var(--card)] border border-[var(--primary)]/30 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs text-[var(--primary)] mb-1">Current Plan</div>
+            <div className="text-xs text-[var(--primary)] mb-1">{t('sub_current_plan')}</div>
             <h2 className="text-xl font-bold text-[var(--foreground)]">Pro</h2>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[var(--foreground)]">₽1199<span className="text-sm font-normal text-[var(--muted-foreground)]">/mo</span></div>
-            <div className="text-xs text-[var(--muted-foreground)]">Renews on Aug 15, 2026</div>
+            <div className="text-xs text-[var(--muted-foreground)]">{t('sub_renews')}</div>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
           <div>
-            <span className="text-[var(--muted-foreground)]">Traffic</span>
+            <span className="text-[var(--muted-foreground)]">{t('sub_traffic')}</span>
             <div className="font-medium text-[var(--foreground)]">200 GB</div>
           </div>
           <div>
-            <span className="text-[var(--muted-foreground)]">Devices</span>
+            <span className="text-[var(--muted-foreground)]">{t('sub_devices')}</span>
             <div className="font-medium text-[var(--foreground)]">5</div>
           </div>
           <div>
-            <span className="text-[var(--muted-foreground)]">Protocols</span>
+            <span className="text-[var(--muted-foreground)]">{t('sub_protocols')}</span>
             <div className="font-medium text-[var(--foreground)]">All</div>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
           <button className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors">
-            Change Plan
+            {t('sub_change')}
           </button>
           <button className="px-4 py-2 bg-[var(--muted)] text-[var(--muted-foreground)] rounded-lg text-sm font-medium hover:text-[var(--foreground)] transition-colors">
-            Cancel
+            {t('sub_cancel')}
           </button>
         </div>
       </div>
 
       {/* Available Plans */}
       <div>
-        <h2 className="happ-section-header">Available Plans</h2>
+        <h2 className="happ-section-header">{t('sub_available')}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {plans.map((plan) => (
             <div
@@ -99,7 +103,7 @@ export default function SubscriptionPage() {
               }`}
             >
               {plan.popular && (
-                <div className="text-xs text-[var(--primary)] mb-2">Popular</div>
+                <div className="text-xs text-[var(--primary)] mb-2">{t('sub_popular')}</div>
               )}
               <h3 className="font-semibold text-[var(--foreground)] mb-1">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-3">
@@ -119,7 +123,7 @@ export default function SubscriptionPage() {
                 }`}
                 disabled={plan.current}
               >
-                {plan.current ? 'Current' : 'Select'}
+                {plan.current ? t('sub_current') : t('sub_select')}
               </button>
             </div>
           ))}

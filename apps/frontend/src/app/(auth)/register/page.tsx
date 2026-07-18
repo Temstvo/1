@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { useTranslations } from '@/lib/i18n';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslations();
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,12 +18,12 @@ export default function RegisterPage() {
     setError('');
 
     if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register_error_match'));
       return;
     }
 
     if (form.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('register_error_length'));
       return;
     }
 
@@ -35,7 +37,7 @@ export default function RegisterPage() {
       localStorage.setItem('refreshToken', data.refreshToken);
       router.push('/vpn');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
+      setError(err.response?.data?.message || t('register_error_fail'));
     } finally {
       setLoading(false);
     }
@@ -44,8 +46,8 @@ export default function RegisterPage() {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white">Create account</h2>
-        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">Join APPI VPN for private internet access</p>
+        <h2 className="text-2xl font-bold text-white">{t('register_title')}</h2>
+        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">{t('register_subtitle')}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -54,7 +56,7 @@ export default function RegisterPage() {
           </div>
         )}
         <div>
-          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Email</label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('register_email')}</label>
           <input
             type="email"
             value={form.email}
@@ -65,7 +67,7 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Password</label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('register_password')}</label>
           <input
             type="password"
             value={form.password}
@@ -74,10 +76,10 @@ export default function RegisterPage() {
             className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
             placeholder="Min 8 characters"
           />
-          <p className="mt-1 text-xs text-[hsl(222,10%,40%)]">Uppercase, lowercase, number, special character</p>
+          <p className="mt-1 text-xs text-[hsl(222,10%,40%)]">{t('register_hint')}</p>
         </div>
         <div>
-          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">Confirm Password</label>
+          <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('register_confirm')}</label>
           <input
             type="password"
             value={form.confirmPassword}
@@ -92,13 +94,13 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
         >
-          {loading ? 'Creating account...' : 'Create Account'}
+          {loading ? t('register_loading') : t('register_submit')}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-[hsl(222,10%,55%)]">
-        Already have an account?{' '}
+        {t('register_has_account')}{' '}
         <Link href="/login" className="text-[hsl(267,80%,60%)] hover:underline font-medium">
-          Sign in
+          {t('register_signin')}
         </Link>
       </p>
     </>

@@ -18,6 +18,7 @@ interface Plan {
 
 interface Subscription {
   id: string;
+  planId: string;
   status: string;
   plan: Plan;
   expiresAt: string;
@@ -130,7 +131,7 @@ export default function SubscriptionPage() {
           <div className="grid gap-3">
             {plans.map((p) => (
               <div key={p.id} className={`bg-[#141414] border rounded-xl p-4 flex items-center justify-between ${
-                subscription?.planId === p.id ? 'border-purple-500/30' : 'border-white/5'
+                subscription?.plan?.id === p.id ? 'border-purple-500/30' : 'border-white/5'
               }`}>
                 <div>
                   <div className="text-sm font-medium text-white">{p.name}</div>
@@ -138,7 +139,7 @@ export default function SubscriptionPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-white">₽{p.price.toLocaleString()}</span>
-                  {subscription?.planId !== p.id && (
+                  {subscription?.plan?.id !== p.id && (
                     <button onClick={() => handleChangePlan(p.id)} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 transition-colors">
                       Switch
                     </button>

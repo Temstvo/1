@@ -18,6 +18,7 @@ interface Plan {
   trafficLimit: number;
   deviceLimit: number;
   features: string[];
+  isActive?: boolean;
 }
 
 function formatTraffic(bytes: number): string {
@@ -214,7 +215,13 @@ export default function CheckoutPage() {
               </button>
 
               <div className="space-y-3">
-                {plans.filter(p => p.price > 0).map((p) => (
+                {loading ? (
+                  <>
+                    <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
+                    <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
+                    <div className="h-[72px] bg-white/5 rounded-xl animate-pulse" />
+                  </>
+                ) : plans.filter(p => p.price > 0).map((p) => (
                   <button
                     key={p.id}
                     onClick={() => setSelectedPlan(p.id)}

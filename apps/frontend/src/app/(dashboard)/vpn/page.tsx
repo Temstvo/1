@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
 
-const servers = [
+const defaultServers = [
   { id: '1', country: 'Germany', city: 'Nuremberg', code: 'DE', protocol: 'VLESS', flag: '🇩🇪', online: true },
   { id: '2', country: 'Germany', city: 'Karlsruhe', code: 'DE', protocol: 'VLESS', flag: '🇩🇪', online: true },
   { id: '3', country: 'Latvia', city: 'Riga', code: 'LV', protocol: 'VLESS', flag: '🇱🇻', online: true },
@@ -37,7 +37,8 @@ function PingDots() {
 
 export default function VpnPage() {
   const [search, setSearch] = useState('');
-  const [selectedServer, setSelectedServer] = useState(servers[0]);
+  const [allServers, setAllServers] = useState(defaultServers);
+  const [selectedServer, setSelectedServer] = useState(defaultServers[0]);
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [visualPhase, setVisualPhase] = useState<VisualPhase>('off');
   const [connectionTime, setConnectionTime] = useState('00:00:00');
@@ -49,6 +50,18 @@ export default function VpnPage() {
   const secondsRef = useRef(0);
   const pingTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
   const { t } = useTranslations();
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('appi-added-servers');
+      if (saved) {
+        const extra = JSON.parse(saved);
+        if (Array.isArray(extra) && extra.length > 0) {
+          setAllServers((prev) => [...prev, ...extra]);
+        }
+      }
+    } catch {}
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {
@@ -63,7 +76,7 @@ export default function VpnPage() {
     pingTimeouts.current = [];
   }, []);
 
-  const filteredServers = servers.filter(
+  const filteredServers = allServers.filter(
     (s) =>
       s.country.toLowerCase().includes(search.toLowerCase()) ||
       s.city.toLowerCase().includes(search.toLowerCase())

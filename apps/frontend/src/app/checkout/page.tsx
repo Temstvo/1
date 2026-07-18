@@ -258,10 +258,6 @@ export default function CheckoutPage() {
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">{t('checkout_success')}</h1>
               <p className="text-gray-400 mb-8">{t('checkout_success_sub')} <span className="text-white">{email}</span></p>
-              <div className="bg-[#141414] border border-white/5 rounded-xl p-6 mb-8 max-w-md mx-auto">
-                <div className="text-xs text-gray-500 mb-2">{t('checkout_your_key')}</div>
-                <div className="text-sm text-gray-400">{t('checkout_key_sent_to') || 'Your VPN key will be sent to'} <span className="text-white">{email}</span></div>
-              </div>
               <div className="flex gap-3 justify-center">
                 <Link href="/login" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
                   {t('checkout_signin')}

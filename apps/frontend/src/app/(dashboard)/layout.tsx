@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from '@/lib/i18n';
+import AddSubscriptionModal from './add-subscription-modal';
 
 export default function DashboardLayout({
   children,
@@ -12,21 +13,28 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const { t } = useTranslations();
 
   const sidebarWidth = expanded ? 180 : 52;
 
-  const topItems = [
+  const handleServersAdded = () => {
+    window.location.reload();
+  };
+
+  const navItems = [
     {
+      key: 'add',
       label: t('sidebar_add'),
-      href: '/checkout',
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       ),
+      action: () => setModalOpen(true),
     },
     {
+      key: 'servers',
       label: t('sidebar_servers'),
       href: '/vpn',
       icon: (
@@ -36,6 +44,7 @@ export default function DashboardLayout({
       ),
     },
     {
+      key: 'settings',
       label: t('sidebar_settings'),
       href: '/settings',
       icon: (
@@ -46,6 +55,7 @@ export default function DashboardLayout({
       ),
     },
     {
+      key: 'stats',
       label: t('sidebar_stats'),
       href: '/traffic',
       icon: (
@@ -55,6 +65,7 @@ export default function DashboardLayout({
       ),
     },
     {
+      key: 'logs',
       label: t('sidebar_logs'),
       href: '/logs',
       icon: (
@@ -65,31 +76,14 @@ export default function DashboardLayout({
     },
   ];
 
-  const renderItem = (item: typeof topItems[0]) => {
-    const isActive = pathname === item.href;
-    return (
-      <Link
-        key={item.href}
-        href={item.href}
-        title={expanded ? undefined : item.label}
-        className={`flex items-center gap-3 w-full rounded-lg transition-all ${
-          expanded ? 'px-3 py-2' : 'justify-center px-0 py-2'
-        } ${
-          isActive
-            ? 'bg-white/10 text-white'
-            : 'text-[hsl(222,10%,55%)] hover:bg-white/5 hover:text-white'
-        }`}
-      >
-        {item.icon}
-        {expanded && (
-          <span className="text-sm font-medium truncate">{item.label}</span>
-        )}
-      </Link>
-    );
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-[hsl(222,14%,6%)]">
+      <AddSubscriptionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onServersAdded={handleServersAdded}
+      />
+
       <aside
         className="flex flex-col shrink-0 bg-[hsl(222,14%,10%)] border-r border-[hsl(222,14%,16%)] transition-all duration-200"
         style={{ width: sidebarWidth }}
@@ -114,7 +108,47 @@ export default function DashboardLayout({
 
         {/* Nav */}
         <nav className={`flex flex-col gap-1 flex-1 ${expanded ? 'px-2 py-3' : 'px-2 py-3 items-center'}`}>
-          {topItems.map(renderItem)}
+          {navItems.map((item) => {
+            const isActive = item.href ? pathname === item.href : false;
+
+            if (item.action) {
+              return (
+                <button
+                  key={item.key}
+                  onClick={item.action}
+                  title={expanded ? undefined : item.label}
+                  className={`flex items-center gap-3 w-full rounded-lg transition-all ${
+                    expanded ? 'px-3 py-2' : 'justify-center px-0 py-2'
+                  } text-[hsl(222,10%,55%)] hover:bg-white/5 hover:text-white`}
+                >
+                  {item.icon}
+                  {expanded && (
+                    <span className="text-sm font-medium truncate">{item.label}</span>
+                  )}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={item.key}
+                href={item.href!}
+                title={expanded ? undefined : item.label}
+                className={`flex items-center gap-3 w-full rounded-lg transition-all ${
+                  expanded ? 'px-3 py-2' : 'justify-center px-0 py-2'
+                } ${
+                  isActive
+                    ? 'bg-white/10 text-white'
+                    : 'text-[hsl(222,10%,55%)] hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                {item.icon}
+                {expanded && (
+                  <span className="text-sm font-medium truncate">{item.label}</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 

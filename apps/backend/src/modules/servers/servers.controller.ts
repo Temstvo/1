@@ -200,10 +200,4 @@ export class ServersController {
     await this.serversService.delete(id);
     return { message: 'Server deleted successfully' };
   }
-
-  @Post('seed')
-  @HttpCode(HttpStatus.OK)
-  async seed() {
-    return this.serversService.seedServersAndPlans();
-  }
 }

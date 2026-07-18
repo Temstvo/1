@@ -182,45 +182,4 @@ export class ServersService {
     };
   }
 
-  async seedServersAndPlans() {
-    const serversData = [
-      { name: 'Frankfurt', country: 'Germany', city: 'Frankfurt', ip: '185.212.60.1', protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], maxUsers: 500, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Berlin', country: 'Germany', city: 'Berlin', ip: '185.212.60.2', protocols: ['WIREGUARD', 'VLESS'], maxUsers: 300, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Amsterdam', country: 'Netherlands', city: 'Amsterdam', ip: '185.212.61.1', protocols: ['WIREGUARD', 'OPENVPN', 'VLESS'], maxUsers: 500, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'London', country: 'United Kingdom', city: 'London', ip: '185.212.62.1', protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], maxUsers: 500, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Paris', country: 'France', city: 'Paris', ip: '185.212.63.1', protocols: ['WIREGUARD', 'VLESS'], maxUsers: 400, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Riga', country: 'Latvia', city: 'Riga', ip: '185.212.64.1', protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], maxUsers: 300, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Stockholm', country: 'Sweden', city: 'Stockholm', ip: '185.212.65.1', protocols: ['WIREGUARD', 'VLESS'], maxUsers: 300, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Tallinn', country: 'Estonia', city: 'Tallinn', ip: '185.212.66.1', protocols: ['WIREGUARD', 'XRAY_REALITY', 'VLESS'], maxUsers: 200, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Belgrade', country: 'Serbia', city: 'Belgrade', ip: '185.212.67.1', protocols: ['WIREGUARD', 'VLESS'], maxUsers: 200, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'New York', country: 'United States', city: 'New York', ip: '198.51.100.1', protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], maxUsers: 800, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Los Angeles', country: 'United States', city: 'Los Angeles', ip: '198.51.100.2', protocols: ['WIREGUARD', 'OPENVPN', 'VLESS'], maxUsers: 600, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'San Francisco', country: 'United States', city: 'San Francisco', ip: '198.51.100.3', protocols: ['WIREGUARD', 'VLESS'], maxUsers: 400, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Toronto', country: 'Canada', city: 'Toronto', ip: '198.51.101.1', protocols: ['WIREGUARD', 'OPENVPN', 'VLESS'], maxUsers: 400, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Tokyo', country: 'Japan', city: 'Tokyo', ip: '198.51.102.1', protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], maxUsers: 600, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-      { name: 'Singapore', country: 'Singapore', city: 'Singapore', ip: '198.51.103.1', protocols: ['WIREGUARD', 'OPENVPN', 'VLESS'], maxUsers: 500, bandwidth: BigInt(10 * 1024 * 1024 * 1024), status: 'ONLINE' as const },
-    ];
-
-    const created = { servers: 0, plans: 0, skipped: 0 };
-
-    const result = await this.prisma.server.createMany({
-      data: serversData as any,
-      skipDuplicates: true,
-    });
-    created.servers = result.count;
-
-    const plansData = [
-      { name: 'Starter', description: 'For personal use', price: 499, currency: 'RUB', duration: 30, trafficLimit: BigInt(50 * 1024 * 1024 * 1024), deviceLimit: 3, protocols: ['WIREGUARD', 'OPENVPN'], regions: ['EU', 'US'], features: ['All servers', 'Email support'], priority: 1 },
-      { name: 'Pro', description: 'For power users', price: 1199, currency: 'RUB', duration: 90, trafficLimit: BigInt(200 * 1024 * 1024 * 1024), deviceLimit: 5, protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], regions: ['ALL'], features: ['All protocols', 'Priority support'], priority: 2 },
-      { name: 'Business', description: 'For teams', price: 3999, currency: 'RUB', duration: 365, trafficLimit: BigInt(BigInt(1024) * BigInt(1024) * BigInt(1024) * BigInt(1024)), deviceLimit: 10, protocols: ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'], regions: ['ALL'], features: ['Dedicated IP', '24/7 support'], priority: 3 },
-    ];
-
-    const planResult = await this.prisma.plan.createMany({
-      data: plansData as any,
-      skipDuplicates: true,
-    });
-    created.plans = planResult.count;
-
-    return created;
-  }
 }

@@ -381,11 +381,26 @@ export class BotUpdate implements OnModuleInit {
             { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
           );
         } catch (e: any) {
-          this.userStates.set(userId, { action: 'register_password', data: { email } });
-          await ctx.reply(
-            `❌ *Error:* ${e.message}\n\nTry a different password:`,
-            { parse_mode: 'Markdown' },
-          );
+          const msg = e.message || '';
+          if (msg.includes('already registered') || msg.includes('already exists')) {
+            this.userStates.delete(userId);
+            await ctx.reply(
+              '❌ *Email already registered*\n\nTry /start to sign in instead.',
+              { parse_mode: 'Markdown', reply_markup: { inline_keyboard: authKeyboard } },
+            );
+          } else if (msg.includes('Password must') || msg.includes('password must')) {
+            this.userStates.set(userId, { action: 'register_password', data: { email } });
+            await ctx.reply(
+              '❌ *Invalid password*\n\nPassword must contain:\n• uppercase letter\n• lowercase letter\n• number\n• special character (!@#$%^&*)\n\nTry again:',
+              { parse_mode: 'Markdown' },
+            );
+          } else {
+            this.userStates.set(userId, { action: 'register_password', data: { email } });
+            await ctx.reply(
+              `❌ *Error:* ${msg}\n\nTry a different password:`,
+              { parse_mode: 'Markdown' },
+            );
+          }
         }
         return;
       }
@@ -423,10 +438,24 @@ export class BotUpdate implements OnModuleInit {
           );
         } catch (e: any) {
           this.userStates.set(userId, { action: 'login_password', data: { email } });
-          await ctx.reply(
-            `❌ *Error:* ${e.message}\n\nTry again:`,
-            { parse_mode: 'Markdown' },
-          );
+          const msg = e.message || '';
+          if (msg.includes('Invalid credentials')) {
+            await ctx.reply(
+              '❌ *Wrong email or password*\n\nTry again:',
+              { parse_mode: 'Markdown' },
+            );
+          } else if (msg.includes('locked') || msg.includes('banned') || msg.includes('suspended')) {
+            this.userStates.delete(userId);
+            await ctx.reply(
+              `❌ *Account unavailable*\n\n${msg}`,
+              { parse_mode: 'Markdown', reply_markup: { inline_keyboard: authKeyboard } },
+            );
+          } else {
+            await ctx.reply(
+              `❌ *Error:* ${msg}\n\nTry again:`,
+              { parse_mode: 'Markdown' },
+            );
+          }
         }
         return;
       }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import * as crypto from 'crypto';
 
 const CONFIG_SOURCES = [
   {
@@ -112,7 +113,6 @@ export class VpnConfigSyncService {
 
     const country = this.extractCountry(label, uri);
 
-    const crypto = require('crypto');
     const id = crypto.createHash('md5').update(configUri).digest('hex');
     const uuid = `${id.substring(0, 8)}-${id.substring(8, 12)}-${id.substring(12, 16)}-${id.substring(16, 20)}-${id.substring(20, 32)}`;
 

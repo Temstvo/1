@@ -42,4 +42,4 @@ USER nestjs
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "timeout 30 npx prisma db push --skip-generate || echo 'Schema push skipped' && node dist/main.js"]
+CMD ["node", "dist/main.js"]

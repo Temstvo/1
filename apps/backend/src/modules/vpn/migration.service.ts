@@ -31,7 +31,7 @@ export class MigrationService implements OnModuleInit {
         CREATE INDEX IF NOT EXISTS idx_free_vpn_configs_is_active ON free_vpn_configs(is_active);
       `);
       this.logger.log('Migration: free_vpn_configs table ensured');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(`Migration failed (table may already exist): ${error.message}`);
     }
   }

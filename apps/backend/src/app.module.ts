@@ -13,6 +13,7 @@ import { PlansModule } from './modules/plans/plans.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { VpnModule } from './modules/vpn/vpn.module';
+import { VpnConfigsModule } from './modules/vpn/vpn-configs.module';
 import { ServersModule } from './modules/servers/servers.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -51,6 +52,7 @@ import { QueuesModule } from './queues/queues.module';
     PaymentsModule,
     InvoicesModule,
     VpnModule,
+    VpnConfigsModule,
     ServersModule,
     TrafficModule,
     NotificationsModule,

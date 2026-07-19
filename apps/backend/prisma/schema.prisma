@@ -514,6 +514,32 @@ model TicketMessage {
 }
 
 // ============================================
+// FREE VPN CONFIGS (synced from GitHub)
+// ============================================
+
+model VpnConfig {
+  id          String   @id @default(uuid()) @db.Uuid
+  protocol    String
+  uri         String
+  label       String
+  country     String
+  countryCode String   @map("country_code")
+  server      String
+  listType    String   @map("list_type")
+  isActive    Boolean  @default(true) @map("is_active")
+  lastChecked DateTime? @map("last_checked")
+  latency     Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([protocol])
+  @@index([country])
+  @@index([listType])
+  @@index([isActive])
+  @@map("free_vpn_configs")
+}
+
+// ============================================
 // SECURITY & AUDIT
 // ============================================
 

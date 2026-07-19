@@ -76,7 +76,9 @@ export default function VpnPage() {
 
   const copyUri = async (config: VpnConfig) => {
     try {
-      await navigator.clipboard.writeText(config.uri);
+      const res = await api.get(`/vpn-configs/${config.id}`);
+      const uri = res.data?.uri || '';
+      await navigator.clipboard.writeText(uri);
       setCopiedId(config.id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch {}

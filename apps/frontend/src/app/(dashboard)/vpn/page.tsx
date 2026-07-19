@@ -1,167 +1,121 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from '@/lib/i18n';
 import api from '@/lib/api';
 
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
-type VisualPhase = 'off' | 'spinning' | 'on' | 'fading';
-type PingState = Record<string, 'idle' | 'loading' | number | 'na'>;
-
-function PingDots() {
-  return (
-    <span className="inline-flex items-center gap-[3px]">
-      <span className="w-[4px] h-[4px] rounded-full bg-[var(--muted-foreground)] animate-ping" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
-      <span className="w-[4px] h-[4px] rounded-full bg-[var(--muted-foreground)] animate-ping" style={{ animationDelay: '200ms', animationDuration: '1s' }} />
-      <span className="w-[4px] h-[4px] rounded-full bg-[var(--muted-foreground)] animate-ping" style={{ animationDelay: '400ms', animationDuration: '1s' }} />
-    </span>
-  );
+interface VpnConfig {
+  id: string;
+  protocol: string;
+  label: string;
+  country: string;
+  countryCode: string;
+  server: string;
+  listType: string;
+  latency: number | null;
+  lastChecked: string | null;
 }
 
+interface ConfigStats {
+  total: number;
+  byProtocol: { protocol: string; count: number }[];
+  byCountry: { country: string; count: number }[];
+}
+
+const PROTOCOL_COLORS: Record<string, string> = {
+  vless: '#22c55e',
+  trojan: '#f59e0b',
+  shadowsocks: '#3b82f6',
+  vmess: '#a855f7',
+  hysteria2: '#ef4444',
+  tuic: '#06b6d4',
+};
+
 export default function VpnPage() {
-  const [search, setSearch] = useState('');
-  const [allServers, setAllServers] = useState<any[]>([]);
-  const [selectedServer, setSelectedServer] = useState<any>(null);
-  const [loadingServers, setLoadingServers] = useState(true);
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
-  const [visualPhase, setVisualPhase] = useState<VisualPhase>('off');
-  const [connectionTime, setConnectionTime] = useState('00:00:00');
-  const [mode, setMode] = useState<'Proxy' | 'TUN'>('Proxy');
-  const [pings, setPings] = useState<PingState>({});
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<'servers' | 'connect'>('servers');
-  const [expanded, setExpanded] = useState(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const secondsRef = useRef(0);
-  const pingTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
   const { t } = useTranslations();
+  const [configs, setConfigs] = useState<VpnConfig[]>([]);
+  const [stats, setStats] = useState<ConfigStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [protocolFilter, setProtocolFilter] = useState('');
+  const [listFilter, setListFilter] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showFullUri, setShowFullUri] = useState<string | null>(null);
+  const [fullUri, setFullUri] = useState('');
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [selectedConfig, setSelectedConfig] = useState<VpnConfig | null>(null);
+
+  const fetchConfigs = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (protocolFilter) params.set('protocol', protocolFilter);
+    if (listFilter) params.set('listType', listFilter);
+    if (search) params.set('search', search);
+
+    api.get(`/vpn-configs?${params.toString()}`)
+      .then((res) => setConfigs(res.data))
+      .catch(() => setConfigs([]))
+      .finally(() => setLoading(false));
+  }, [protocolFilter, listFilter, search]);
+
+  const fetchStats = useCallback(() => {
+    api.get('/vpn-configs/stats')
+      .then((res) => setStats(res.data))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
-    api.get('/servers')
-      .then((res) => {
-        const data = res.data;
-        const list = Array.isArray(data) ? data : data.servers || [];
-        setAllServers(list.filter((s: any) => s.status === 'ONLINE'));
-        if (list.length > 0) setSelectedServer(list.find((s: any) => s.status === 'ONLINE') || list[0]);
-      })
-      .catch(() => setAllServers([]))
-      .finally(() => setLoadingServers(false));
-  }, []);
+    fetchConfigs();
+    fetchStats();
+  }, [fetchConfigs, fetchStats]);
 
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    secondsRef.current = 0;
-  }, []);
+  useEffect(() => {
+    const debounce = setTimeout(fetchConfigs, 300);
+    return () => clearTimeout(debounce);
+  }, [search, protocolFilter, listFilter, fetchConfigs]);
 
-  const clearPingTimeouts = useCallback(() => {
-    pingTimeouts.current.forEach(clearTimeout);
-    pingTimeouts.current = [];
-  }, []);
+  const copyUri = async (config: VpnConfig) => {
+    try {
+      await navigator.clipboard.writeText(config.uri);
+      setCopiedId(config.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {}
+  };
 
-  const filteredServers = allServers.filter(
-    (s) =>
-      s.country.toLowerCase().includes(search.toLowerCase()) ||
-      s.city.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleConnect = () => {
-    if (status === 'disconnected') {
-      setStatus('connecting');
-      setVisualPhase('spinning');
-      setTimeout(() => {
-        setStatus('connected');
-        setVisualPhase('on');
-        secondsRef.current = 0;
-        intervalRef.current = setInterval(() => {
-          secondsRef.current++;
-          const sec = secondsRef.current;
-          const h = String(Math.floor(sec / 3600)).padStart(2, '0');
-          const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
-          const s = String(sec % 60).padStart(2, '0');
-          setConnectionTime(`${h}:${m}:${s}`);
-        }, 1000);
-      }, 1500);
-    } else {
-      clearTimer();
-      setVisualPhase('fading');
-      setTimeout(() => {
-        setStatus('disconnected');
-        setVisualPhase('off');
-      }, 400);
-      setConnectionTime('00:00:00');
+  const showUri = async (config: VpnConfig) => {
+    setShowFullUri(config.id);
+    try {
+      const res = await api.get(`/vpn-configs/${config.id}`);
+      setFullUri(res.data.uri || '');
+    } catch {
+      setFullUri('Error loading config');
     }
   };
 
-  const pingServer = useCallback((serverId: string) => {
-    setPings((prev) => ({ ...prev, [serverId]: 'loading' }));
-    const delay = 500 + Math.random() * 2000;
-    const timeout = setTimeout(() => {
-      const success = Math.random() > 0.15;
-      if (success) {
-        const ms = Math.floor(10 + Math.random() * 180);
-        setPings((prev) => ({ ...prev, [serverId]: ms }));
-      } else {
-        setPings((prev) => ({ ...prev, [serverId]: 'na' }));
-      }
-    }, delay);
-    pingTimeouts.current.push(timeout);
-  }, []);
-
-  const pingAll = useCallback(() => {
-    clearPingTimeouts();
-    setPings({});
-    filteredServers.forEach((server, i) => {
-      const timeout = setTimeout(() => {
-        pingServer(server.id);
-      }, i * 300);
-      pingTimeouts.current.push(timeout);
-    });
-    setMenuOpen(false);
-  }, [filteredServers, pingServer, clearPingTimeouts]);
-
-  const renderPing = (serverId: string) => {
-    const p = pings[serverId];
-    if (p === undefined || p === 'idle') return null;
-    if (p === 'loading') return <PingDots />;
-    if (p === 'na') return <span className="text-xs text-[var(--muted-foreground)]">n/a</span>;
-    return <span className="text-xs text-[var(--muted-foreground)]">{p}ms</span>;
-  };
-
-  const hasAnyPing = Object.keys(pings).length > 0;
-
-  const statusText =
-    status === 'disconnected'
-      ? t('vpn_disconnected')
-      : status === 'connecting'
-      ? t('vpn_connecting')
-      : t('vpn_connected');
+  const flagUrl = (code: string) =>
+    `https://flagcdn.com/w80/${(code || 'un').toLowerCase()}.png`;
 
   return (
     <div className="flex h-full flex-col md:flex-row">
-      {/* Mobile toggle */}
       <div className="md:hidden flex border-b border-[var(--border)]">
         <button
-          onClick={() => setMobileView('servers')}
-          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'servers' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
+          onClick={() => setMobileView('list')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'list' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
         >
           {t('vpn_title')}
         </button>
         <button
-          onClick={() => setMobileView('connect')}
-          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'connect' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
+          onClick={() => setMobileView('detail')}
+          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'detail' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
         >
-          {statusText}
+          Info
         </button>
       </div>
 
-      {/* Left: Server list */}
-      <div className={`${mobileView === 'connect' ? 'hidden md:flex' : 'flex'} w-full md:w-[320px] lg:w-[420px] border-r border-[var(--border)] flex-col shrink-0`}>
+      <div className={`${mobileView === 'detail' ? 'hidden md:flex' : 'flex'} w-full md:w-[320px] lg:w-[420px] border-r border-[var(--border)] flex-col shrink-0`}>
         <div className="p-4">
           <h1 className="text-lg font-semibold text-[var(--foreground)] mb-3">{t('vpn_title')}</h1>
-          <div className="relative">
+          <div className="relative mb-3">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
@@ -170,223 +124,203 @@ export default function VpnPage() {
               placeholder={t('vpn_search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[var(--muted)] border border-[var(--border)] rounded-lg pl-10 pr-20 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+              className="w-full bg-[var(--muted)] border border-[var(--border)] rounded-lg pl-10 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-              {/* Refresh / Ping all icon */}
-              <button
-                onClick={pingAll}
-                className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
-                title={t('vpn_ping_all')}
-              >
-                <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-                </svg>
-              </button>
-              {/* Three dots menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="currentColor" viewBox="0 0 24 24">
-                    <circle cx="5" cy="12" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="19" cy="12" r="2" />
-                  </svg>
-                </button>
-                {menuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-[#1e1e24] border border-[#2a2a32] rounded-lg shadow-xl overflow-hidden">
-                      <button
-                        onClick={() => { setMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-white/5 transition-colors text-left"
-                      >
-                        <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        {t('vpn_add_url')}
-                      </button>
-                      <button
-                        onClick={pingAll}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-white/5 transition-colors text-left"
-                      >
-                        <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
-                        </svg>
-                        {t('vpn_ping_all')}
-                      </button>
-                      <button
-                        onClick={() => { setExpanded(false); setMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-white/5 transition-colors text-left"
-                      >
-                        <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                        </svg>
-                        {t('vpn_collapse_all')}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
+          <div className="flex gap-2 mb-3">
+            <select
+              value={listFilter}
+              onChange={(e) => setListFilter(e.target.value)}
+              className="flex-1 bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            >
+              <option value="">All lists</option>
+              <option value="black">Black List (bypass blocks)</option>
+              <option value="white">White List (Russia only)</option>
+            </select>
+            <select
+              value={protocolFilter}
+              onChange={(e) => setProtocolFilter(e.target.value)}
+              className="flex-1 bg-[var(--muted)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+            >
+              <option value="">All protocols</option>
+              <option value="vless">VLESS</option>
+              <option value="trojan">Trojan</option>
+              <option value="shadowsocks">Shadowsocks</option>
+              <option value="vmess">VMess</option>
+              <option value="hysteria2">Hysteria2</option>
+            </select>
+          </div>
+          {stats && (
+            <div className="flex items-center gap-3 text-xs text-[var(--muted-foreground)] mb-2">
+              <span>{stats.total} configs</span>
+              {stats.byProtocol.slice(0, 3).map((p) => (
+                <span key={p.protocol} className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ background: PROTOCOL_COLORS[p.protocol] || '#888' }} />
+                  {p.protocol} ({p.count})
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-4">
-          {loadingServers ? (
+          {loading ? (
             <div className="flex items-center justify-center py-10">
               <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : filteredServers.map((server) => (
-            <button
-              key={server.id}
-              onClick={() => { setSelectedServer(server); setMobileView('connect'); }}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                selectedServer?.id === server.id
-                  ? 'bg-white/10'
-                  : 'hover:bg-white/5'
-              }`}
-            >
-              <span className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/10">
-                <img
-                  src={`https://flagcdn.com/w80/${server.code?.toLowerCase() || 'un'}.png`}
-                  alt={server.country}
-                  className="w-full h-full object-cover"
-                />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">
-                  {server.country}, {server.city}
-                </div>
-                <div className="text-xs text-[hsl(222,10%,50%)]">{Array.isArray(server.protocols) ? server.protocols[0] : server.protocol || 'VLESS'}</div>
-              </div>
-              {hasAnyPing && (
-                <span className="shrink-0 w-12 text-right">
-                  {renderPing(server.id)}
+          ) : configs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-[var(--muted-foreground)] text-sm">
+              <p>No configs found</p>
+            </div>
+          ) : (
+            configs.map((config) => (
+              <button
+                key={config.id}
+                onClick={() => { setSelectedConfig(config); setMobileView('detail'); }}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
+                  selectedConfig?.id === config.id ? 'bg-white/10' : 'hover:bg-white/5'
+                }`}
+              >
+                <span className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-white/10">
+                  <img src={flagUrl(config.countryCode)} alt={config.country} className="w-full h-full object-cover" />
                 </span>
-              )}
-              <svg className="w-4 h-4 text-[hsl(222,10%,40%)] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">{config.label || config.country}</div>
+                  <div className="flex items-center gap-2 text-xs text-[hsl(222,10%,50%)]">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: PROTOCOL_COLORS[config.protocol] || '#888' }} />
+                    <span className="uppercase">{config.protocol}</span>
+                    <span className="opacity-50">|</span>
+                    <span>{config.listType === 'black' ? 'BL' : 'WL'}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); copyUri(config); }}
+                  className="p-1.5 rounded-md hover:bg-white/10 transition-colors shrink-0"
+                  title="Copy config"
+                >
+                  {copiedId === config.id ? (
+                    <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-[var(--muted-foreground)]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                    </svg>
+                  )}
+                </button>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Right: Connection panel */}
-      <div className={`${mobileView === 'servers' ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-between py-6 md:py-10 px-4 md:px-6 relative`}>
+      <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col items-center justify-center py-6 md:py-10 px-4 md:px-8 relative`}>
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 35%, rgba(139,92,246,0.04) 0%, transparent 60%)' }} />
 
-        {/* Power button */}
-        <div className="flex-1 flex items-center justify-center w-full">
-          <div className="relative">
-            <div className="absolute -inset-5 rounded-full" style={{ background: 'conic-gradient(from 0deg, transparent 0%, rgba(100,100,120,0.15) 25%, transparent 50%, rgba(100,100,120,0.1) 75%, transparent 100%)' }} />
-            <div className="absolute -inset-3 rounded-full bg-[#1e1e24] border border-[#2a2a32]" />
-            <div className="absolute -inset-1 rounded-full bg-[#1a1a20] border border-[#252530]" />
-            {/* Outer ring — spin once while connecting */}
-            {visualPhase === 'spinning' && (
-              <div className="absolute -inset-1 rounded-full border-2 border-t-transparent border-r-transparent border-[var(--primary)]/60 animate-spin-once" />
-            )}
-            {/* Outer ring — glow in when connected */}
-            {visualPhase === 'on' && (
-              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)] shadow-[0_0_24px_rgba(139,92,246,0.4)] animate-glow-in" />
-            )}
-            {/* Outer ring — glow out when disconnecting */}
-            {visualPhase === 'fading' && (
-              <div className="absolute -inset-1 rounded-full border-2 border-[var(--primary)]/50 animate-glow-out" />
-            )}
-            {/* Main button */}
-            <button
-              onClick={handleConnect}
-              className={`relative w-[140px] h-[140px] md:w-[180px] md:h-[180px] rounded-full flex items-center justify-center transition-all duration-500 z-10 ${
-                visualPhase === 'off'
-                  ? 'bg-[#1a1a20] border border-[#2a2a32] hover:border-[#3a3a44] shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
-                  : visualPhase === 'spinning'
-                  ? 'bg-[#1a1a20] border border-[var(--primary)]/40'
-                  : visualPhase === 'on'
-                  ? 'bg-[#1a1a20] border border-[var(--primary)] shadow-[0_0_30px_rgba(139,92,246,0.15)]'
-                  : 'bg-[#1a1a20] border border-[var(--primary)]/30'
-              }`}
-            >
-              <svg
-                className={`w-12 h-12 md:w-16 md:h-16 transition-all duration-500 ${
-                  visualPhase === 'off'
-                    ? 'text-[#555560]'
-                    : visualPhase === 'spinning'
-                    ? 'text-[var(--primary)]/60'
-                    : visualPhase === 'on'
-                    ? 'text-white drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]'
-                    : 'text-[var(--primary)]/40'
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.8"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
-              </svg>
-            </button>
+        {!selectedConfig ? (
+          <div className="flex flex-col items-center gap-4 text-[var(--muted-foreground)]">
+            <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" strokeWidth="1" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 7.41A2.25 2.25 0 012.25 5.496V5.25" />
+            </svg>
+            <p className="text-sm">Select a config to view details</p>
+            <p className="text-xs opacity-60 text-center max-w-xs">
+              Copy the config URI and import it into your VPN client (Karing, v2rayN, Streisand, etc.)
+            </p>
           </div>
-        </div>
-
-        {/* Bottom section */}
-        <div className="flex flex-col items-center gap-4 w-full max-w-[260px] md:max-w-[260px]">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-              <img
-                src={`https://flagcdn.com/w80/${selectedServer?.code?.toLowerCase() || 'un'}.png`}
-                alt={selectedServer?.country}
-                className="w-full h-full object-cover"
-              />
-            </span>
-            <div className="text-sm font-medium text-[var(--foreground)] text-center">
-              {selectedServer?.country} | {selectedServer?.code}
+        ) : (
+          <div className="w-full max-w-lg space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                <img src={flagUrl(selectedConfig.countryCode)} alt={selectedConfig.country} className="w-full h-full object-cover" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">{selectedConfig.country}</h2>
+                <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                  <span className="w-2 h-2 rounded-full" style={{ background: PROTOCOL_COLORS[selectedConfig.protocol] || '#888' }} />
+                  <span className="uppercase font-medium">{selectedConfig.protocol}</span>
+                  <span className="opacity-50">|</span>
+                  <span>{selectedConfig.listType === 'black' ? 'Black List' : 'White List'}</span>
+                  <span className="opacity-50">|</span>
+                  <span>{selectedConfig.server}</span>
+                </div>
+              </div>
             </div>
-            {pings[selectedServer?.id] !== undefined && pings[selectedServer?.id] !== 'idle' && (
-              <div className="text-xs text-[var(--muted-foreground)] text-center">
-                {pings[selectedServer?.id] === 'loading' ? (
-                  <PingDots />
-                ) : pings[selectedServer?.id] === 'na' ? (
-                  'n/a'
+
+            {selectedConfig.label && (
+              <div className="text-sm text-[var(--muted-foreground)] bg-[var(--muted)] rounded-xl px-4 py-3">
+                {selectedConfig.label}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <button
+                onClick={() => copyUri(selectedConfig)}
+                className="w-full py-3 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white text-sm font-semibold transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+              >
+                {copiedId === selectedConfig.id ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    Copied!
+                  </>
                 ) : (
-                  `${pings[selectedServer?.id]}ms`
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                    </svg>
+                    Copy Config
+                  </>
                 )}
+              </button>
+
+              <button
+                onClick={() => showUri(selectedConfig)}
+                className="w-full py-3 rounded-xl bg-[#1e1e24] border border-[#2a2a32] hover:border-[#3a3a44] text-[var(--foreground)] text-sm font-medium transition-all active:scale-[0.97]"
+              >
+                Show Full Config
+              </button>
+            </div>
+
+            {showFullUri === selectedConfig.id && fullUri && (
+              <div className="bg-[var(--muted)] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-[var(--muted-foreground)] uppercase">Config URI</span>
+                  <button onClick={() => { navigator.clipboard.writeText(fullUri); setCopiedId('full'); }} className="text-xs text-[var(--primary)] hover:underline">
+                    {copiedId === 'full' ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <pre className="text-xs text-[var(--muted-foreground)] break-all whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                  {fullUri}
+                </pre>
+              </div>
+            )}
+
+            <div className="bg-[var(--muted)] rounded-xl p-4 space-y-2">
+              <h3 className="text-xs font-medium text-[var(--muted-foreground)] uppercase mb-3">How to use</h3>
+              <div className="text-xs text-[var(--muted-foreground)] space-y-2">
+                <p>1. Copy the config URI above</p>
+                <p>2. Open your VPN client (Karing, v2rayN, Streisand, etc.)</p>
+                <p>3. Paste the URI as a new server</p>
+                <p>4. Connect and browse freely</p>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  <span className="font-medium">Black List</span> - bypasses RKN blocks. Use this in Russia.
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                  <span className="font-medium">White List</span> - only routes Russian traffic through proxy. For split tunneling.
+                </p>
+              </div>
+            </div>
+
+            {selectedConfig.latency && (
+              <div className="text-xs text-[var(--muted-foreground)] text-center">
+                Latency: {selectedConfig.latency}ms
               </div>
             )}
           </div>
-
-          <div className="text-sm text-[var(--muted-foreground)] text-center">
-            {statusText}
-            {status === 'connected' && (
-              <span className="ml-2 text-[var(--foreground)]">{connectionTime}</span>
-            )}
-          </div>
-
-          <button
-            onClick={() => pingServer(selectedServer?.id)}
-            className="w-full py-3 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white text-sm font-semibold transition-all active:scale-[0.97]"
-          >
-            {t('vpn_ping_test')}
-          </button>
-
-          <div className="flex gap-2 w-full">
-            {(['Proxy', 'TUN'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  mode === m
-                    ? 'bg-[var(--primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.2)]'
-                    : 'bg-[#1e1e24] text-[var(--muted-foreground)] border border-[#2a2a32] hover:border-[#3a3a44]'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

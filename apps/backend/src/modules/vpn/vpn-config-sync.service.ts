@@ -11,12 +11,27 @@ const CONFIG_SOURCES = [
   {
     url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_SS+All_RUS.txt',
     listType: 'black',
-    name: 'Black List SS+All',
+    name: 'Black List SS+Hysteria2+VMess+Trojan',
   },
   {
     url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile.txt',
     listType: 'white',
-    name: 'White List VLESS Mobile',
+    name: 'White List CIDR Mobile #1',
+  },
+  {
+    url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt',
+    listType: 'white',
+    name: 'White List CIDR Mobile #2',
+  },
+  {
+    url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-CIDR-RU-checked.txt',
+    listType: 'white',
+    name: 'White List CIDR Checked',
+  },
+  {
+    url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-SNI-RU-all.txt',
+    listType: 'white',
+    name: 'White List SNI',
   },
 ];
 
@@ -52,15 +67,18 @@ export class VpnConfigSyncService {
 
   constructor(private prisma: PrismaService) {}
 
-  async syncAll(): Promise<{ fetched: number; stored: number; errors: number }> {
+  async syncAll(): Promise<{ fetched: number; stored: number; errors: number; sources: number }> {
     this.logger.log('Starting VPN config sync...');
-    const results = { fetched: 0, stored: 0, errors: 0 };
+    const results = { fetched: 0, stored: 0, errors: 0, sources: 0 };
 
     await this.prisma.vpnConfig.updateMany({ data: { isActive: false } });
 
     for (const source of CONFIG_SOURCES) {
       try {
-        const response = await fetch(source.url);
+        this.logger.log(`Fetching ${source.name}...`);
+        const response = await fetch(source.url, {
+          signal: AbortSignal.timeout(30000),
+        });
         if (!response.ok) {
           this.logger.error(`Failed to fetch ${source.name}: ${response.status}`);
           results.errors++;
@@ -70,6 +88,8 @@ export class VpnConfigSyncService {
         const text = await response.text();
         const lines = text.split('\n').filter((l) => l.trim() && !l.startsWith('#'));
         results.fetched += lines.length;
+        results.sources++;
+        this.logger.log(`${source.name}: ${lines.length} configs found`);
 
         for (const line of lines) {
           try {

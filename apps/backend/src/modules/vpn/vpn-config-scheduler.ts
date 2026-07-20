@@ -1,12 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
+import { MigrationService } from './migration.service';
 
 @Injectable()
-export class VpnConfigScheduler {
+export class VpnConfigScheduler implements OnModuleInit {
   private readonly logger = new Logger(VpnConfigScheduler.name);
 
-  constructor(private readonly syncService: VpnConfigSyncService) {}
+  constructor(
+    private readonly syncService: VpnConfigSyncService,
+    private readonly migrationService: MigrationService,
+  ) {}
+
+  async onModuleInit() {
+    this.logger.log('Initial VPN config sync on startup (waiting 5s for migration)...');
+    setTimeout(async () => {
+      try {
+        const result = await this.syncService.syncAll();
+        this.logger.log(`Startup sync completed: ${JSON.stringify(result)}`);
+      } catch (error: any) {
+        this.logger.error(`Startup sync failed: ${error.message}`);
+      }
+    }, 5000);
+  }
 
   @Cron(CronExpression.EVERY_2_HOURS)
   async handleSync() {

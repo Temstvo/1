@@ -16,12 +16,7 @@ const CONFIG_SOURCES = [
   {
     url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile.txt',
     listType: 'white',
-    name: 'White List CIDR Mobile #1',
-  },
-  {
-    url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt',
-    listType: 'white',
-    name: 'White List CIDR Mobile #2',
+    name: 'White List CIDR Mobile',
   },
   {
     url: 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-CIDR-RU-checked.txt',

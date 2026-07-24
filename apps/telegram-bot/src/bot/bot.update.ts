@@ -93,11 +93,14 @@ export class BotUpdate implements OnModuleInit {
     bot.action('menu:status', (ctx) => this.handleStatus(ctx));
     bot.action('menu:subscription', (ctx) => this.handleSubscription(ctx));
     bot.action('menu:servers', (ctx) => this.handleServers(ctx));
+    bot.action('menu:vpnconfigs', (ctx) => this.handleVpnConfigs(ctx));
     bot.action('menu:traffic', (ctx) => this.handleTraffic(ctx));
     bot.action('menu:devices', (ctx) => this.handleDevices(ctx));
     bot.action('menu:logout', (ctx) => this.handleLogout(ctx));
 
     bot.action(/^server:(.+)$/, (ctx) => this.handleServerSelect(ctx));
+    bot.action(/^vpnconfig:(.+)$/, (ctx) => this.handleVpnConfigSelect(ctx));
+    bot.action(/^vpnfilter:(.+)$/, (ctx) => this.handleVpnFilter(ctx));
 
     bot.on('text', (ctx) => this.handleText(ctx));
   }
@@ -282,6 +285,120 @@ export class BotUpdate implements OnModuleInit {
       } else {
         await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
       }
+    }
+  }
+
+  private async handleVpnConfigs(ctx: Context) {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    await ctx.answerCbQuery();
+    try {
+      const data = await this.api('/vpn-configs?listType=black', { token: undefined });
+      const configs = Array.isArray(data) ? data : [];
+
+      if (configs.length === 0) {
+        await ctx.reply('No VPN configs available. Try again later.', {
+          reply_markup: { inline_keyboard: mainMenuKeyboard },
+        });
+        return;
+      }
+
+      const byProtocol: Record<string, number> = {};
+      for (const c of configs) {
+        byProtocol[c.protocol] = (byProtocol[c.protocol] || 0) + 1;
+      }
+
+      const keyboard: any[][] = [];
+      for (const [proto, count] of Object.entries(byProtocol)) {
+        keyboard.push([{ text: `${proto.toUpperCase()} (${count})`, callback_data: `vpnfilter:${proto}` }]);
+      }
+      keyboard.push([{ text: `📋 All configs (${configs.length})`, callback_data: 'vpnfilter:all' }]);
+      keyboard.push([backButton]);
+
+      await ctx.reply(
+        `🌐 *Free VPN Configs*\n\n` +
+        `Configs from igareck/vpn-configs-for-russia\n` +
+        `Updated every 2 hours.\n\n` +
+        `Choose a protocol or view all:`,
+        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } },
+      );
+    } catch (e: any) {
+      await ctx.reply(`Error: ${e.message}`, {
+        reply_markup: { inline_keyboard: mainMenuKeyboard },
+      });
+    }
+  }
+
+  private async handleVpnFilter(ctx: any) {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    await ctx.answerCbQuery();
+    const filter = ctx.match?.[1];
+
+    try {
+      const url = filter === 'all' ? '/vpn-configs?listType=black' : `/vpn-configs?protocol=${filter}&listType=black`;
+      const data = await this.api(url);
+      const configs = (Array.isArray(data) ? data : []).slice(0, 20);
+
+      if (configs.length === 0) {
+        await ctx.reply('No configs found for this filter.', {
+          reply_markup: { inline_keyboard: [[backButton]] },
+        });
+        return;
+      }
+
+      const keyboard: any[][] = configs.map((c: any) => [{
+        text: `${c.country || 'Unknown'} · ${c.protocol.toUpperCase()}`,
+        callback_data: `vpnconfig:${c.id}`,
+      }]);
+      keyboard.push([backButton]);
+
+      await ctx.reply(
+        `🌐 *${filter === 'all' ? 'All' : filter.toUpperCase()} Configs*\n\nSelect a config:`,
+        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } },
+      );
+    } catch (e: any) {
+      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: [[backButton]] } });
+    }
+  }
+
+  private async handleVpnConfigSelect(ctx: any) {
+    const userId = ctx.from?.id;
+    if (!userId) return;
+
+    await ctx.answerCbQuery();
+    const configId = ctx.match?.[1];
+
+    try {
+      const config = await this.api(`/vpn-configs/${configId}`);
+      if (!config || !config.uri) {
+        await ctx.reply('Config not found.', { reply_markup: { inline_keyboard: [[backButton]] } });
+        return;
+      }
+
+      const flagEmoji = (code: string) => {
+        if (!code || code.length !== 2) return '';
+        return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
+      };
+
+      const flag = flagEmoji(config.countryCode);
+
+      await ctx.reply(
+        `${flag} *${config.country || 'Unknown'}*\n\n` +
+        `Protocol: ${config.protocol?.toUpperCase()}\n` +
+        `List: ${config.listType === 'black' ? 'Black List (bypass blocks)' : 'White List'}\n` +
+        `Server: ${config.server || '—'}\n\n` +
+        `📋 *Config URI:*\n\`${config.uri}\`\n\n` +
+        `💡 Copy the URI above and paste it into your VPN client (Karing, v2rayN, Streisand, NekoBox).`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: { inline_keyboard: [[{ text: '📋 Copy URI', url: 'https://appi-frontend.vercel.app/vpn' }], [backButton]] },
+        },
+      );
+    } catch (e: any) {
+      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: [[backButton]] } });
     }
   }
 

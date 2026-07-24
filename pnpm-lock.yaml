@@ -50,6 +50,9 @@ importers:
       next:
         specifier: ^15.1.0
         version: 15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -261,7 +264,7 @@ importers:
         version: 7.81.0(react@19.2.7)
       serwist:
         specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.6)(typescript@5.9.3)
+        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
       tailwind-merge:
         specifier: ^2.6.0
         version: 2.6.1
@@ -274,7 +277,7 @@ importers:
         version: 9.5.11(next@15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(webpack@5.97.1(postcss@8.5.17))
       '@serwist/precaching':
         specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.6)(typescript@5.9.3)
+        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
       '@types/node':
         specifier: 20.17.6
         version: 20.17.6
@@ -3419,6 +3422,12 @@ packages:
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
+  next-themes@0.4.6:
+    resolution: {integrity: sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==}
+    peerDependencies:
+      react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
+
   next@15.5.20:
     resolution: {integrity: sha512-cvyS3/geydan1xLtE3FA8VCgdoQ/Gg/dlOldFkFCbB5VcVYJV7090hQLBnvTW2PwT76Z/dHdzDZCsVhZpoOlUA==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
@@ -5555,9 +5564,9 @@ snapshots:
     transitivePeerDependencies:
       - webpack
 
-  '@serwist/precaching@9.5.11(browserslist@4.28.6)(typescript@5.9.3)':
+  '@serwist/precaching@9.5.11(browserslist@4.28.2)(typescript@5.9.3)':
     dependencies:
-      serwist: 9.5.11(browserslist@4.28.6)(typescript@5.9.3)
+      serwist: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -5566,10 +5575,6 @@ snapshots:
   '@serwist/utils@9.5.11(browserslist@4.28.2)':
     optionalDependencies:
       browserslist: 4.28.2
-
-  '@serwist/utils@9.5.11(browserslist@4.28.6)':
-    optionalDependencies:
-      browserslist: 4.28.6
 
   '@serwist/webpack-plugin@9.5.11(browserslist@4.28.2)(typescript@5.9.3)(webpack@5.97.1(postcss@8.5.17))':
     dependencies:
@@ -8018,6 +8023,11 @@ snapshots:
 
   neo-async@2.6.2: {}
 
+  next-themes@0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+    dependencies:
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+
   next@15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@next/env': 15.5.20
@@ -8560,15 +8570,6 @@ snapshots:
   serwist@9.5.11(browserslist@4.28.2)(typescript@5.9.3):
     dependencies:
       '@serwist/utils': 9.5.11(browserslist@4.28.2)
-      idb: 8.0.3
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - browserslist
-
-  serwist@9.5.11(browserslist@4.28.6)(typescript@5.9.3):
-    dependencies:
-      '@serwist/utils': 9.5.11(browserslist@4.28.6)
       idb: 8.0.3
     optionalDependencies:
       typescript: 5.9.3

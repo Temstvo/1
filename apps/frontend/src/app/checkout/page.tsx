@@ -169,7 +169,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-3">
                 {!loading && plans.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">No plans available</div>
+                  <div className="text-center text-gray-500 py-8">{t('checkout_no_plans')}</div>
                 )}
                 {loading ? (
                   <>
@@ -275,7 +275,7 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">💳</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">Bank Card</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_card')}</div>
                     <div className="text-xs text-gray-500">MIR, Visa, Mastercard</div>
                   </div>
                 </button>
@@ -288,8 +288,8 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">⚡</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">СБП</div>
-                    <div className="text-xs text-gray-500">Система быстрых платежей</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_sbp')}</div>
+                    <div className="text-xs text-gray-500">{t('checkout_sbp_desc')}</div>
                   </div>
                 </button>
 
@@ -301,29 +301,29 @@ export default function CheckoutPage() {
                 >
                   <span className="text-2xl">₿</span>
                   <div className="text-left">
-                    <div className="font-medium text-white text-sm">Crypto</div>
-                    <div className="text-xs text-gray-500">USDT, BTC, ETH</div>
+                    <div className="font-medium text-white text-sm">{t('checkout_crypto')}</div>
+                    <div className="text-xs text-gray-500">{t('checkout_crypto_desc')}</div>
                   </div>
                 </button>
               </div>
 
               <div className="bg-[#141414] border border-white/5 rounded-xl p-4 mt-4">
-                <label className="text-xs text-gray-500 mb-2 block">Promo code</label>
+                <label className="text-xs text-gray-500 mb-2 block">{t('checkout_promo')}</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter promo code"
+                    placeholder={t('checkout_promo_enter')}
                     className="flex-1 bg-[#0d0d0d] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
                   />
                   <button onClick={handlePromo} className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">
-                    Apply
+                    {t('checkout_promo_apply')}
                   </button>
                 </div>
                 {promoApplied && (
                   <p className="mt-2 text-xs text-green-400 flex items-center justify-between">
-                    <span>Promo applied: -₽{discount.toLocaleString()}</span>
+                    <span>{t('checkout_promo_ok')}</span>
                     <button onClick={() => { setPromoCode(''); setPromoApplied(false); setDiscount(0); }} className="text-gray-500 hover:text-white">✕</button>
                   </p>
                 )}
@@ -337,13 +337,13 @@ export default function CheckoutPage() {
                   {processing ? (
                     <span className="flex items-center justify-center gap-2">
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                      Processing...
+                      {t('checkout_processing')}
                     </span>
                   ) : `Pay ₽${finalPrice.toLocaleString()}`}
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-600 mt-4">🔒 Secure payment via YooKassa / Cryptomus</p>
+              <p className="text-center text-xs text-gray-600 mt-4">🔒 {t('checkout_secure')}</p>
             </div>
           )}
 
@@ -358,7 +358,7 @@ export default function CheckoutPage() {
               <p className="text-gray-400 mb-8">{t('checkout_success_sub')}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/vpn" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
-                  Go to VPN Dashboard
+                  {t('checkout_success_vpn')}
                 </Link>
                 <Link href="/" className="px-6 py-3 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
                   {t('checkout_home')}

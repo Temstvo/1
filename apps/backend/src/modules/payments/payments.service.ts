@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import { YooKassaService } from './providers/yookassa.service';
@@ -7,12 +8,18 @@ import { CryptomusService } from './providers/cryptomus.service';
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
+  private readonly frontendUrl: string;
+  private readonly backendUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly yookassaService: YooKassaService,
     private readonly cryptomusService: CryptomusService,
-  ) {}
+  ) {
+    this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://appi-frontend.vercel.app');
+    this.backendUrl = this.configService.get<string>('BACKEND_URL', 'https://appibackend-production.up.railway.app');
+  }
 
   async createPayment(data: {
     userId: string;
@@ -274,7 +281,7 @@ export class PaymentsService {
       currency: plan.currency || 'RUB',
       description: `APPI VPN — ${plan.name}`,
       metadata: { paymentId: payment.id, planId },
-      returnReturnUrl: 'https://appi-frontend.vercel.app/checkout/success',
+      returnReturnUrl: `${this.frontendUrl}/checkout/success`,
     });
 
     await this.prisma.payment.update({
@@ -372,8 +379,8 @@ export class PaymentsService {
       amount: finalAmount.toString(),
       currency: 'USDT',
       order_id: payment.id,
-      url_success: 'https://appi-frontend.vercel.app/checkout/success',
-      url_callback: 'https://appibackend-production.up.railway.app/api/payments/webhook/cryptomus',
+      url_success: `${this.frontendUrl}/checkout/success`,
+      url_callback: `${this.backendUrl}/api/payments/webhook/cryptomus`,
       currencies: ['USDT'],
     });
 

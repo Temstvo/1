@@ -48,7 +48,10 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  if (nodeEnv !== 'production') {
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   await app.listen(port);
 }

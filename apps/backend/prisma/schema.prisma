@@ -37,6 +37,8 @@ model User {
   role          UserRole    @default(USER)
   status        UserStatus  @default(ACTIVE)
   emailVerified Boolean     @default(false) @map("email_verified")
+  emailVerificationTokenHash String? @map("email_verification_token_hash")
+  passwordResetTokenHash     String? @map("password_reset_token_hash")
   twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
   twoFactorSecret    String? @map("two_factor_secret")
   lastLoginAt        DateTime? @map("last_login_at")

@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
@@ -86,26 +87,6 @@ export class PaymentsController {
     return this.paymentsService.findByUserId(userId);
   }
 
-  @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get payment by ID' })
-  @ApiResponse({ status: 200, description: 'Payment details' })
-  async getPayment(@Param('id') id: string) {
-    return this.paymentsService.findById(id);
-  }
-
-  @Post(':id/refund')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refund a payment (admin)' })
-  @ApiResponse({ status: 200, description: 'Payment refunded' })
-  async refund(@Param('id') id: string, @Body() dto: RefundDto) {
-    return this.paymentsService.refund(id, dto.amount);
-  }
-
   @Get('admin/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
@@ -114,6 +95,19 @@ export class PaymentsController {
   @ApiResponse({ status: 200, description: 'Payment statistics' })
   async getStats() {
     return this.paymentsService.getPaymentStats();
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get payment by ID' })
+  @ApiResponse({ status: 200, description: 'Payment details' })
+  async getPayment(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    const payment = await this.paymentsService.findById(id);
+    if (payment.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+    return payment;
   }
 
   @Post('webhook/stripe')

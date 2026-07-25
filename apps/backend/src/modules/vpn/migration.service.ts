@@ -28,6 +28,12 @@ export class MigrationService implements OnModuleInit {
       `CREATE INDEX IF NOT EXISTS idx_free_vpn_configs_country ON free_vpn_configs(country)`,
       `CREATE INDEX IF NOT EXISTS idx_free_vpn_configs_list_type ON free_vpn_configs(list_type)`,
       `CREATE INDEX IF NOT EXISTS idx_free_vpn_configs_is_active ON free_vpn_configs(is_active)`,
+      `DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token_hash TEXT;
+      EXCEPTION WHEN duplicate_column THEN null; END $$`,
+      `DO $$ BEGIN
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token_hash TEXT;
+      EXCEPTION WHEN duplicate_column THEN null; END $$`,
     ];
 
     for (const sql of statements) {

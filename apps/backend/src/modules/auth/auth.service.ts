@@ -5,6 +5,7 @@ import { TokenService } from './token.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '@prisma/client';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,7 @@ export class AuthService {
         passwordHash,
         referralCode,
         emailVerified: false,
+        emailVerificationTokenHash,
         profile: {
           create: {
             firstName: dto.firstName,
@@ -264,6 +266,7 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: {
         emailVerified: false,
+        emailVerificationTokenHash: tokenHash,
       },
     });
 
@@ -275,6 +278,7 @@ export class AuthService {
       where: { id: user.id },
       data: {
         emailVerified: true,
+        emailVerificationTokenHash: null,
       },
     });
 
@@ -306,7 +310,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        twoFactorSecret: resetTokenHash,
+        passwordResetTokenHash: resetTokenHash,
       },
     });
 
@@ -314,7 +318,6 @@ export class AuthService {
 
     return {
       message: 'If the email exists, a reset link has been sent',
-      resetToken,
     };
   }
 
@@ -323,7 +326,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findFirst({
       where: {
-        twoFactorSecret: tokenHash,
+        passwordResetTokenHash: tokenHash,
       },
     });
 
@@ -337,7 +340,7 @@ export class AuthService {
       where: { id: user.id },
       data: {
         passwordHash,
-        twoFactorSecret: null,
+        passwordResetTokenHash: null,
       },
     });
 
@@ -465,15 +468,16 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { passwordHash, twoFactorSecret, ...sanitized } = user as any;
+    const { passwordHash, twoFactorSecret, emailVerificationTokenHash, passwordResetTokenHash, ...sanitized } = user as any;
     return sanitized;
   }
 
   private generateReferralCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const bytes = randomBytes(8);
     let code = '';
     for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars.charAt(bytes[i] % chars.length);
     }
     return code;
   }

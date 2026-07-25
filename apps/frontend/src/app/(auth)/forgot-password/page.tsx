@@ -3,15 +3,27 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from '@/lib/i18n';
+import api from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslations();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/forgot-password', { email });
+      setSent(true);
+    } catch {
+      setError('Failed to send reset link. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,6 +57,11 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="bg-[hsl(222,14%,12%)] rounded-2xl p-8 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                {error}
+              </div>
+            )}
             <div>
               <label className="block text-sm text-[hsl(222,10%,55%)] mb-1.5">{t('forgot_email')}</label>
               <input
@@ -56,8 +73,8 @@ export default function ForgotPasswordPage() {
                 className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)]"
               />
             </div>
-            <button type="submit" className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] text-white font-semibold rounded-xl transition-colors">
-              {t('forgot_submit')}
+            <button type="submit" className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] text-white font-semibold rounded-xl transition-colors disabled:opacity-50" disabled={loading}>
+              {loading ? '...' : t('forgot_submit')}
             </button>
             <p className="text-center text-sm text-[hsl(222,10%,55%)]">
               {t('forgot_remember')} <Link href="/login" className="text-[hsl(267,80%,60%)] hover:underline">{t('forgot_login')}</Link>

@@ -1,0 +1,7 @@
+node_modules
+apps/frontend/src-tauri
+apps/frontend/src-tauri/target
+.next
+out
+.git
+.docker

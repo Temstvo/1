@@ -29,7 +29,7 @@ export class SubscriptionsService {
     return subscription || null;
   }
 
-  async create(userId: string, dto: { planId: string; couponCode?: string; paymentMethod?: string }) {
+  async create(userId: string, dto: { planId: string; couponCode?: string; paymentMethod?: string; provider?: string }) {
     const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
     if (!plan || !plan.isActive) {
       throw new NotFoundException('Plan not found or inactive');
@@ -66,7 +66,7 @@ export class SubscriptionsService {
       userId,
       amount: finalAmount,
       currency: plan.currency,
-      provider: 'STRIPE',
+      provider: (dto.provider as any) || 'YOOKASSA',
       description: `Subscription: ${plan.name}`,
       metadata: { planId: dto.planId, couponCode: dto.couponCode },
     });
@@ -174,7 +174,7 @@ export class SubscriptionsService {
       subscriptionId: newSubscription.id,
       amount: finalAmount,
       currency: newPlan.currency,
-      provider: 'STRIPE',
+      provider: 'YOOKASSA',
       description: `Plan change: ${newPlan.name}`,
       metadata: { previousPlanId: currentSubscription.planId, newPlanId, couponCode },
     });

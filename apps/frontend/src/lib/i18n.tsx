@@ -12,6 +12,7 @@ const translations = {
     sidebar_settings: 'Settings',
     sidebar_stats: 'Statistics',
     sidebar_logs: 'Logs',
+    sidebar_logout: 'Log out',
 
     // VPN page
     vpn_title: 'Configs',
@@ -332,6 +333,7 @@ const translations = {
     sidebar_settings: 'Настройки',
     sidebar_stats: 'Статистика',
     sidebar_logs: 'Логи',
+    sidebar_logout: 'Выйти',
 
     // VPN page
     vpn_title: 'Конфиги',

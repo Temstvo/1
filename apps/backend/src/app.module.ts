@@ -26,6 +26,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { SecurityModule } from './modules/security/security.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
+import { EmailModule } from './modules/email/email.module';
 import { QueuesModule } from './queues/queues.module';
 
 @Module({
@@ -65,6 +66,7 @@ import { QueuesModule } from './queues/queues.module';
     SecurityModule,
     AuditModule,
     HealthModule,
+    EmailModule,
     QueuesModule,
   ],
 })

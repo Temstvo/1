@@ -2,9 +2,31 @@
 
 import Link from 'next/link';
 import { useTranslations } from '@/lib/i18n';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const { t } = useTranslations();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_TAURI === 'true') {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        router.replace('/vpn');
+      } else {
+        router.replace('/register');
+      }
+    }
+  }, [router]);
+
+  if (process.env.NEXT_PUBLIC_TAURI === 'true') {
+    return (
+      <div className="min-h-screen bg-[hsl(222,14%,6%)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] text-white">

@@ -4,6 +4,8 @@ import { PrismaService } from '../../database/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import { YooKassaService } from './providers/yookassa.service';
 import { CryptomusService } from './providers/cryptomus.service';
+import { InvoicesService } from '../invoices/invoices.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class PaymentsService {
@@ -16,6 +18,8 @@ export class PaymentsService {
     private readonly configService: ConfigService,
     private readonly yookassaService: YooKassaService,
     private readonly cryptomusService: CryptomusService,
+    private readonly invoicesService: InvoicesService,
+    private readonly emailService: EmailService,
   ) {
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://appi-frontend.vercel.app');
     this.backendUrl = this.configService.get<string>('BACKEND_URL', 'https://appibackend-production.up.railway.app');
@@ -87,6 +91,38 @@ export class PaymentsService {
         ...(status === 'REFUNDED' ? { refundedAt: new Date() } : {}),
       },
     });
+  }
+
+  private async onPaymentCompleted(payment: any) {
+    try {
+      await this.invoicesService.create({
+        userId: payment.userId,
+        paymentId: payment.id,
+        subtotal: Number(payment.amount),
+        total: Number(payment.amount),
+        currency: payment.currency,
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payment.userId },
+        select: { email: true },
+      });
+
+      const planName = payment.metadata?.planId
+        ? (await this.prisma.plan.findUnique({ where: { id: payment.metadata.planId } }))?.name || 'Pro'
+        : 'Pro';
+
+      if (user) {
+        await this.emailService.sendPaymentConfirmationEmail(
+          user.email,
+          planName,
+          Number(payment.amount),
+          payment.currency,
+        );
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to create invoice/send email: ${error.message || error}`);
+    }
   }
 
   async handleStripeWebhook(event: any) {
@@ -171,7 +207,7 @@ export class PaymentsService {
     }
   }
 
-  async createCheckoutSession(userId: string, planId: string, couponCode?: string) {
+  async createCheckoutSession(userId: string, planId: string, couponCode?: string, provider: string = 'YOOKASSA') {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
       throw new NotFoundException('Plan not found or inactive');
@@ -190,23 +226,13 @@ export class PaymentsService {
     }
 
     const finalAmount = Math.max(0, Number(plan.price) - discount);
+    const paymentProvider = provider.toUpperCase() as any;
 
-    const payment = await this.createPayment({
-      userId,
-      amount: finalAmount,
-      currency: plan.currency,
-      provider: 'STRIPE',
-      description: `Subscription to ${plan.name}`,
-      metadata: { planId, couponCode: couponCode || null },
-    });
+    if (paymentProvider === 'CRYPTOMUS') {
+      return this.createCryptomusPayment(userId, planId, couponCode);
+    }
 
-    return {
-      paymentId: payment.id,
-      amount: finalAmount,
-      currency: plan.currency,
-      stripePriceId: plan.stripePriceId,
-      clientSecret: `pi_mock_${payment.id}`,
-    };
+    return this.createYooKassaPayment(userId, planId, couponCode);
   }
 
   async refund(paymentId: string, amount?: number) {
@@ -321,6 +347,7 @@ export class PaymentsService {
             data: { status: 'ACTIVE' },
           });
         }
+        await this.onPaymentCompleted(payment);
         this.logger.log(`YooKassa payment succeeded: ${payment.id}`);
         break;
       }
@@ -420,6 +447,7 @@ export class PaymentsService {
             data: { status: 'ACTIVE' },
           });
         }
+        await this.onPaymentCompleted(payment);
         this.logger.log(`Cryptomus payment completed: ${payment.id}`);
         break;
       }

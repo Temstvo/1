@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, ConflictException, Logger } from '@n
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { TokenService } from './token.service';
+import { EmailService } from '../email/email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '@prisma/client';
@@ -15,6 +16,7 @@ export class AuthService {
     private prisma: PrismaService,
     private tokenService: TokenService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto, ip?: string, userAgent?: string) {
@@ -88,12 +90,13 @@ export class AuthService {
 
     const tokens = await this.tokenService.generateTokenPair(user);
 
+    await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
+
     this.logger.log(`User registered: ${user.email}`);
 
     return {
       user: this.sanitizeUser(user),
       ...tokens,
-      emailVerificationToken,
     };
   }
 
@@ -313,6 +316,8 @@ export class AuthService {
         passwordResetTokenHash: resetTokenHash,
       },
     });
+
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken);
 
     this.logger.log(`Password reset requested for: ${user.email}`);
 

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
+  "productName": "APPI VPN",
+  "version": "1.0.0",
+  "identifier": "com.appivpn.desktop",
+  "build": {
+    "beforeDevCommand": "cd ../.. && pnpm --filter @appi/frontend dev",
+    "devUrl": "http://localhost:3001",
+    "beforeBuildCommand": "cd ../.. && pnpm --filter @appi/frontend build:tauri",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "APPI VPN",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://flagcdn.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* https://*.up.railway.app https://*.vercel.app https://*.supabase.co https://api.github.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "displayLanguageSelector": true
+      }
+    }
+  }
+}

@@ -25,6 +25,10 @@ class CreateCheckoutDto {
   @IsOptional()
   @IsString()
   couponCode?: string;
+
+  @IsOptional()
+  @IsString()
+  provider?: string;
 }
 
 class RefundDto {
@@ -49,7 +53,7 @@ export class PaymentsController {
     @CurrentUser('id') userId: string,
     @Body() dto: CreateCheckoutDto,
   ) {
-    return this.paymentsService.createCheckoutSession(userId, dto.planId, dto.couponCode);
+    return this.paymentsService.createCheckoutSession(userId, dto.planId, dto.couponCode, dto.provider);
   }
 
   @Post('checkout/yookassa')

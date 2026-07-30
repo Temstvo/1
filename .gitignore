@@ -54,3 +54,11 @@ prisma/migrations/
 
 # Misc
 *.tsbuildinfo
+
+# Tauri
+apps/frontend/src-tauri/target/
+apps/frontend/src-tauri/gen/
+*.zip
+fix-rls*.js
+supabase-fix-rls.sql
+

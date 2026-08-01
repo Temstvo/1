@@ -121,15 +121,18 @@ export class PaymentsController {
     @Headers('stripe-signature') signature: string,
     @Body() body: any,
   ) {
-    await this.paymentsService.handleStripeWebhook(body);
+    await this.paymentsService.handleStripeWebhook(body, signature);
     return { received: true };
   }
 
   @Post('webhook/yookassa')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'YooKassa webhook handler' })
-  async yookassaWebhook(@Body() body: any) {
-    return this.paymentsService.handleYooKassaWebhook(body);
+  async yookassaWebhook(
+    @Headers('x-shopify-hmac-sha256') signature: string,
+    @Body() body: any,
+  ) {
+    return this.paymentsService.handleYooKassaWebhook(body, signature);
   }
 
   @Post('webhook/cryptomus')

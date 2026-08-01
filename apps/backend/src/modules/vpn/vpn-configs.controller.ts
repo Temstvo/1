@@ -1,6 +1,9 @@
-import { Controller, Get, Query, Param, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Query, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
+import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('vpn-configs')
 @Controller('vpn-configs')
@@ -35,7 +38,10 @@ export class VpnConfigsController {
   }
 
   @Post('sync')
-  @ApiOperation({ summary: 'Trigger config sync (manual)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Trigger config sync (admin only)' })
   async sync() {
     return this.syncService.syncAll();
   }

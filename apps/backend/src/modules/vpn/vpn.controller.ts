@@ -55,8 +55,11 @@ export class VpnController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get config QR code data' })
   @ApiResponse({ status: 200, description: 'Config QR data' })
-  async getConfigQr(@Param('id') configId: string) {
-    return this.vpnService.getConfigQrCode(configId);
+  async getConfigQr(
+    @CurrentUser('id') userId: string,
+    @Param('id') configId: string,
+  ) {
+    return this.vpnService.getConfigQrCode(userId, configId);
   }
 
   @Delete('config/:id')

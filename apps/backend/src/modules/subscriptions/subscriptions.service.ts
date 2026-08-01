@@ -5,6 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CouponsService } from '../coupons/coupons.service';
@@ -21,7 +22,7 @@ export class SubscriptionsService {
 
   async getCurrentUserSubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -36,7 +37,7 @@ export class SubscriptionsService {
     }
 
     const activeSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD', 'PENDING'] } },
     });
 
     if (activeSubscription) {
@@ -75,7 +76,7 @@ export class SubscriptionsService {
       data: {
         userId,
         planId: dto.planId,
-        status: 'ACTIVE',
+        status: 'PENDING',
         startedAt: new Date(),
         expiresAt,
         paymentMethod: dto.paymentMethod || 'card',
@@ -98,7 +99,7 @@ export class SubscriptionsService {
 
   async cancel(userId: string, reason?: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
     });
 
     if (!subscription) {
@@ -119,7 +120,7 @@ export class SubscriptionsService {
 
   async changePlan(userId: string, newPlanId: string, couponCode?: string) {
     const currentSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
     });
 
     if (!currentSubscription) {
@@ -212,6 +213,7 @@ export class SubscriptionsService {
     });
   }
 
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async checkExpiration() {
     const expiredSubscriptions = await this.prisma.subscription.findMany({
       where: {
@@ -221,13 +223,41 @@ export class SubscriptionsService {
     });
 
     for (const subscription of expiredSubscriptions) {
-      await this.prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { status: 'EXPIRED' },
-      });
+      const graceEnd = new Date(subscription.expiresAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      if (new Date() < graceEnd) {
+        await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { status: 'GRACE_PERIOD' },
+        });
+        this.logger.log(`Subscription ${subscription.id} moved to GRACE_PERIOD`);
+      } else {
+        await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { status: 'EXPIRED' },
+        });
+        this.logger.log(`Subscription ${subscription.id} expired`);
+      }
     }
 
-    return { updated: expiredSubscriptions.length };
+    const gracePeriodExpired = await this.prisma.subscription.findMany({
+      where: {
+        status: 'GRACE_PERIOD',
+      },
+    });
+
+    for (const subscription of gracePeriodExpired) {
+      const graceEnd = new Date(subscription.expiresAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (new Date() >= graceEnd) {
+        await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { status: 'EXPIRED' },
+        });
+        this.logger.log(`Grace period ended for subscription ${subscription.id}`);
+      }
+    }
+
+    return { expired: expiredSubscriptions.length, graceExpired: gracePeriodExpired.length };
   }
 
   async getAll(userId?: string) {

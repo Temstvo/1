@@ -173,10 +173,10 @@ export class HealthCheckService {
     this.consecutiveFailures.delete(configId);
   }
 
-  getHealthStatus() {
+  async getHealthStatus() {
     return {
       lastCheck: this.lastCheckResult,
-      activeConfigs: this.prisma.vpnConfig.count({ where: { isActive: true } }),
+      activeConfigs: await this.prisma.vpnConfig.count({ where: { isActive: true } }),
     };
   }
 

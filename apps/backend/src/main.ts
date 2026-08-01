@@ -5,6 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,8 +17,16 @@ async function bootstrap() {
   app.use(helmet());
   app.setGlobalPrefix(apiPrefix);
 
+  app.enableGlobalFilters(new GlobalExceptionFilter());
+
+  const corsOrigins = configService
+    .get<string>('CORS_ORIGINS', 'http://localhost:3001')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGINS', 'http://localhost:3001').split(','),
+    origin: corsOrigins,
     credentials: true,
   });
 
@@ -55,5 +64,4 @@ async function bootstrap() {
 
   await app.listen(port);
 }
-
 bootstrap();

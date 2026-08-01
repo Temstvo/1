@@ -35,7 +35,7 @@ export class VpnService {
     }
 
     const hasActiveSubscription = user.subscriptions.some(
-      (s) => s.status === 'ACTIVE',
+      (s) => s.status === 'ACTIVE' || s.status === 'GRACE_PERIOD',
     );
 
     if (!hasActiveSubscription) {
@@ -44,6 +44,7 @@ export class VpnService {
 
     const keyPair = this.vpnConfigService.generateKeyPair();
     const clientId = this.vpnConfigService.generateClientId();
+    const clientAddress = this.vpnConfigService.generateClientAddress();
 
     let configData: any;
 
@@ -54,7 +55,7 @@ export class VpnService {
           serverPort: 51820,
           serverPublicKey: keyPair.publicKey,
           clientPrivateKey: keyPair.privateKey,
-          clientAddress: `10.0.0.${Math.floor(Math.random() * 254) + 1}`,
+          clientAddress,
         });
         break;
 
@@ -102,7 +103,7 @@ export class VpnService {
         config: configData,
         publicKey: keyPair.publicKey,
         privateKey: keyPair.privateKey,
-        ipAddress: `10.0.0.${Math.floor(Math.random() * 254) + 1}`,
+        ipAddress: clientAddress,
         port: protocol === 'WIREGUARD' ? 51820 : protocol === 'OPENVPN' ? 1194 : 443,
       },
     });
@@ -120,7 +121,18 @@ export class VpnService {
 
     this.logger.log(`VPN config generated: ${protocol} for user ${userId}`);
 
-    return vpnConfig;
+    return {
+      id: vpnConfig.id,
+      userId: vpnConfig.userId,
+      serverId: vpnConfig.serverId,
+      protocol: vpnConfig.protocol,
+      config: vpnConfig.config,
+      publicKey: vpnConfig.publicKey,
+      ipAddress: vpnConfig.ipAddress,
+      port: vpnConfig.port,
+      isActive: vpnConfig.isActive,
+      createdAt: vpnConfig.createdAt,
+    };
   }
 
   async getUserConfigs(userId: string) {
@@ -128,6 +140,21 @@ export class VpnService {
       where: { userId, isActive: true },
       include: { server: true },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        userId: true,
+        serverId: true,
+        protocol: true,
+        config: true,
+        publicKey: true,
+        ipAddress: true,
+        port: true,
+        isActive: true,
+        lastUsed: true,
+        createdAt: true,
+        updatedAt: true,
+        server: true,
+      },
     });
   }
 
@@ -146,12 +173,16 @@ export class VpnService {
     });
   }
 
-  async getConfigQrCode(configId: string) {
+  async getConfigQrCode(userId: string, configId: string) {
     const config = await this.prisma.vPNConfig.findUnique({
       where: { id: configId },
     });
 
     if (!config) {
+      throw new NotFoundException('Config not found');
+    }
+
+    if (config.userId !== userId) {
       throw new NotFoundException('Config not found');
     }
 

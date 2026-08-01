@@ -1,5 +1,4 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { VpnService } from './vpn.service';
 import { VpnConfigService } from './vpn-config.service';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
@@ -14,7 +13,6 @@ import { PrismaModule } from '../../database/prisma.module';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
     forwardRef(() => ServersModule),
     PrismaModule,
   ],

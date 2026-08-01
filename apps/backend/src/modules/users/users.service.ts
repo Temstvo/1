@@ -49,12 +49,12 @@ export class UsersService {
               timezone: data.timezone || 'UTC',
             },
             update: {
-              firstName: data.firstName,
-              lastName: data.lastName,
-              phone: data.phone,
-              country: data.country,
-              language: data.language,
-              timezone: data.timezone,
+              ...(data.firstName !== undefined && { firstName: data.firstName }),
+              ...(data.lastName !== undefined && { lastName: data.lastName }),
+              ...(data.phone !== undefined && { phone: data.phone }),
+              ...(data.country !== undefined && { country: data.country }),
+              ...(data.language !== undefined && { language: data.language }),
+              ...(data.timezone !== undefined && { timezone: data.timezone }),
             },
           },
         },
@@ -119,7 +119,7 @@ export class UsersService {
   }
 
   private sanitizeUser(user: User & { profile?: any }) {
-    const { passwordHash, twoFactorSecret, ...sanitized } = user as any;
+    const { passwordHash, twoFactorSecret, emailVerificationTokenHash, passwordResetTokenHash, ...sanitized } = user as any;
     return sanitized;
   }
 }

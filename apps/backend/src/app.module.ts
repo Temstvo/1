@@ -33,7 +33,6 @@ import { QueuesModule } from './queues/queues.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development',
     }),
     ThrottlerModule.forRoot([
       {

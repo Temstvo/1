@@ -38,7 +38,9 @@ model User {
   status        UserStatus  @default(ACTIVE)
   emailVerified Boolean     @default(false) @map("email_verified")
   emailVerificationTokenHash String? @map("email_verification_token_hash")
+  emailVerificationExpiresAt DateTime? @map("email_verification_expires_at")
   passwordResetTokenHash     String? @map("password_reset_token_hash")
+  passwordResetExpiresAt     DateTime? @map("password_reset_expires_at")
   twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
   twoFactorSecret    String? @map("two_factor_secret")
   lastLoginAt        DateTime? @map("last_login_at")
@@ -140,8 +142,10 @@ model Device {
 // ============================================
 
 enum SubscriptionStatus {
+  PENDING
   ACTIVE
   TRIAL
+  GRACE_PERIOD
   EXPIRED
   CANCELLED
   PAST_DUE

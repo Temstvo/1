@@ -125,15 +125,21 @@ export class PaymentsService {
     }
   }
 
-  async handleStripeWebhook(event: any) {
-    const { type, data } = event;
+  async handleStripeWebhook(event: any, signature?: string) {
+    if (!event?.type) {
+      this.logger.warn('Stripe webhook: missing event type');
+      return;
+    }
 
-    switch (type) {
+    const { type, data } = event;
+    const eventType = type as string;
+
+    switch (eventType) {
       case 'checkout.session.completed': {
         const session = data.object;
         const payment = await this.findByTransactionId(session.payment_intent || session.id);
 
-        if (payment) {
+        if (payment && payment.status !== 'COMPLETED') {
           await this.updateStatus(payment.id, 'COMPLETED', true);
           if (payment.subscriptionId) {
             await this.prisma.subscription.update({
@@ -141,7 +147,8 @@ export class PaymentsService {
               data: { status: 'ACTIVE' },
             });
           }
-          this.logger.log(`Payment completed: ${payment.id}`);
+          await this.onPaymentCompleted(payment);
+          this.logger.log(`Stripe payment completed: ${payment.id}`);
         }
         break;
       }
@@ -150,9 +157,15 @@ export class PaymentsService {
         const invoice = data.object;
         const payment = await this.findByTransactionId(invoice.payment_intent);
 
-        if (payment) {
+        if (payment && payment.status !== 'COMPLETED') {
           await this.updateStatus(payment.id, 'COMPLETED', true);
-          this.logger.log(`Subscription payment succeeded: ${payment.id}`);
+          if (payment.subscriptionId) {
+            await this.prisma.subscription.update({
+              where: { id: payment.subscriptionId },
+              data: { status: 'ACTIVE' },
+            });
+          }
+          this.logger.log(`Stripe subscription payment succeeded: ${payment.id}`);
         }
         break;
       }
@@ -169,7 +182,7 @@ export class PaymentsService {
               data: { status: 'PAST_DUE' },
             });
           }
-          this.logger.log(`Subscription payment failed: ${payment.id}`);
+          this.logger.log(`Stripe subscription payment failed: ${payment.id}`);
         }
         break;
       }
@@ -188,7 +201,7 @@ export class PaymentsService {
               webhookVerified: true,
             },
           });
-          this.logger.log(`Payment refunded: ${payment.id}`);
+          this.logger.log(`Stripe payment refunded: ${payment.id}`);
         }
         break;
       }
@@ -203,7 +216,7 @@ export class PaymentsService {
       }
 
       default:
-        this.logger.warn(`Unhandled Stripe event: ${type}`);
+        this.logger.warn(`Unhandled Stripe event: ${eventType}`);
     }
   }
 
@@ -323,19 +336,29 @@ export class PaymentsService {
     };
   }
 
-  async handleYooKassaWebhook(body: any) {
+  async handleYooKassaWebhook(body: any, signature?: string) {
+    if (signature && !this.yookassaService.verifyWebhook(body, signature)) {
+      this.logger.warn('YooKassa webhook: invalid signature — rejecting');
+      return { event: 'rejected' };
+    }
+
     const event = body.event;
     const paymentData = body.object;
 
     if (!paymentData?.id) {
       this.logger.warn('YooKassa webhook: missing payment id');
-      return;
+      return { event: 'invalid' };
     }
 
     const payment = await this.findByTransactionId(paymentData.id);
     if (!payment) {
       this.logger.warn(`YooKassa webhook: payment not found for ${paymentData.id}`);
-      return;
+      return { event: 'not_found' };
+    }
+
+    if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
+      this.logger.log(`YooKassa webhook: payment ${payment.id} already ${payment.status}, skipping`);
+      return { event: 'duplicate' };
     }
 
     switch (event) {

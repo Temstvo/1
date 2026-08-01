@@ -40,6 +40,7 @@ export class AuthService {
         referralCode,
         emailVerified: false,
         emailVerificationTokenHash,
+        emailVerificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         profile: {
           create: {
             firstName: dto.firstName,
@@ -70,7 +71,7 @@ export class AuthService {
     await this.prisma.securityEvent.create({
       data: {
         userId: user.id,
-        type: 'LOGIN_SUCCESS',
+        type: 'USER_CREATED',
         ip,
         userAgent,
       },
@@ -110,16 +111,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (user.status === 'BANNED') {
-      throw new UnauthorizedException('Account has been banned');
-    }
-
-    if (user.status === 'SUSPENDED') {
-      throw new UnauthorizedException('Account has been suspended');
-    }
-
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new UnauthorizedException('Account is temporarily locked');
+    if (user.status === 'BANNED' || user.status === 'SUSPENDED' || (user.lockedUntil && user.lockedUntil > new Date())) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const isValidPassword = await this.tokenService.verifyPassword(
@@ -235,6 +228,17 @@ export class AuthService {
   async refresh(refreshToken: string) {
     const payload = await this.tokenService.verifyRefreshToken(refreshToken);
 
+    const session = await this.prisma.session.findFirst({
+      where: {
+        userId: payload.sub,
+        isActive: true,
+      },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException('Session expired');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: { profile: true },
@@ -248,7 +252,22 @@ export class AuthService {
       throw new UnauthorizedException('Account is not available');
     }
 
+    await this.prisma.session.update({
+      where: { id: session.id },
+      data: { isActive: false },
+    });
+
     const tokens = await this.tokenService.generateTokenPair(user);
+
+    await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        tokenHash: this.tokenService.hashToken(tokens.accessToken),
+        ip: session.ip,
+        userAgent: session.userAgent,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
 
     await this.prisma.securityEvent.create({
       data: {
@@ -270,6 +289,7 @@ export class AuthService {
       where: {
         emailVerified: false,
         emailVerificationTokenHash: tokenHash,
+        emailVerificationExpiresAt: { gt: new Date() },
       },
     });
 
@@ -282,6 +302,7 @@ export class AuthService {
       data: {
         emailVerified: true,
         emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
       },
     });
 
@@ -314,6 +335,7 @@ export class AuthService {
       where: { id: user.id },
       data: {
         passwordResetTokenHash: resetTokenHash,
+        passwordResetExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
       },
     });
 
@@ -332,6 +354,7 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: {
         passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: { gt: new Date() },
       },
     });
 
@@ -346,6 +369,7 @@ export class AuthService {
       data: {
         passwordHash,
         passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
       },
     });
 

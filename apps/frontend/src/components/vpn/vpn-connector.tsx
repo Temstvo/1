@@ -7,7 +7,7 @@ type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 export function VpnConnector() {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [selectedServer, setSelectedServer] = useState('Frankfurt, Germany');
-  const [protocol, setProtocol] = useState('WireGuard');
+  const [protocol, setProtocol] = useState('VLESS Reality');
 
   const handleConnect = async () => {
     if (status === 'connected') {
@@ -122,8 +122,9 @@ export function VpnConnector() {
             onChange={(e) => setProtocol(e.target.value)}
             className="block w-full rounded-xl border border-gray-700/50 bg-[#111] px-4 py-3 text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
           >
-            <option>WireGuard</option>
-            <option>OpenVPN</option>
+            <option>VLESS Reality</option>
+            <option>Trojan</option>
+            <option>Shadowsocks</option>
             <option>Xray Reality</option>
             <option>VLESS</option>
           </select>

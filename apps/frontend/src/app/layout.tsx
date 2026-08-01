@@ -11,7 +11,11 @@ const inter = 'inter';
 export const metadata: Metadata = {
   title: 'APPI VPN',
   description: 'Private Internet. Without Limits.',
-  icons: { icon: '/logo.svg' },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    other: { rel: 'icon', url: '/favicon.ico' },
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

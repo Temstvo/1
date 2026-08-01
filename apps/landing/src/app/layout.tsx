@@ -3,7 +3,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'APPI VPN - Private Internet. Without Limits.',
-  description: 'Premium VPN service with WireGuard, OpenVPN, Xray Reality. Fast, secure, unlimited.',
+  description: 'Premium VPN service with VLESS Reality, Trojan, Shadowsocks. Fast, secure, unlimited.',
+  icons: { icon: '/favicon.ico' },
 };
 
 export default function RootLayout({
@@ -12,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className="scroll-smooth">
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

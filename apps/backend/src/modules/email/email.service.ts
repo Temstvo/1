@@ -45,7 +45,7 @@ export class EmailService {
           <body style="margin:0;padding:0;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:480px;margin:40px auto;background:#141414;border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;">
               <div style="padding:40px 32px;text-align:center;">
-                <img src="${this.frontendUrl}/logo.svg" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
+                <img src="${this.frontendUrl}/logo.png" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
                 <h1 style="color:#fff;font-size:24px;margin:0 0 8px;">Verify your email</h1>
                 <p style="color:#888;font-size:14px;margin:0 0 32px;">Click the button below to verify your email address and activate your account.</p>
                 <a href="${url}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:14px;">Verify Email</a>
@@ -85,7 +85,7 @@ export class EmailService {
           <body style="margin:0;padding:0;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:480px;margin:40px auto;background:#141414;border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;">
               <div style="padding:40px 32px;text-align:center;">
-                <img src="${this.frontendUrl}/logo.svg" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
+                <img src="${this.frontendUrl}/logo.png" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
                 <h1 style="color:#fff;font-size:24px;margin:0 0 8px;">Reset your password</h1>
                 <p style="color:#888;font-size:14px;margin:0 0 32px;">Click the button below to set a new password for your account.</p>
                 <a href="${url}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:14px;">Reset Password</a>
@@ -123,7 +123,7 @@ export class EmailService {
           <body style="margin:0;padding:0;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:480px;margin:40px auto;background:#141414;border-radius:16px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;">
               <div style="padding:40px 32px;text-align:center;">
-                <img src="${this.frontendUrl}/logo.svg" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
+                <img src="${this.frontendUrl}/logo.png" alt="APPI VPN" width="48" height="48" style="margin-bottom:16px;">
                 <h1 style="color:#fff;font-size:24px;margin:0 0 8px;">Payment confirmed!</h1>
                 <p style="color:#888;font-size:14px;margin:0 0 24px;">Your <strong style="color:#c4b5fd;">${planName}</strong> subscription is now active.</p>
                 <div style="background:#1a1a1a;border-radius:12px;padding:16px;margin:0 0 24px;">

@@ -17,14 +17,14 @@ interface Server {
 }
 
 const mockServers: Server[] = [
-  { id: '1', name: 'Frankfurt', country: 'Germany', city: 'Frankfurt', flag: '🇩🇪', status: 'ONLINE', load: 45, latency: 12, currentUsers: 234, maxUsers: 1000, protocols: ['WireGuard', 'OpenVPN', 'Xray'] },
-  { id: '2', name: 'Amsterdam', country: 'Netherlands', city: 'Amsterdam', flag: '🇳🇱', status: 'ONLINE', load: 62, latency: 18, currentUsers: 189, maxUsers: 800, protocols: ['WireGuard', 'OpenVPN'] },
-  { id: '3', name: 'New York', country: 'USA', city: 'New York', flag: '🇺🇸', status: 'ONLINE', load: 78, latency: 85, currentUsers: 456, maxUsers: 1500, protocols: ['WireGuard', 'OpenVPN', 'Xray', 'VLESS'] },
-  { id: '4', name: 'Tokyo', country: 'Japan', city: 'Tokyo', flag: '🇯🇵', status: 'ONLINE', load: 33, latency: 120, currentUsers: 167, maxUsers: 600, protocols: ['WireGuard', 'Xray'] },
-  { id: '5', name: 'London', country: 'UK', city: 'London', flag: '🇬🇧', status: 'MAINTENANCE', load: 0, latency: 0, currentUsers: 0, maxUsers: 1000, protocols: ['WireGuard', 'OpenVPN'] },
-  { id: '6', name: 'Singapore', country: 'Singapore', city: 'Singapore', flag: '🇸🇬', status: 'ONLINE', load: 55, latency: 95, currentUsers: 298, maxUsers: 800, protocols: ['WireGuard', 'OpenVPN', 'VLESS'] },
-  { id: '7', name: 'Paris', country: 'France', city: 'Paris', flag: '🇫🇷', status: 'ONLINE', load: 28, latency: 22, currentUsers: 145, maxUsers: 700, protocols: ['WireGuard', 'Xray'] },
-  { id: '8', name: 'Warsaw', country: 'Poland', city: 'Warsaw', flag: '🇵🇱', status: 'ONLINE', load: 15, latency: 28, currentUsers: 89, maxUsers: 500, protocols: ['WireGuard', 'OpenVPN'] },
+  { id: '1', name: 'Frankfurt', country: 'Germany', city: 'Frankfurt', flag: '🇩🇪', status: 'ONLINE', load: 45, latency: 12, currentUsers: 234, maxUsers: 1000, protocols: ['VLESS Reality', 'Trojan', 'Shadowsocks'] },
+  { id: '2', name: 'Amsterdam', country: 'Netherlands', city: 'Amsterdam', flag: '🇳🇱', status: 'ONLINE', load: 62, latency: 18, currentUsers: 189, maxUsers: 800, protocols: ['VLESS Reality', 'Trojan'] },
+  { id: '3', name: 'New York', country: 'USA', city: 'New York', flag: '🇺🇸', status: 'ONLINE', load: 78, latency: 85, currentUsers: 456, maxUsers: 1500, protocols: ['VLESS Reality', 'Trojan', 'Shadowsocks'] },
+  { id: '4', name: 'Tokyo', country: 'Japan', city: 'Tokyo', flag: '🇯🇵', status: 'ONLINE', load: 33, latency: 120, currentUsers: 167, maxUsers: 600, protocols: ['VLESS Reality', 'Shadowsocks'] },
+  { id: '5', name: 'London', country: 'UK', city: 'London', flag: '🇬🇧', status: 'MAINTENANCE', load: 0, latency: 0, currentUsers: 0, maxUsers: 1000, protocols: ['VLESS Reality', 'Trojan'] },
+  { id: '6', name: 'Singapore', country: 'Singapore', city: 'Singapore', flag: '🇸🇬', status: 'ONLINE', load: 55, latency: 95, currentUsers: 298, maxUsers: 800, protocols: ['VLESS Reality', 'Trojan', 'Shadowsocks'] },
+  { id: '7', name: 'Paris', country: 'France', city: 'Paris', flag: '🇫🇷', status: 'ONLINE', load: 28, latency: 22, currentUsers: 145, maxUsers: 700, protocols: ['VLESS Reality', 'Shadowsocks'] },
+  { id: '8', name: 'Warsaw', country: 'Poland', city: 'Warsaw', flag: '🇵🇱', status: 'ONLINE', load: 15, latency: 28, currentUsers: 89, maxUsers: 500, protocols: ['VLESS Reality', 'Trojan'] },
 ];
 
 export function ServerList({ onSelect }: { onSelect?: (server: Server) => void }) {

@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
+import { HealthCheckService } from './health-check.service';
 import { MigrationService } from './migration.service';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class VpnConfigScheduler implements OnModuleInit {
 
   constructor(
     private readonly syncService: VpnConfigSyncService,
+    private readonly healthCheckService: HealthCheckService,
     private readonly migrationService: MigrationService,
   ) {}
 
@@ -32,6 +34,16 @@ export class VpnConfigScheduler implements OnModuleInit {
       this.logger.log(`Auto-sync completed: ${JSON.stringify(result)}`);
     } catch (error: any) {
       this.logger.error(`Auto-sync failed: ${error.message}`);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async handleHealthCheck() {
+    this.logger.log('Running health check...');
+    try {
+      await this.healthCheckService.forceCheck();
+    } catch (error: any) {
+      this.logger.error(`Health check failed: ${error.message}`);
     }
   }
 }

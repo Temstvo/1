@@ -10,11 +10,17 @@ interface UserData {
   refreshToken: string;
 }
 
+interface RateLimit {
+  attempts: number;
+  resetAt: number;
+}
+
 @Injectable()
 export class BotUpdate implements OnModuleInit {
   private readonly logger = new Logger(BotUpdate.name);
   private userStates = new Map<number, { action: string; data?: any }>();
   private linkedUsers = new Map<number, UserData>();
+  private rateLimits = new Map<number, RateLimit>();
   private backendUrl: string;
 
   constructor(
@@ -80,6 +86,21 @@ export class BotUpdate implements OnModuleInit {
     }
   }
 
+  private checkRateLimit(userId: number): boolean {
+    const now = Date.now();
+    const limit = this.rateLimits.get(userId);
+
+    if (!limit || now > limit.resetAt) {
+      this.rateLimits.set(userId, { attempts: 1, resetAt: now + 60_000 });
+      return true;
+    }
+
+    if (limit.attempts >= 5) return false;
+
+    limit.attempts++;
+    return true;
+  }
+
   private registerHandlers() {
     const bot = this.botService.getBot();
 
@@ -142,7 +163,7 @@ export class BotUpdate implements OnModuleInit {
 
     await ctx.answerCbQuery();
     this.userStates.set(userId, { action: 'login_email' });
-    await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
+    await ctx.editMessageText('📧 Enter your email:', { parse_mode: 'Markdown' });
   }
 
   private async handleRegisterStart(ctx: Context) {
@@ -151,7 +172,7 @@ export class BotUpdate implements OnModuleInit {
 
     await ctx.answerCbQuery();
     this.userStates.set(userId, { action: 'register_email' });
-    await ctx.editMessageText('Enter your email:', { parse_mode: 'Markdown' });
+    await ctx.editMessageText('📧 Enter your email:', { parse_mode: 'Markdown' });
   }
 
   private async handleMainMenu(ctx: Context) {
@@ -394,7 +415,7 @@ export class BotUpdate implements OnModuleInit {
         `💡 Copy the URI above and paste it into your VPN client (Karing, v2rayN, Streisand, NekoBox).`,
         {
           parse_mode: 'Markdown',
-          reply_markup: { inline_keyboard: [[{ text: '📋 Copy URI', url: 'https://appi-frontend.vercel.app/vpn' }], [backButton]] },
+          reply_markup: { inline_keyboard: [[backButton]] },
         },
       );
     } catch (e: any) {
@@ -480,8 +501,12 @@ export class BotUpdate implements OnModuleInit {
   }
 
   private async requireLogin(ctx: Context) {
-    await ctx.answerCbQuery();
-    await ctx.reply('Please log in first.', {
+    if ('data' in ctx.update && 'message' in (ctx.update as any).message) {
+      // Text message - no cb to answer
+    } else {
+      try { await ctx.answerCbQuery(); } catch {}
+    }
+    await ctx.reply('🔒 Please log in first.', {
       reply_markup: { inline_keyboard: authKeyboard },
     });
   }
@@ -498,30 +523,52 @@ export class BotUpdate implements OnModuleInit {
       case 'register_email': {
         const email = text.trim();
         if (!email.includes('@')) {
-          await ctx.reply('Invalid email. Try again:');
+          await ctx.reply('❌ Invalid email. Try again:');
           return;
         }
         this.userStates.set(userId, { action: 'register_password', data: { email } });
-        await ctx.reply('Create a password:\n• min 8 characters\n• uppercase + lowercase\n• number\n• special character: @ $ ! % * ? &');
+        await ctx.reply(
+          '🔒 Create a password:\n' +
+          '• min 8 characters\n' +
+          '• uppercase + lowercase\n' +
+          '• number + special char (@ $ ! % * ? &)\n\n' +
+          '⚠️ *For security, delete this message after typing your password.*',
+          { parse_mode: 'Markdown' },
+        );
         return;
       }
 
       case 'register_password': {
+        if (!this.checkRateLimit(userId)) {
+          await ctx.reply('⏳ Too many attempts. Wait 1 minute and try /start again.');
+          return;
+        }
+
         const password = text.trim();
+
+        // Delete the password message for security
+        if (ctx.message && 'message_id' in ctx.message) {
+          try { await ctx.deleteMessage(); } catch {}
+        }
+
         if (password.length < 8) {
-          await ctx.reply('Too short (min 8 characters). Try again:');
+          await ctx.reply('❌ Too short (min 8 characters). Try again:');
           return;
         }
         this.userStates.set(userId, { action: 'register_confirm', data: { ...state.data, password } });
-        await ctx.reply('Confirm your password:');
+        await ctx.reply('🔒 Confirm your password:');
         return;
       }
 
       case 'register_confirm': {
         const { email, password } = state.data;
 
+        if (ctx.message && 'message_id' in ctx.message) {
+          try { await ctx.deleteMessage(); } catch {}
+        }
+
         if (text.trim() !== password) {
-          await ctx.reply('Passwords do not match. Try again:');
+          await ctx.reply('❌ Passwords do not match. Try again:');
           return;
         }
 
@@ -570,16 +617,27 @@ export class BotUpdate implements OnModuleInit {
       case 'login_email': {
         const email = text.trim();
         if (!email.includes('@')) {
-          await ctx.reply('Invalid email. Try again:');
+          await ctx.reply('❌ Invalid email. Try again:');
           return;
         }
         this.userStates.set(userId, { action: 'login_password', data: { email } });
-        await ctx.reply('Enter your password:');
+        await ctx.reply('🔒 Enter your password:');
         return;
       }
 
       case 'login_password': {
+        if (!this.checkRateLimit(userId)) {
+          await ctx.reply('⏳ Too many attempts. Wait 1 minute and try /start again.');
+          this.userStates.delete(userId);
+          return;
+        }
+
         const { email } = state.data;
+
+        // Delete the password message for security
+        if (ctx.message && 'message_id' in ctx.message) {
+          try { await ctx.deleteMessage(); } catch {}
+        }
 
         try {
           const data = await this.api('/auth/login', {

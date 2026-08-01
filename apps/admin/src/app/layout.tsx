@@ -5,6 +5,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'APPI VPN Admin',
   description: 'Admin panel for APPI VPN platform',
+  icons: { icon: '/favicon.ico' },
 };
 
 export default function RootLayout({

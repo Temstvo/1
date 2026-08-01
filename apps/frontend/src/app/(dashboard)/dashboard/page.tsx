@@ -43,7 +43,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="mt-3 text-2xl font-bold text-white">Germany</p>
-          <p className="mt-1 text-xs text-gray-500">Frankfurt - WireGuard</p>
+          <p className="mt-1 text-xs text-gray-500">Frankfurt - VLESS Reality</p>
         </div>
       </div>
 

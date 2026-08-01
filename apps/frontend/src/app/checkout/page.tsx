@@ -131,7 +131,7 @@ export default function CheckoutPage() {
       <header className="border-b border-white/5 bg-[#0d0d0d]/80 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
+            <img src="/logo.png" alt="APPI VPN" className="w-7 h-7" />
             <span className="font-bold">APPI VPN</span>
           </Link>
           <div className="flex items-center gap-3 md:gap-4 text-sm">

@@ -34,7 +34,7 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0d0d0d]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="APPI VPN" className="w-8 h-8" />
+            <img src="/logo.png" alt="APPI VPN" className="w-8 h-8" />
             <span className="font-bold text-lg">APPI VPN</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
@@ -219,7 +219,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-6 md:gap-8">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
+              <img src="/logo.png" alt="APPI VPN" className="w-7 h-7" />
               <span className="font-bold">APPI VPN</span>
             </div>
             <p className="text-sm text-gray-500">{t('landing_footer_desc')}</p>

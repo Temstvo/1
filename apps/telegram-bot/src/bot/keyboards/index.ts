@@ -14,7 +14,10 @@ export const mainMenuKeyboard = [
     { text: '🔑 Subscription', callback_data: 'menu:subscription' },
   ],
   [
+    { text: '🖥 Servers', callback_data: 'menu:servers' },
     { text: '📈 Traffic', callback_data: 'menu:traffic' },
+  ],
+  [
     { text: '📱 Devices', callback_data: 'menu:devices' },
   ],
   [

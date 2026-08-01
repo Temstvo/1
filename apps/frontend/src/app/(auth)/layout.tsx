@@ -14,7 +14,7 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href={isTauri ? '#' : '/'} className="inline-flex items-center gap-2 text-xl font-bold text-white">
-            <img src="/logo.svg" alt="APPI VPN" className="w-7 h-7" />
+            <img src="/logo.png" alt="APPI VPN" className="w-7 h-7" />
             APPI VPN
           </Link>
         </div>

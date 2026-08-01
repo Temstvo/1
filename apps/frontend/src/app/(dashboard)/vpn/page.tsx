@@ -218,8 +218,18 @@ export default function VpnPage() {
   const flagUrl = (code: string) =>
     `https://flagcdn.com/w80/${(code || 'un').toLowerCase()}.png`;
 
+  const isTauri = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TAURI === 'true';
+
   return (
     <div className="flex h-full flex-col md:flex-row">
+      {!isTauri && (
+        <div className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 border-b border-[var(--border)] px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-[var(--foreground)]">{t('vpn_download_banner')}</p>
+          <a href="/downloads" className="shrink-0 rounded-lg bg-[var(--primary)] px-4 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition-opacity">
+            {t('vpn_download_btn')}
+          </a>
+        </div>
+      )}
       <div className="md:hidden flex border-b border-[var(--border)]">
         <button onClick={() => setMobileView('list')} className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${mobileView === 'list' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}>
           {t('vpn_title')}

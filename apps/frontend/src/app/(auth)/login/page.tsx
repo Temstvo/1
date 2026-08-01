@@ -22,7 +22,7 @@ export default function LoginPage() {
       const { data } = await api.post('/auth/login', { email, password });
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      router.push('/vpn');
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || t('login_error'));
     } finally {

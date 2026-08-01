@@ -12,6 +12,7 @@ const translations = {
     sidebar_settings: 'Settings',
     sidebar_stats: 'Statistics',
     sidebar_logs: 'Logs',
+    sidebar_downloads: 'Download App',
     sidebar_logout: 'Log out',
 
     // VPN page
@@ -45,6 +46,8 @@ const translations = {
     vpn_latency: 'Latency',
     vpn_no_configs: 'No configs found',
     vpn_loading: 'Loading configs...',
+    vpn_download_banner: 'Download the app to use VPN on your device',
+    vpn_download_btn: 'Download',
 
     // Settings page
     settings_title: 'Settings',
@@ -333,6 +336,7 @@ const translations = {
     sidebar_settings: 'Настройки',
     sidebar_stats: 'Статистика',
     sidebar_logs: 'Логи',
+    sidebar_downloads: 'Скачать приложение',
     sidebar_logout: 'Выйти',
 
     // VPN page
@@ -366,6 +370,8 @@ const translations = {
     vpn_latency: 'Пинг',
     vpn_no_configs: 'Конфиги не найдены',
     vpn_loading: 'Загрузка конфигов...',
+    vpn_download_banner: 'Скачайте приложение чтобы пользоваться VPN на устройстве',
+    vpn_download_btn: 'Скачать',
 
     // Settings page
     settings_title: 'Настройки',

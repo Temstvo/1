@@ -35,7 +35,7 @@ export default function RegisterPage() {
       });
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      router.push('/vpn');
+      router.push('/checkout');
     } catch (err: any) {
       setError(err.response?.data?.message || t('register_error_fail'));
     } finally {

@@ -2,16 +2,18 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from '@/lib/i18n';
 
 export default function CheckoutSuccessPage() {
-  const [countdown, setCountdown] = useState(5);
+  const { t } = useTranslations();
+  const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
           clearInterval(timer);
-          window.location.href = '/vpn';
+          window.location.href = '/downloads';
           return 0;
         }
         return c - 1;
@@ -28,16 +30,16 @@ export default function CheckoutSuccessPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-2">Payment Successful!</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('checkout_success')}</h1>
         <p className="text-gray-400 mb-8">
-          Your VPN subscription is now active. Redirecting to dashboard in {countdown}s...
+          {t('checkout_success_sub')} Redirecting in {countdown}s...
         </p>
         <div className="flex gap-3 justify-center">
-          <Link href="/vpn" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
-            Go to Dashboard
+          <Link href="/downloads" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold transition-colors">
+            {t('checkout_download_app')}
           </Link>
-          <Link href="/" className="px-6 py-3 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
-            Home
+          <Link href="/dashboard" className="px-6 py-3 border border-white/10 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
+            {t('checkout_dashboard')}
           </Link>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { BotService } from './bot.service';
 @Injectable()
 export class BotMiddleware implements OnModuleInit {
   private readonly logger = new Logger(BotMiddleware.name);
+  private readonly rateLimits = new Map<number, { count: number; resetAt: number }>();
 
   constructor(private readonly botService: BotService) {}
 
@@ -13,6 +14,21 @@ export class BotMiddleware implements OnModuleInit {
       return;
     }
     this.registerMiddleware();
+  }
+
+  private isRateLimited(userId: number): boolean {
+    const now = Date.now();
+    const windowMs = 60_000;
+    const maxRequests = 30;
+    const entry = this.rateLimits.get(userId);
+
+    if (!entry || now > entry.resetAt) {
+      this.rateLimits.set(userId, { count: 1, resetAt: now + windowMs });
+      return false;
+    }
+
+    entry.count++;
+    return entry.count > maxRequests;
   }
 
   private registerMiddleware() {
@@ -30,6 +46,12 @@ export class BotMiddleware implements OnModuleInit {
         this.logger.log(
           `User ${ctx.from.id} (${ctx.from.username || ctx.from.first_name}) - ${ctx.updateType}`,
         );
+
+        if (this.isRateLimited(ctx.from.id)) {
+          this.logger.warn(`Rate limited user ${ctx.from.id}`);
+          await ctx.reply('Please slow down. Try again in a minute.');
+          return;
+        }
       }
       await next();
     });

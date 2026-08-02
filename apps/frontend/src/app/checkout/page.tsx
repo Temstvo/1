@@ -117,6 +117,21 @@ export default function CheckoutPage() {
     }
   };
 
+  const isValidPaymentUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url);
+      const allowedHosts = [
+        'yookassa.ru',
+        'yoomoney.ru',
+        'cryptomus.com',
+        'pay.cryptomus.com',
+      ];
+      return allowedHosts.some((h) => parsed.hostname === h || parsed.hostname.endsWith('.' + h));
+    } catch {
+      return false;
+    }
+  };
+
   const handlePay = async () => {
     setProcessing(true);
     setError('');
@@ -128,10 +143,10 @@ export default function CheckoutPage() {
           couponCode: promoApplied ? promoCode : undefined,
         });
         const { confirmationUrl } = res.data;
-        if (confirmationUrl) {
+        if (confirmationUrl && isValidPaymentUrl(confirmationUrl)) {
           window.location.href = confirmationUrl;
         } else {
-          setError('Payment URL not received');
+          setError('Invalid payment URL');
           setProcessing(false);
         }
       } else if (paymentMethod === 'crypto') {
@@ -140,10 +155,10 @@ export default function CheckoutPage() {
           couponCode: promoApplied ? promoCode : undefined,
         });
         const { paymentUrl } = res.data;
-        if (paymentUrl) {
+        if (paymentUrl && isValidPaymentUrl(paymentUrl)) {
           window.location.href = paymentUrl;
         } else {
-          setError('Payment URL not received');
+          setError('Invalid payment URL');
           setProcessing(false);
         }
       }

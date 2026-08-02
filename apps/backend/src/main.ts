@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,7 @@ async function bootstrap() {
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');
 
   app.use(helmet());
+  app.use(new RequestLoggerMiddleware().use);
   app.setGlobalPrefix(apiPrefix);
 
   app.enableGlobalFilters(new GlobalExceptionFilter());

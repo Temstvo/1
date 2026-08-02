@@ -58,12 +58,26 @@ export class ConnectionsService {
   }
 
   async disconnectAll(userId: string) {
-    const connections = await this.prisma.connection.findMany({
+    const activeConnections = await this.prisma.connection.findMany({
       where: { userId, disconnectedAt: null },
+      select: { id: true, serverId: true },
     });
 
-    for (const conn of connections) {
-      await this.disconnect(userId, conn.id);
+    if (activeConnections.length === 0) return;
+
+    const serverIds = [...new Set(activeConnections.map((c) => c.serverId))];
+
+    await this.prisma.connection.updateMany({
+      where: { userId, disconnectedAt: null },
+      data: { disconnectedAt: new Date() },
+    });
+
+    for (const serverId of serverIds) {
+      const count = activeConnections.filter((c) => c.serverId === serverId).length;
+      await this.prisma.server.update({
+        where: { id: serverId },
+        data: { currentUsers: { decrement: count } },
+      });
     }
   }
 

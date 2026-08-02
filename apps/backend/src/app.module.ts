@@ -17,17 +17,10 @@ import { VpnConfigsModule } from './modules/vpn/vpn-configs.module';
 import { ServersModule } from './modules/servers/servers.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { TelegramModule } from './modules/telegram/telegram.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { SupportModule } from './modules/support/support.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { SecurityModule } from './modules/security/security.module';
-import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
-import { QueuesModule } from './queues/queues.module';
 
 @Module({
   imports: [
@@ -56,17 +49,10 @@ import { QueuesModule } from './queues/queues.module';
     ServersModule,
     TrafficModule,
     NotificationsModule,
-    TelegramModule,
     ReferralsModule,
     CouponsModule,
-    AnalyticsModule,
-    SupportModule,
-    AdminModule,
-    SecurityModule,
-    AuditModule,
     HealthModule,
     EmailModule,
-    QueuesModule,
   ],
 })
 export class AppModule {}

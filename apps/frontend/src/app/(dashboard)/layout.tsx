@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
 import AddSubscriptionModal from './add-subscription-modal';
@@ -12,12 +12,27 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const { t } = useTranslations();
 
   const isTauri = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TAURI === 'true';
+
+  useEffect(() => {
+    if (isTauri) {
+      setAuthChecked(true);
+      return;
+    }
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      router.replace('/login');
+    } else {
+      setAuthChecked(true);
+    }
+  }, [router, isTauri]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -118,6 +133,14 @@ export default function DashboardLayout({
       ),
     },
   ];
+
+  if (!authChecked) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[hsl(222,14%,6%)]">
+        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[hsl(222,14%,6%)]">

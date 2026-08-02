@@ -571,9 +571,12 @@ model AuditLog {
 }
 
 enum SecurityEventType {
+  USER_CREATED
   LOGIN_SUCCESS
   LOGIN_FAILURE
   PASSWORD_CHANGED
+  PASSWORD_RESET
+  EMAIL_VERIFIED
   TWO_FA_ENABLED
   TWO_FA_DISABLED
   SUSPICIOUS_ACTIVITY
@@ -598,4 +601,15 @@ model SecurityEvent {
   @@index([type])
   @@index([createdAt])
   @@map("security_events")
+}
+
+// ============================================
+// SEQUENCES (atomic counters)
+// ============================================
+
+model Sequence {
+  prefix  String @id
+  nextVal Int    @default(1) @map("next_val")
+
+  @@map("sequences")
 }

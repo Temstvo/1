@@ -19,7 +19,7 @@ async function bootstrap() {
   app.use(new RequestLoggerMiddleware().use);
   app.setGlobalPrefix(apiPrefix);
 
-  app.enableGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   const corsOrigins = configService
     .get<string>('CORS_ORIGINS', 'http://localhost:3001')

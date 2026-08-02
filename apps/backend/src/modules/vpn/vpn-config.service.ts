@@ -228,4 +228,11 @@ ${params.tlsAuthKey}
   generateClientId(): string {
     return randomBytes(16).toString('hex');
   }
+
+  generateClientAddress(clientId: string): string {
+    const hash = Buffer.from(clientId, 'hex');
+    const subnet = (hash[0] & 0x0f) % 251 + 2;
+    const host = (hash[1] & 0x3f) % 251 + 2;
+    return `10.10.${subnet}.${host}`;
+  }
 }

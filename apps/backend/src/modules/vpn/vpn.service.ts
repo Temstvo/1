@@ -44,7 +44,7 @@ export class VpnService {
 
     const keyPair = this.vpnConfigService.generateKeyPair();
     const clientId = this.vpnConfigService.generateClientId();
-    const clientAddress = this.vpnConfigService.generateClientAddress();
+    const clientAddress = this.vpnConfigService.generateClientAddress(clientId);
 
     let configData: any;
 
@@ -136,26 +136,13 @@ export class VpnService {
   }
 
   async getUserConfigs(userId: string) {
-    return this.prisma.vPNConfig.findMany({
+    const configs = await this.prisma.vPNConfig.findMany({
       where: { userId, isActive: true },
       include: { server: true },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        userId: true,
-        serverId: true,
-        protocol: true,
-        config: true,
-        publicKey: true,
-        ipAddress: true,
-        port: true,
-        isActive: true,
-        lastUsed: true,
-        createdAt: true,
-        updatedAt: true,
-        server: true,
-      },
     });
+
+    return configs.map(({ privateKey, ...rest }) => rest);
   }
 
   async deleteConfig(userId: string, configId: string) {

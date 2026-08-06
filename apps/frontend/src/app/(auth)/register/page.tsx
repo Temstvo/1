@@ -46,8 +46,8 @@ export default function RegisterPage() {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white">{t('register_title')}</h2>
-        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">{t('register_subtitle')}</p>
+        <h2 className="text-2xl font-bold text-white">Начать</h2>
+        <p className="mt-1 text-[hsl(222,10%,55%)] text-sm">Пробный период — 3 дня за 10&nbsp;₽.</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -94,7 +94,7 @@ export default function RegisterPage() {
           disabled={loading}
           className="w-full py-3 bg-[hsl(267,80%,60%)] hover:bg-[hsl(267,80%,55%)] disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
         >
-          {loading ? t('register_loading') : t('register_submit')}
+          {loading ? t('register_loading') : 'Начать за 10 ₽'}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-[hsl(222,10%,55%)]">

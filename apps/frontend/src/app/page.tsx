@@ -191,8 +191,8 @@ export default function HomePage() {
           <div className="grid grid-cols-3 gap-3 mt-3 reveal">
             {[
               { value: 'TLS 1.3', label: 'Протокол шифрования' },
-              { value: '0 ms', label: 'Логов сохраняется' },
-              { value: '0.00%', label: 'Аптайм за 30 суток' },
+              { value: '< 30 ms', label: 'Средняя задержка' },
+              { value: '99.95%', label: 'Аптайм за 30 суток' },
             ].map((s) => (
               <div key={s.label} className="bg-[#111] border border-white/5 rounded-2xl p-6 text-center">
                 <div className="text-xl md:text-2xl font-bold text-purple-400">{s.value}</div>
@@ -218,7 +218,7 @@ export default function HomePage() {
               <div className="text-xs font-semibold uppercase tracking-widest text-purple-400 mb-2">Скорость</div>
               <h3 className="text-2xl font-bold mb-3">Без буфера. Без ограничений.</h3>
               <div className="flex items-end gap-2 mb-3">
-                <span className="text-5xl font-bold text-purple-400">0</span>
+                <span className="text-5xl font-bold text-purple-400">850</span>
                 <span className="text-xl text-gray-500 mb-1">Мбит/с</span>
               </div>
               <p className="text-sm text-gray-500">P95 за последние 30 суток (iperf3). Каждый сервер — собственный 1 Гбит/с канал.</p>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useTranslations } from '@/lib/i18n';
@@ -73,7 +73,7 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
           <h2 className="text-lg font-semibold text-white">
             {step === 'code' ? (t('modal_title') || 'Add configuration') : (t('modal_details_title') || 'Subscription details')}
           </h2>
-          <button onClick={handleClose} className="text-[var(--muted-foreground)] hover:text-white transition-colors">
+          <button onClick={handleClose} className="text-[hsl(var(--muted-foreground))] hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -84,11 +84,11 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
           {step === 'code' ? (
             /* Step 1: Enter code */
             <div className="space-y-4">
-              <p className="text-sm text-[var(--muted-foreground)]">
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">
                 {t('modal_code_desc') || 'Enter the 3-character activation code from your subscription'}
               </p>
               <div>
-                <label className="block text-sm text-[var(--muted-foreground)] mb-1.5">
+                <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
                   {t('modal_code_label') || 'Activation code'}
                 </label>
                 <input
@@ -96,7 +96,7 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
                   value={code}
                   onChange={(e) => { setCode(e.target.value.toUpperCase().slice(0, 3)); setError(''); }}
                   maxLength={3}
-                  className="w-full px-4 py-3 bg-[var(--muted)] border border-[var(--border)] rounded-xl text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors uppercase"
+                  className="w-full px-4 py-3 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl text-white text-center text-2xl font-mono tracking-[0.5em] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors uppercase"
                   placeholder="___"
                   autoFocus
                 />
@@ -106,7 +106,7 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
               )}
               <button
                 onClick={handleCodeSubmit}
-                className="w-full py-3 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white font-semibold rounded-xl transition-colors"
+                className="w-full py-3 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white font-semibold rounded-xl transition-colors"
               >
                 {t('modal_next') || 'Next'}
               </button>
@@ -115,65 +115,65 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
             /* Step 2: Subscription details */
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-[var(--muted-foreground)] mb-1.5">
+                <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
                   {t('modal_type') || 'Type'}
                 </label>
-                <select className="w-full px-4 py-3 bg-[var(--muted)] border border-[var(--border)] rounded-xl text-white text-sm focus:outline-none focus:border-[var(--primary)] transition-colors">
+                <select className="w-full px-4 py-3 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl text-white text-sm focus:outline-none focus:border-[hsl(var(--primary))] transition-colors">
                   <option>{t('modal_type_subscription') || 'Subscription'}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-[var(--muted-foreground)] mb-1.5">
+                <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
                   {t('modal_name') || 'Subscription name'}
                 </label>
                 <input
                   type="text"
                   value={subName}
                   onChange={(e) => { setSubName(e.target.value); setError(''); }}
-                  className="w-full px-4 py-3 bg-[var(--muted)] border border-[var(--border)] rounded-xl text-white text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                  className="w-full px-4 py-3 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl text-white text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors"
                   placeholder={t('modal_name_placeholder') || 'My VPN'}
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm text-[var(--muted-foreground)] mb-1.5">
+                <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
                   {t('modal_url') || 'Subscription URL'}
                 </label>
                 <input
                   type="text"
                   value={subUrl}
                   onChange={(e) => setSubUrl(e.target.value)}
-                  className="w-full px-4 py-3 bg-[var(--muted)] border border-[var(--border)] rounded-xl text-white text-sm placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                  className="w-full px-4 py-3 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl text-white text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary))] transition-colors"
                   placeholder="https://..."
                 />
               </div>
 
               {/* Toggle options */}
-              <div className="space-y-0 border border-[var(--border)] rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+              <div className="space-y-0 border border-[hsl(var(--border))] rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))]">
                   <div>
                     <div className="text-sm text-white">{t('modal_hide_settings') || 'Hide server settings'}</div>
-                    <div className="text-xs text-[var(--muted-foreground)]">{t('modal_hide_settings_desc') || "You won't be able to edit server settings in this subscription"}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_hide_settings_desc') || "You won't be able to edit server settings in this subscription"}</div>
                   </div>
-                  <span className="text-xs text-[var(--muted-foreground)]">{t('modal_off') || 'Off'}</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_off') || 'Off'}</span>
                 </div>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))]">
                   <div>
                     <div className="text-sm text-white">{t('modal_encrypted') || 'Encrypted subscription'}</div>
-                    <div className="text-xs text-[var(--muted-foreground)]">{t('modal_encrypted_desc') || 'The link you are adding is encrypted'}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_encrypted_desc') || 'The link you are adding is encrypted'}</div>
                   </div>
-                  <span className="text-xs text-[var(--muted-foreground)]">{t('modal_off') || 'Off'}</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_off') || 'Off'}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <div>
                     <div className="text-sm text-white">{t('modal_unsafe') || 'Allow unsafe connection'}</div>
-                    <div className="text-xs text-[var(--muted-foreground)]">{t('modal_unsafe_desc') || 'Allow unencrypted connections'}</div>
+                    <div className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_unsafe_desc') || 'Allow unencrypted connections'}</div>
                   </div>
-                  <span className="text-xs text-[var(--muted-foreground)]">{t('modal_off') || 'Off'}</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{t('modal_off') || 'Off'}</span>
                 </div>
               </div>
 
-              <p className="text-xs text-[var(--muted-foreground)]">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
                 {t('modal_warning') || 'If you enable hidden server settings or add an encrypted subscription, you will no longer be able to edit this subscription.'}
               </p>
 
@@ -184,14 +184,14 @@ export default function AddSubscriptionModal({ open, onClose, onServersAdded }: 
               <div className="flex gap-3">
                 <button
                   onClick={() => { setStep('code'); setError(''); }}
-                  className="flex-1 py-3 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-white/5 transition-colors"
+                  className="flex-1 py-3 border border-[hsl(var(--border))] rounded-xl text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-white/5 transition-colors"
                 >
                   {t('modal_back') || 'Back'}
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={loading}
-                  className="flex-1 py-3 bg-[var(--primary)] hover:bg-[var(--primary)]/90 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
+                  className="flex-1 py-3 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 disabled:opacity-50 text-white font-semibold rounded-xl transition-colors"
                 >
                   {loading ? (t('modal_adding') || 'Adding...') : (t('modal_add') || 'Add')}
                 </button>

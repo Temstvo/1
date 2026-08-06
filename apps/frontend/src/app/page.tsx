@@ -414,7 +414,7 @@ log_to    = /dev/null`}</pre>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-600/5 to-transparent pointer-events-none" />
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Нырнуть<br />за 10&nbsp;₽.
+            Начать<br />за 10&nbsp;₽.
           </h2>
           <p className="text-gray-400 mb-8">3 дня за 10 ₽, потом автопродление по тарифу. Отменить можно в любой момент.</p>
           <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 rounded-full font-semibold transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-purple-600/25">

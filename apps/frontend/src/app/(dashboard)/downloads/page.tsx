@@ -11,6 +11,8 @@ const platforms = [
       </svg>
     ),
     clients: [
+      { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
+      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
       { name: 'v2rayN', link: 'https://github.com/2dust/v2rayN/releases/latest', desc: 'Рекомендуется' },
     ],
   },
@@ -22,6 +24,7 @@ const platforms = [
       </svg>
     ),
     clients: [
+      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
       { name: 'V2Box', link: 'https://apps.apple.com/app/v2box/id6446817712', desc: 'App Store' },
       { name: 'Streisand', link: 'https://apps.apple.com/app/streisand/id6450534064', desc: 'App Store' },
     ],
@@ -40,6 +43,7 @@ const platforms = [
       </svg>
     ),
     clients: [
+      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
       { name: 'v2rayA', link: 'https://github.com/v2rayA/v2rayA/releases/latest', desc: 'Веб-интерфейс' },
     ],
   },
@@ -51,6 +55,8 @@ const platforms = [
       </svg>
     ),
     clients: [
+      { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
+      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
       { name: 'v2rayNG', link: 'https://github.com/2dust/v2rayNG/releases/latest', desc: 'Google Play / APK' },
     ],
   },
@@ -62,6 +68,7 @@ const platforms = [
       </svg>
     ),
     clients: [
+      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
       { name: 'Streisand', link: 'https://apps.apple.com/app/streisand/id6450534064', desc: 'App Store' },
       { name: 'V2Box', link: 'https://apps.apple.com/app/v2box/id6446817712', desc: 'App Store' },
     ],

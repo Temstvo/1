@@ -15,9 +15,15 @@ export class VpnConfigScheduler implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.logger.log('Initial VPN config sync on startup (waiting 5s for migration)...');
+    this.logger.log('Checking VPN config count before initial sync...');
     setTimeout(async () => {
       try {
+        const count = await this.syncService.countActiveConfigs();
+        if (count > 0) {
+          this.logger.log(`Startup sync skipped: ${count} active configs already present`);
+          return;
+        }
+        this.logger.log('No active configs found, running initial sync...');
         const result = await this.syncService.syncAll();
         this.logger.log(`Startup sync completed: ${JSON.stringify(result)}`);
       } catch (error: any) {

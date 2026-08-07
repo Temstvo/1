@@ -62,11 +62,15 @@ export class VpnConfigSyncService {
 
   constructor(private prisma: PrismaService) {}
 
+  async countActiveConfigs(): Promise<number> {
+    return this.prisma.vpnConfig.count({ where: { isActive: true } });
+  }
+
   async syncAll(): Promise<{ fetched: number; stored: number; errors: number; sources: number }> {
     this.logger.log('Starting VPN config sync...');
     const results = { fetched: 0, stored: 0, errors: 0, sources: 0 };
-
-    await this.prisma.vpnConfig.updateMany({ data: { isActive: false } });
+    const syncStart = new Date();
+    let okSources = 0;
 
     for (const source of CONFIG_SOURCES) {
       try {
@@ -84,19 +88,27 @@ export class VpnConfigSyncService {
         const lines = text.split('\n').filter((l) => l.trim() && !l.startsWith('#'));
         results.fetched += lines.length;
         results.sources++;
+        okSources++;
         this.logger.log(`${source.name}: ${lines.length} configs found`);
 
+        const rows: any[] = [];
         for (const line of lines) {
           try {
             const config = this.parseConfigUri(line.trim(), source.listType);
-            if (config) {
-              await this.prisma.vpnConfig.upsert({
-                where: { id: config.id },
-                update: { isActive: true, lastChecked: new Date() },
-                create: config,
-              });
-              results.stored++;
-            }
+            if (config) rows.push(config);
+          } catch (_err) {
+            results.errors++;
+          }
+        }
+
+        for (const config of rows) {
+          try {
+            await this.prisma.vpnConfig.upsert({
+              where: { id: config.id },
+              update: { isActive: true, lastChecked: new Date() },
+              create: config,
+            });
+            results.stored++;
           } catch (_err) {
             results.errors++;
           }
@@ -105,6 +117,14 @@ export class VpnConfigSyncService {
         this.logger.error(`Error syncing ${source.name}: ${error.message}`);
         results.errors++;
       }
+    }
+
+    if (okSources > 0) {
+      const deactivated = await this.prisma.vpnConfig.updateMany({
+        where: { isActive: true, lastChecked: { lt: syncStart } },
+        data: { isActive: false },
+      });
+      this.logger.log(`Deactivated ${deactivated.count} configs not present in sources`);
     }
 
     this.logger.log(`Sync complete: ${JSON.stringify(results)}`);

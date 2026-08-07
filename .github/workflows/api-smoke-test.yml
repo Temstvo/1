@@ -50,11 +50,27 @@ jobs:
           done
       - name: 4. Login with first test creds (200 if e2e-2 was created)
         run: |
-          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
-            https://appibackend-production.up.railway.app/api/auth/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}'
+          for i in 1 2 3 4 5; do
+            OUT=$(curl -sS -w "|HTTP_CODE=%{http_code}" -X POST \
+              https://appibackend-production.up.railway.app/api/auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}')
+            CODE=$(echo "$OUT" | grep -o 'HTTP_CODE=[0-9]*')
+            echo "attempt $i: $CODE"
+            if [ "$CODE" = "HTTP_CODE=200" ]; then echo "$OUT"; break; fi
+            sleep 30
+          done
       - name: 5. Get plans (expect 200)
         run: |
+          for i in 1 2 3 4 5; do
+            OUT=$(curl -sS -w "|HTTP_CODE=%{http_code}" \
+              https://appibackend-production.up.railway.app/api/plans)
+            CODE=$(echo "$OUT" | grep -o 'HTTP_CODE=[0-9]*')
+            echo "attempt $i: $CODE"
+            if [ "$CODE" = "HTTP_CODE=200" ]; then echo "$OUT"; break; fi
+            sleep 30
+          done
+      - name: 6. Health endpoint
+        run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" \
-            https://appibackend-production.up.railway.app/api/plans
+            https://appibackend-production.up.railway.app/api/health

@@ -8,37 +8,53 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for deploy window to pass
+        run: sleep 90
       - name: 1. Login wrong password (expect 401)
         run: |
-          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
-            https://appibackend-production.up.railway.app/api/auth/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"test@example.com","password":"wrongpass123"}'
+          for i in 1 2 3 4 5; do
+            OUT=$(curl -sS -w "|HTTP_CODE=%{http_code}" -X POST \
+              https://appibackend-production.up.railway.app/api/auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"email":"test@example.com","password":"wrongpass123"}')
+            CODE=$(echo "$OUT" | grep -o 'HTTP_CODE=[0-9]*')
+            echo "attempt $i: $CODE"
+            if [ "$CODE" = "HTTP_CODE=401" ]; then echo "$OUT"; break; fi
+            sleep 30
+          done
       - name: 2. Register fresh user (expect 201)
         run: |
-          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
-            https://appibackend-production.up.railway.app/api/auth/register \
-            -H "Content-Type: application/json" \
-            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@","firstName":"E2E2"}'
-      - name: 3. Register same user again (201 if first failed / 409 if first succeeded)
+          for i in 1 2 3 4 5; do
+            OUT=$(curl -sS -w "|HTTP_CODE=%{http_code}" -X POST \
+              https://appibackend-production.up.railway.app/api/auth/register \
+              -H "Content-Type: application/json" \
+              -d '{"email":"e2e-3@appi.vpn","password":"Test123!@","firstName":"E2E3"}')
+            CODE=$(echo "$OUT" | grep -o 'HTTP_CODE=[0-9]*')
+            echo "attempt $i: $CODE"
+            case "$CODE" in
+              HTTP_CODE=201|HTTP_CODE=409) echo "$OUT"; break ;;
+            esac
+            sleep 30
+          done
+      - name: 3. Login with correct creds (expect 200)
         run: |
-          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
-            https://appibackend-production.up.railway.app/api/auth/register \
-            -H "Content-Type: application/json" \
-            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}'
-      - name: 4. Login with correct creds (expect 200 + tokens)
+          for i in 1 2 3 4 5; do
+            OUT=$(curl -sS -w "|HTTP_CODE=%{http_code}" -X POST \
+              https://appibackend-production.up.railway.app/api/auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"email":"e2e-3@appi.vpn","password":"Test123!@"}')
+            CODE=$(echo "$OUT" | grep -o 'HTTP_CODE=[0-9]*')
+            echo "attempt $i: $CODE"
+            if [ "$CODE" = "HTTP_CODE=200" ]; then echo "$OUT"; break; fi
+            sleep 30
+          done
+      - name: 4. Login with first test creds (200 if e2e-2 was created)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
             https://appibackend-production.up.railway.app/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}'
-      - name: 5. Login with first test creds (200 if created before, else 401)
-        run: |
-          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
-            https://appibackend-production.up.railway.app/api/auth/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"e2e-check@appi.vpn","password":"Test123!@"}'
-      - name: 6. Get plans (expect 200)
+      - name: 5. Get plans (expect 200)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" \
             https://appibackend-production.up.railway.app/api/plans

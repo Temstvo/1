@@ -11,7 +11,7 @@ const platforms = [
       </svg>
     ),
     clients: [
-      { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
+      { name: 'APPI VPN', link: 'https://github.com/Temstvo/1/releases/latest/download/APPI-VPN_1.0.0_x64-setup.exe', desc: 'Наш клиент' },
       { name: 'HAPP', link: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe', desc: 'Поддержка VLESS' },
       { name: 'v2rayN', link: 'https://github.com/2dust/v2rayN/releases/latest', desc: 'Рекомендуется' },
     ],
@@ -55,7 +55,7 @@ const platforms = [
       </svg>
     ),
     clients: [
-      { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
+      { name: 'APPI VPN', link: 'https://github.com/Temstvo/1/releases/latest', desc: 'Все сборки' },
       { name: 'HAPP', link: 'https://play.google.com/store/apps/details?id=com.happproxy', desc: 'Google Play / APK' },
       { name: 'v2rayNG', link: 'https://github.com/2dust/v2rayNG/releases/latest', desc: 'Google Play / APK' },
     ],

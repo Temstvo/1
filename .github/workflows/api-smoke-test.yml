@@ -8,25 +8,37 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Login with wrong password (expect 401)
+      - name: 1. Login wrong password (expect 401)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
             https://appibackend-production.up.railway.app/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"test@example.com","password":"wrongpass123"}'
-      - name: Register new user (expect 201)
+      - name: 2. Register fresh user (expect 201)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
             https://appibackend-production.up.railway.app/api/auth/register \
             -H "Content-Type: application/json" \
-            -d '{"email":"e2e-check@appi.vpn","password":"Test123!@","firstName":"E2E"}'
-      - name: Login with correct creds (expect 200 + tokens)
+            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@","firstName":"E2E2"}'
+      - name: 3. Register same user again (201 if first failed / 409 if first succeeded)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
+            https://appibackend-production.up.railway.app/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}'
+      - name: 4. Login with correct creds (expect 200 + tokens)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
+            https://appibackend-production.up.railway.app/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"e2e-2@appi.vpn","password":"Test123!@"}'
+      - name: 5. Login with first test creds (200 if created before, else 401)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
             https://appibackend-production.up.railway.app/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"e2e-check@appi.vpn","password":"Test123!@"}'
-      - name: Get plans (expect 200)
+      - name: 6. Get plans (expect 200)
         run: |
           curl -sS -w "\nHTTP_CODE=%{http_code}\n" \
             https://appibackend-production.up.railway.app/api/plans

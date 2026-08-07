@@ -306,6 +306,32 @@ log_to    = /dev/null`}</pre>
         </div>
       </section>
 
+      {/* ===== TRIAL ===== */}
+      <section className="py-16 px-4 md:px-6">
+        <div className="max-w-3xl mx-auto bg-gradient-to-br from-purple-600/20 to-[#111] border border-purple-500/20 rounded-3xl p-8 md:p-12 text-center reveal">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-2xl text-gray-500 line-through">99&nbsp;₽</span>
+            <span className="text-5xl font-bold text-purple-400">10&nbsp;₽</span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">3 дня за 10 ₽, потом автопродление по тарифу — отменить можно в любой момент.</h2>
+          <ul className="space-y-2.5 my-6 text-left max-w-md mx-auto">
+            {['Полная скорость до 1 Гбит/с — без ограничений', 'Все 305 серверов в 7 странах доступны сразу', 'Возврат денег в течение 7 дней без вопросов'].map((f) => (
+              <li key={f} className="flex items-center gap-2.5 text-sm text-gray-300">
+                <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 rounded-full font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]">
+            Попробовать за 10&nbsp;₽
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+          </Link>
+          <div className="mt-4">
+            <a href="#pricing" className="text-sm text-gray-500 hover:text-white transition-colors underline underline-offset-4 decoration-gray-700">Все тарифы</a>
+          </div>
+        </div>
+      </section>
+
       {/* ===== PRICING ===== */}
       <section id="pricing" className="py-20 md:py-24 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
@@ -444,6 +470,13 @@ log_to    = /dev/null`}</pre>
                   <Link href="/terms" className="block hover:text-white transition-colors">Условия использования</Link>
                   <Link href="/privacy" className="block hover:text-white transition-colors">Политика конфиденциальности</Link>
                   <Link href="/refund" className="block hover:text-white transition-colors">Возврат средств</Link>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Реквизиты</h4>
+                <div className="space-y-2 text-gray-400">
+                  <span className="block text-xs leading-relaxed">ООО «АППИ ВПН»<br />ул. Примерная, д. 1, офис 1<br />Москва, Россия</span>
+                  <span className="block text-xs leading-relaxed">ОГРН 0000000000000<br />ИНН 0000000000</span>
                 </div>
               </div>
             </div>

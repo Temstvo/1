@@ -12,7 +12,7 @@ const platforms = [
     ),
     clients: [
       { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
-      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
+      { name: 'HAPP', link: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe', desc: 'Поддержка VLESS' },
       { name: 'v2rayN', link: 'https://github.com/2dust/v2rayN/releases/latest', desc: 'Рекомендуется' },
     ],
   },
@@ -24,7 +24,7 @@ const platforms = [
       </svg>
     ),
     clients: [
-      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
+      { name: 'HAPP', link: 'https://apps.apple.com/ru/app/happ-proxy-utility/id6783623643', desc: 'App Store' },
       { name: 'V2Box', link: 'https://apps.apple.com/app/v2box/id6446817712', desc: 'App Store' },
       { name: 'Streisand', link: 'https://apps.apple.com/app/streisand/id6450534064', desc: 'App Store' },
     ],
@@ -43,7 +43,7 @@ const platforms = [
       </svg>
     ),
     clients: [
-      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
+      { name: 'HAPP', link: 'https://github.com/Happ-proxy/happ-desktop/releases/latest', desc: 'deb / rpm' },
       { name: 'v2rayA', link: 'https://github.com/v2rayA/v2rayA/releases/latest', desc: 'Веб-интерфейс' },
     ],
   },
@@ -56,7 +56,7 @@ const platforms = [
     ),
     clients: [
       { name: 'APPI VPN', link: '#', desc: 'Наш клиент' },
-      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
+      { name: 'HAPP', link: 'https://play.google.com/store/apps/details?id=com.happproxy', desc: 'Google Play / APK' },
       { name: 'v2rayNG', link: 'https://github.com/2dust/v2rayNG/releases/latest', desc: 'Google Play / APK' },
     ],
   },
@@ -68,7 +68,7 @@ const platforms = [
       </svg>
     ),
     clients: [
-      { name: 'HAPP', link: '#', desc: 'Поддержка VLESS' },
+      { name: 'HAPP', link: 'https://apps.apple.com/ru/app/happ-proxy-utility/id6783623643', desc: 'App Store' },
       { name: 'Streisand', link: 'https://apps.apple.com/app/streisand/id6450534064', desc: 'App Store' },
       { name: 'V2Box', link: 'https://apps.apple.com/app/v2box/id6446817712', desc: 'App Store' },
     ],

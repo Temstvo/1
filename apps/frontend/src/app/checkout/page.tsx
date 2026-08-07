@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 
 type Step = 'plan' | 'account' | 'payment' | 'success';
 type PaymentMethod = 'yookassa' | 'sbp' | 'crypto';
@@ -100,7 +100,7 @@ export default function CheckoutPage() {
       setIsLoggedIn(true);
       setStep('payment');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Ошибка регистрации');
+      setError(apiErrorMessage(err, 'Ошибка регистрации'));
     } finally { setProcessing(false); }
   };
 
@@ -134,7 +134,7 @@ export default function CheckoutPage() {
         }
       }
     } catch (e: any) {
-      setError(e.response?.data?.message || 'Ошибка оплаты. Попробуйте ещё раз.');
+      setError(apiErrorMessage(e, 'Ошибка оплаты. Попробуйте ещё раз.'));
       setProcessing(false);
     }
   };

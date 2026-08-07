@@ -1,0 +1,32 @@
+name: api-smoke-test
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login with wrong password (expect 401)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
+            https://appibackend-production.up.railway.app/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","password":"wrongpass123"}'
+      - name: Register new user (expect 201)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
+            https://appibackend-production.up.railway.app/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email":"e2e-check@appi.vpn","password":"Test123!@","firstName":"E2E"}'
+      - name: Login with correct creds (expect 200 + tokens)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" -X POST \
+            https://appibackend-production.up.railway.app/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"e2e-check@appi.vpn","password":"Test123!@"}'
+      - name: Get plans (expect 200)
+        run: |
+          curl -sS -w "\nHTTP_CODE=%{http_code}\n" \
+            https://appibackend-production.up.railway.app/api/plans

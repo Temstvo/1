@@ -1,0 +1,6 @@
+name = "appi-api-proxy"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+
+[observability]
+enabled = true

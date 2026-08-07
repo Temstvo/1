@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 import { useTranslations } from '@/lib/i18n';
 
 export default function RegisterPage() {
@@ -37,7 +37,7 @@ export default function RegisterPage() {
       localStorage.setItem('refreshToken', data.refreshToken);
       router.push('/checkout');
     } catch (err: any) {
-      setError(err.response?.data?.message || t('register_error_fail'));
+      setError(apiErrorMessage(err, t('register_error_fail')));
     } finally {
       setLoading(false);
     }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 import { useTranslations } from '@/lib/i18n';
 
 export default function LoginPage() {
@@ -24,7 +24,7 @@ export default function LoginPage() {
       localStorage.setItem('refreshToken', data.refreshToken);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || t('login_error'));
+      setError(apiErrorMessage(err, t('login_error')));
     } finally {
       setLoading(false);
     }

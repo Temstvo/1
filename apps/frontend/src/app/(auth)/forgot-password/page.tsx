@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from '@/lib/i18n';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslations();
@@ -19,8 +19,8 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
-    } catch {
-      setError('Failed to send reset link. Try again.');
+    } catch (err: any) {
+      setError(apiErrorMessage(err, 'Failed to send reset link. Try again.'));
     } finally {
       setLoading(false);
     }

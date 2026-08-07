@@ -97,4 +97,12 @@ api.interceptors.response.use(
   },
 );
 
+export function apiErrorMessage(err: any, fallback: string): string {
+  if (err?.response?.data?.message) return err.response.data.message;
+  if (!err?.response || err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
+    return 'Сервер временно недоступен. Проверьте интернет или попробуйте позже.';
+  }
+  return fallback;
+}
+
 export default api;

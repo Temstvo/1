@@ -306,32 +306,6 @@ log_to    = /dev/null`}</pre>
         </div>
       </section>
 
-      {/* ===== TRIAL ===== */}
-      <section className="py-16 px-4 md:px-6">
-        <div className="max-w-3xl mx-auto bg-gradient-to-br from-purple-600/20 to-[#111] border border-purple-500/20 rounded-3xl p-8 md:p-12 text-center reveal">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-2xl text-gray-500 line-through">99&nbsp;₽</span>
-            <span className="text-5xl font-bold text-purple-400">10&nbsp;₽</span>
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">3 дня за 10 ₽, потом автопродление по тарифу — отменить можно в любой момент.</h2>
-          <ul className="space-y-2.5 my-6 text-left max-w-md mx-auto">
-            {['Полная скорость до 1 Гбит/с — без ограничений', 'Все 305 серверов в 7 странах доступны сразу', 'Возврат денег в течение 7 дней без вопросов'].map((f) => (
-              <li key={f} className="flex items-center gap-2.5 text-sm text-gray-300">
-                <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                {f}
-              </li>
-            ))}
-          </ul>
-          <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 rounded-full font-semibold transition-all hover:scale-[1.03] active:scale-[0.97]">
-            Попробовать за 10&nbsp;₽
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-          </Link>
-          <div className="mt-4">
-            <a href="#pricing" className="text-sm text-gray-500 hover:text-white transition-colors underline underline-offset-4 decoration-gray-700">Все тарифы</a>
-          </div>
-        </div>
-      </section>
-
       {/* ===== PRICING ===== */}
       <section id="pricing" className="py-20 md:py-24 px-4 md:px-6 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
@@ -390,7 +364,7 @@ log_to    = /dev/null`}</pre>
           <div className="text-center mb-12 reveal">
             <div className="text-xs font-semibold uppercase tracking-widest text-purple-400 mb-3">Вопросы</div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Часто задаваемое.</h2>
-            <p className="text-gray-400 mt-4">Не нашли ответа — напишите в поддержку, отвечаем в течение часа.</p>
+            <p className="text-gray-400 mt-4">Не нашли ответа — напишите в <a href="https://t.me/AppiVPNBot" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline underline-offset-4">Telegram-бота</a>, отвечаем в течение часа.</p>
           </div>
           <div className="space-y-3">
             {FAQS.map((faq, i) => (
@@ -427,6 +401,18 @@ log_to    = /dev/null`}</pre>
         </div>
       </section>
 
+      {/* ===== TELEGRAM FLOAT ===== */}
+      <a
+        href="https://t.me/AppiVPNBot"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Поддержка в Telegram"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 sm:px-5 py-3.5 rounded-full bg-[#229ED9] hover:bg-[#1B8BC0] text-white font-semibold text-sm shadow-xl shadow-blue-500/25 transition-all hover:scale-105 active:scale-95"
+      >
+        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        <span className="hidden sm:inline">Поддержка в Telegram</span>
+      </a>
+
       {/* ===== FOOTER ===== */}
       <footer className="border-t border-white/5 py-14 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
@@ -440,7 +426,7 @@ log_to    = /dev/null`}</pre>
                 <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Контакты</h4>
                 <div className="space-y-2">
                   <a href="mailto:support@appivpn.com" className="block text-gray-400 hover:text-white transition-colors">support@appivpn.com</a>
-                  <a href="#" className="block text-gray-400 hover:text-white transition-colors">Telegram · @APPI_VPN_BOT</a>
+                  <a href="https://t.me/AppiVPNBot" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-white transition-colors">Telegram · @AppiVPNBot</a>
                 </div>
               </div>
               <div>

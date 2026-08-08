@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'https://appibackend-production.up.railway.app').replace(/\/+$/, '');
+const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'https://appi-api-proxy.appivpn.workers.dev').replace(/\/+$/, '');
 const api = axios.create({
   baseURL: baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`,
   timeout: 10000,

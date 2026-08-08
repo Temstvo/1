@@ -16,7 +16,8 @@ async function bootstrap() {
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');
 
   app.use(helmet());
-  app.use(new RequestLoggerMiddleware().use);
+  const loggerMiddleware = new RequestLoggerMiddleware();
+  app.use(loggerMiddleware.use.bind(loggerMiddleware));
   app.setGlobalPrefix(apiPrefix);
 
   app.useGlobalFilters(new GlobalExceptionFilter());

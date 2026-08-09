@@ -397,7 +397,6 @@ log_to    = /dev/null`}</pre>
               <div key={i} className={`bg-[#111] border rounded-xl overflow-hidden transition-colors ${activeFaq === i ? 'border-purple-500/30' : 'border-white/5'}`}>
                 <button onClick={() => setActiveFaq(activeFaq === i ? null : i)} className="w-full px-6 py-4 flex items-center justify-between text-left">
                   <span className="text-sm font-medium">{faq.q}</span>
-                  <span className="text-xs text-gray-600 mr-3 shrink-0">0{i + 1}</span>
                   <svg className={`w-4 h-4 text-gray-500 shrink-0 transition-transform ${activeFaq === i ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </button>
                 {activeFaq === i && (

@@ -25,7 +25,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Email уже зарегистрирован');
     }
 
     const passwordHash = await this.tokenService.hashPassword(dto.password);
@@ -108,11 +108,11 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Неверный email или пароль');
     }
 
     if (user.status === 'BANNED' || user.status === 'SUSPENDED' || (user.lockedUntil && user.lockedUntil > new Date())) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Неверный email или пароль');
     }
 
     const isValidPassword = await this.tokenService.verifyPassword(
@@ -146,7 +146,7 @@ export class AuthService {
         this.logger.warn(`Account locked due to brute force: ${user.email}`);
       }
 
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Неверный email или пароль');
     }
 
     const tokens = await this.tokenService.generateTokenPair(user);
@@ -236,7 +236,7 @@ export class AuthService {
     });
 
     if (!session) {
-      throw new UnauthorizedException('Session expired');
+      throw new UnauthorizedException('Сессия истекла');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -245,11 +245,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Пользователь не найден');
     }
 
     if (user.status === 'BANNED' || user.status === 'SUSPENDED') {
-      throw new UnauthorizedException('Account is not available');
+      throw new UnauthorizedException('Аккаунт недоступен');
     }
 
     await this.prisma.session.update({
@@ -294,7 +294,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid verification token');
+      throw new UnauthorizedException('Недействительный токен подтверждения');
     }
 
     await this.prisma.user.update({
@@ -359,7 +359,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid or expired reset token');
+      throw new UnauthorizedException('Недействительный или истёкший токен сброса');
     }
 
     const passwordHash = await this.tokenService.hashPassword(newPassword);
@@ -397,7 +397,7 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Пользователь не найден');
     }
 
     const isValid = await this.tokenService.verifyPassword(
@@ -406,7 +406,7 @@ export class AuthService {
     );
 
     if (!isValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException('Текущий пароль неверный');
     }
 
     const passwordHash = await this.tokenService.hashPassword(newPassword);

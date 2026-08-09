@@ -671,7 +671,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('en');
+  const [lang, setLangState] = useState<Lang>('ru');
 
   useEffect(() => {
     const saved = localStorage.getItem('appi-lang') as Lang | null;

@@ -3,6 +3,7 @@ import { AuthService } from '../auth.service';
 import { TokenService } from '../token.service';
 import { PrismaService } from '../../../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../../email/email.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 
 describe('AuthService', () => {
@@ -49,6 +50,13 @@ describe('AuthService', () => {
             },
             session: {
               create: jest.fn(),
+              findFirst: jest.fn(() => ({
+                id: 'session-1',
+                ip: '10.0.0.1',
+                userAgent: 'jest',
+                isActive: true,
+              })),
+              update: jest.fn(),
               updateMany: jest.fn(),
             },
             securityEvent: {
@@ -71,12 +79,20 @@ describe('AuthService', () => {
             generateEmailVerificationToken: jest.fn(),
             hashToken: jest.fn(),
             generatePasswordResetToken: jest.fn(),
+            verifyRefreshToken: jest.fn(),
           },
         },
         {
           provide: ConfigService,
           useValue: {
             get: jest.fn(),
+          },
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sendPasswordResetEmail: jest.fn(),
+            sendVerificationEmail: jest.fn(),
           },
         },
       ],

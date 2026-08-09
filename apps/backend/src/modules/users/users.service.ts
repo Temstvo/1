@@ -13,7 +13,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Пользователь не найден');
     }
 
     return this.sanitizeUser(user);
@@ -32,7 +32,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Пользователь не найден');
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -71,7 +71,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Пользователь не найден');
     }
 
     await this.prisma.user.delete({ where: { id } });
@@ -90,7 +90,7 @@ export class UsersService {
     });
 
     if (!device || device.userId !== userId) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException('Устройство не найдено');
     }
 
     await this.prisma.device.delete({ where: { id: deviceId } });
@@ -109,7 +109,7 @@ export class UsersService {
     });
 
     if (!session || session.userId !== userId) {
-      throw new NotFoundException('Session not found');
+      throw new NotFoundException('Сессия не найдена');
     }
 
     await this.prisma.session.update({

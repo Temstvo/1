@@ -11,7 +11,7 @@ export class ProfilesService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Profile not found');
+      throw new NotFoundException('Профиль не найден');
     }
 
     return profile;

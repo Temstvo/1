@@ -15,7 +15,7 @@ export class CouponsService {
   async findById(id: string) {
     const coupon = await this.prisma.coupon.findUnique({ where: { id } });
     if (!coupon) {
-      throw new NotFoundException('Coupon not found');
+      throw new NotFoundException('Промокод не найден');
     }
     return coupon;
   }
@@ -25,7 +25,7 @@ export class CouponsService {
       where: { code: code.toUpperCase() },
     });
     if (!coupon) {
-      throw new NotFoundException('Coupon not found');
+      throw new NotFoundException('Промокод не найден');
     }
     return coupon;
   }
@@ -45,7 +45,7 @@ export class CouponsService {
     });
 
     if (existing) {
-      throw new ConflictException('Coupon code already exists');
+      throw new ConflictException('Такой промокод уже существует');
     }
 
     return this.prisma.coupon.create({
@@ -82,7 +82,7 @@ export class CouponsService {
         where: { code: data.code.toUpperCase(), id: { not: id } },
       });
       if (existing) {
-        throw new ConflictException('Coupon code already exists');
+        throw new ConflictException('Такой промокод уже существует');
       }
       data.code = data.code.toUpperCase();
     }
@@ -102,26 +102,26 @@ export class CouponsService {
     const coupon = await this.findByCode(code);
 
     if (!coupon.isActive) {
-      throw new BadRequestException('Coupon is no longer active');
+      throw new BadRequestException('Промокод больше не активен');
     }
 
     if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
-      throw new BadRequestException('Coupon has expired');
+      throw new BadRequestException('Срок действия промокода истёк');
     }
 
     if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
-      throw new BadRequestException('Coupon usage limit reached');
+      throw new BadRequestException('Лимит использования промокода исчерпан');
     }
 
     if (coupon.minAmount && amount && amount < Number(coupon.minAmount)) {
       throw new BadRequestException(
-        `Minimum order amount is ${coupon.minAmount} USD`,
+        `Минимальная сумма заказа — ${coupon.minAmount} ₽`,
       );
     }
 
     if (coupon.planIds && coupon.planIds.length > 0 && planId) {
       if (!coupon.planIds.includes(planId)) {
-        throw new BadRequestException('Coupon is not applicable to this plan');
+        throw new BadRequestException('Промокод не применим к этому тарифу');
       }
     }
 
@@ -139,11 +139,11 @@ export class CouponsService {
     const coupon = await this.findByCode(code);
 
     if (!coupon.isActive) {
-      throw new BadRequestException('Coupon is not active');
+      throw new BadRequestException('Промокод неактивен');
     }
 
     if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
-      throw new BadRequestException('Coupon usage limit reached');
+      throw new BadRequestException('Лимит использования промокода исчерпан');
     }
 
     return this.prisma.coupon.update({

@@ -18,11 +18,11 @@ export class DevicesService {
     });
 
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException('Устройство не найдено');
     }
 
     if (device.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException('Доступ запрещён');
     }
 
     return device;
@@ -42,7 +42,7 @@ export class DevicesService {
     });
 
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException('Устройство не найдено');
     }
 
     return this.prisma.device.update({

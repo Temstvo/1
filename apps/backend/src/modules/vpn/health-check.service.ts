@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
 import * as net from 'net';
@@ -17,6 +16,7 @@ interface HealthResult {
 export class HealthCheckService {
   private readonly logger = new Logger(HealthCheckService.name);
   private consecutiveFailures = new Map<string, number>();
+  private deadByHealthCheck = new Set<string>();
   private lastCheckResult: { total: number; alive: number; dead: number; timestamp: Date } | null = null;
 
   constructor(
@@ -24,8 +24,21 @@ export class HealthCheckService {
     private syncService: VpnConfigSyncService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
   async runHealthCheck() {
+    try {
+      await this.performHealthCheck();
+    } catch (error: any) {
+      this.logger.error(`Health check crashed: ${error?.message || error}`);
+      this.lastCheckResult = {
+        total: 0,
+        alive: 0,
+        dead: 0,
+        timestamp: new Date(),
+      };
+    }
+  }
+
+  private async performHealthCheck() {
     this.logger.log('Starting VPN config health check...');
 
     const configs = await this.prisma.vpnConfig.findMany({
@@ -78,16 +91,14 @@ export class HealthCheckService {
       } else {
         this.consecutiveFailures.delete(result.configId);
 
-        // Re-activate previously dead config if it comes back
-        const config = await this.prisma.vpnConfig.findUnique({
-          where: { id: result.configId },
-          select: { isActive: true },
-        });
-        if (config && !config.isActive) {
+        // Re-activate only configs that were deactivated by health check itself,
+        // not ones removed from sources by the sync
+        if (this.deadByHealthCheck.has(result.configId)) {
           await this.prisma.vpnConfig.update({
             where: { id: result.configId },
             data: { isActive: true, lastChecked: new Date() },
           });
+          this.deadByHealthCheck.delete(result.configId);
           this.logger.log(`Re-activated config ${result.configId} (${result.server})`);
         }
       }
@@ -169,6 +180,7 @@ export class HealthCheckService {
       data: { isActive: false, lastChecked: new Date() },
     });
 
+    this.deadByHealthCheck.add(configId);
     this.logger.warn(`Marked config ${configId} as dead after ${failCount} consecutive failures`);
     this.consecutiveFailures.delete(configId);
   }

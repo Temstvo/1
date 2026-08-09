@@ -35,7 +35,7 @@ export class ServersService {
     });
 
     if (!server) {
-      throw new NotFoundException('Server not found');
+      throw new NotFoundException('Сервер не найден');
     }
 
     return server;
@@ -49,7 +49,7 @@ export class ServersService {
     });
 
     if (servers.length === 0) {
-      throw new NotFoundException('No servers available');
+      throw new NotFoundException('Нет доступных серверов');
     }
 
     return servers[0];

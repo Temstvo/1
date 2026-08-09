@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     if (payload.type !== 'access') {
-      throw new UnauthorizedException('Invalid token type');
+      throw new UnauthorizedException('Недействительный тип токена');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -35,11 +35,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Пользователь не найден');
     }
 
     if (user.status === 'BANNED' || user.status === 'SUSPENDED') {
-      throw new UnauthorizedException('Account is not available');
+      throw new UnauthorizedException('Аккаунт недоступен');
     }
 
     return {

@@ -1,12 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VpnConfigService } from '../vpn-config.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('VpnConfigService', () => {
   let service: VpnConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [VpnConfigService],
+      providers: [
+        VpnConfigService,
+        { provide: ConfigService, useValue: { get: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get<VpnConfigService>(VpnConfigService);
@@ -63,7 +67,7 @@ describe('VpnConfigService', () => {
       expect(config).toHaveProperty('interface');
       expect(config).toHaveProperty('peer');
       expect(config.interface.privateKey).toBe('client-private-key');
-      expect(config.interface.address).toBe('10.0.0.1');
+      expect(config.interface.address).toBe('10.0.0.1/32');
       expect(config.peer.endpoint).toBe('185.234.72.1:51820');
       expect(config.peer.publicKey).toBe('server-public-key');
     });
@@ -80,10 +84,10 @@ describe('VpnConfigService', () => {
         tlsAuthKey: 'tls',
       });
 
-      expect(config).toHaveProperty('client');
-      expect(config.client).toHaveProperty('dev');
-      expect(config.client).toHaveProperty('proto');
-      expect(config.client).toHaveProperty('remote');
+      expect(typeof config).toBe('string');
+      expect(config.startsWith('client\n')).toBe(true);
+      expect(config).toContain('remote 185.234.72.1 1194');
+      expect(config).toContain('proto udp');
     });
   });
 
@@ -105,7 +109,7 @@ describe('VpnConfigService', () => {
   });
 
   describe('generateXrayVlessConfig', () => {
-    it('should generate VLESS config', async () => {
+    it('should generate VLESS URI', async () => {
       const config = await service.generateXrayVlessConfig({
         serverIp: '185.234.72.1',
         serverPort: 443,
@@ -113,8 +117,10 @@ describe('VpnConfigService', () => {
         flow: 'xtls-rprx-vision',
       });
 
-      expect(config).toHaveProperty('outbounds');
-      expect(Array.isArray(config.outbounds)).toBe(true);
+      expect(typeof config).toBe('string');
+      expect(config.startsWith('vless://')).toBe(true);
+      expect(config).toContain('@185.234.72.1:443');
+      expect(config).toContain('flow=xtls-rprx-vision');
     });
   });
 });

@@ -18,11 +18,11 @@ export class VpnService {
     });
 
     if (!server) {
-      throw new NotFoundException('Server not found');
+      throw new NotFoundException('Сервер не найден');
     }
 
     if (server.status !== 'ONLINE') {
-      throw new NotFoundException('Server is not available');
+      throw new NotFoundException('Сервер недоступен');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -31,7 +31,7 @@ export class VpnService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Пользователь не найден');
     }
 
     const hasActiveSubscription = user.subscriptions.some(
@@ -39,7 +39,7 @@ export class VpnService {
     );
 
     if (!hasActiveSubscription) {
-      throw new NotFoundException('Active subscription required');
+      throw new NotFoundException('Требуется активная подписка');
     }
 
     const keyPair = this.vpnConfigService.generateKeyPair();
@@ -92,7 +92,7 @@ export class VpnService {
         break;
 
       default:
-        throw new NotFoundException('Unsupported protocol');
+        throw new NotFoundException('Неподдерживаемый протокол');
     }
 
     const vpnConfig = await this.prisma.vPNConfig.create({
@@ -151,7 +151,7 @@ export class VpnService {
     });
 
     if (!config || config.userId !== userId) {
-      throw new NotFoundException('Config not found');
+      throw new NotFoundException('Конфиг не найден');
     }
 
     await this.prisma.vPNConfig.update({
@@ -166,11 +166,11 @@ export class VpnService {
     });
 
     if (!config) {
-      throw new NotFoundException('Config not found');
+      throw new NotFoundException('Конфиг не найден');
     }
 
     if (config.userId !== userId) {
-      throw new NotFoundException('Config not found');
+      throw new NotFoundException('Конфиг не найден');
     }
 
     return {

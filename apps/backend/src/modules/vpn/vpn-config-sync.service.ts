@@ -119,12 +119,18 @@ export class VpnConfigSyncService {
       }
     }
 
-    if (okSources > 0) {
+    if (okSources === CONFIG_SOURCES.length) {
       const deactivated = await this.prisma.vpnConfig.updateMany({
         where: { isActive: true, lastChecked: { lt: syncStart } },
         data: { isActive: false },
       });
       this.logger.log(`Deactivated ${deactivated.count} configs not present in sources`);
+    } else if (okSources > 0) {
+      this.logger.warn(
+        `Sync partially failed (${okSources}/${CONFIG_SOURCES.length} sources OK) — skipping deactivation to avoid losing configs from failed sources`,
+      );
+    } else {
+      this.logger.error('All sources failed — skipping deactivation');
     }
 
     this.logger.log(`Sync complete: ${JSON.stringify(results)}`);

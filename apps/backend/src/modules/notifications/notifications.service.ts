@@ -22,11 +22,11 @@ export class NotificationsService {
     });
 
     if (!notification) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('Уведомление не найдено');
     }
 
     if (notification.userId !== userId) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('Уведомление не найдено');
     }
 
     return this.prisma.notification.update({
@@ -57,11 +57,11 @@ export class NotificationsService {
     });
 
     if (!notification) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('Уведомление не найдено');
     }
 
     if (notification.userId !== userId) {
-      throw new NotFoundException('Notification not found');
+      throw new NotFoundException('Уведомление не найдено');
     }
 
     return this.prisma.notification.delete({

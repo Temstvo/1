@@ -19,7 +19,7 @@ export class PlansService {
     });
 
     if (!plan) {
-      throw new NotFoundException('Plan not found');
+      throw new NotFoundException('Тариф не найден');
     }
 
     return plan;
@@ -31,7 +31,7 @@ export class PlansService {
     });
 
     if (existingPlan) {
-      throw new ConflictException('Plan with this name already exists');
+      throw new ConflictException('Тариф с таким названием уже существует');
     }
 
     return this.prisma.plan.create({
@@ -51,7 +51,7 @@ export class PlansService {
       });
 
       if (existingPlan) {
-        throw new ConflictException('Plan with this name already exists');
+        throw new ConflictException('Тариф с таким названием уже существует');
       }
     }
 
@@ -72,7 +72,7 @@ export class PlansService {
     });
 
     if (activeSubscriptions > 0) {
-      throw new ConflictException('Cannot delete plan with active subscriptions');
+      throw new ConflictException('Нельзя удалить тариф с активными подписками');
     }
 
     return this.prisma.plan.delete({

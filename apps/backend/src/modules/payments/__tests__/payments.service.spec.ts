@@ -1,13 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentsService } from '../payments.service';
 import { PrismaService } from '../../../database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { YooKassaService } from '../providers/yookassa.service';
+import { CryptomusService } from '../providers/cryptomus.service';
+import { InvoicesService } from '../../invoices/invoices.service';
+import { EmailService } from '../../email/email.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
   let prisma: {
     payment: { create: jest.Mock; findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock; aggregate: jest.Mock; count: jest.Mock };
-    subscription: { update: jest.Mock; updateMany: jest.Mock };
+    subscription: { create: jest.Mock; findUnique: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
     plan: { findUnique: jest.Mock };
     coupon: { findUnique: jest.Mock };
   };
@@ -41,6 +46,8 @@ describe('PaymentsService', () => {
         count: jest.fn(),
       },
       subscription: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn(),
       },
@@ -56,6 +63,11 @@ describe('PaymentsService', () => {
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: ConfigService, useValue: { get: jest.fn(() => 'http://localhost') } },
+        { provide: YooKassaService, useValue: { createPayment: jest.fn(), verifyWebhook: jest.fn(() => true) } },
+        { provide: CryptomusService, useValue: { createPayment: jest.fn(), verifyWebhook: jest.fn(() => true) } },
+        { provide: InvoicesService, useValue: { create: jest.fn() } },
+        { provide: EmailService, useValue: { sendPaymentConfirmationEmail: jest.fn() } },
       ],
     }).compile();
 

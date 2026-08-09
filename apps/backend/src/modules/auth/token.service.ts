@@ -78,12 +78,12 @@ export class TokenService {
       });
 
       if (payload.type !== 'access') {
-        throw new UnauthorizedException('Invalid token type');
+        throw new UnauthorizedException('Недействительный тип токена');
       }
 
       return payload;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Недействительный или истёкший токен');
     }
   }
 
@@ -94,12 +94,12 @@ export class TokenService {
       });
 
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
+        throw new UnauthorizedException('Недействительный тип токена');
       }
 
       return payload;
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Недействительный или истёкший refresh-токен');
     }
   }
 

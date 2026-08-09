@@ -47,7 +47,7 @@ export class ReferralsService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Пользователь не найден');
     }
 
     return {
@@ -62,11 +62,11 @@ export class ReferralsService {
     });
 
     if (!owner) {
-      throw new NotFoundException('Invalid referral code');
+      throw new NotFoundException('Недействительный реферальный код');
     }
 
     if (owner.id === newUserId) {
-      throw new BadRequestException('Cannot refer yourself');
+      throw new BadRequestException('Нельзя пригласить самого себя');
     }
 
     const existing = await this.prisma.referral.findUnique({
@@ -74,7 +74,7 @@ export class ReferralsService {
     });
 
     if (existing) {
-      throw new BadRequestException('User already referred');
+      throw new BadRequestException('Пользователь уже приглашён');
     }
 
     return this.prisma.referral.create({
@@ -113,7 +113,7 @@ export class ReferralsService {
     );
 
     if (totalAmount <= 0) {
-      throw new BadRequestException('No pending commissions to payout');
+      throw new BadRequestException('Нет начислений для выплаты');
     }
 
     await this.prisma.referral.updateMany({

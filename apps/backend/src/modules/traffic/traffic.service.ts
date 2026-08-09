@@ -17,7 +17,7 @@ export class TrafficService {
     });
 
     if (!subscription) {
-      throw new NotFoundException('No active subscription found');
+      throw new NotFoundException('Нет активной подписки');
     }
 
     const currentPeriodStart = new Date();
@@ -133,10 +133,35 @@ export class TrafficService {
     today.setHours(0, 0, 0, 0);
     const hour = new Date().getHours();
 
+    if (serverId) {
+      return this.prisma.trafficUsage.upsert({
+        where: {
+          userId_serverId_date_hour: {
+            userId,
+            serverId,
+            date: today,
+            hour,
+          },
+        },
+        update: {
+          download: { increment: BigInt(download) },
+          upload: { increment: BigInt(upload) },
+        },
+        create: {
+          userId,
+          serverId,
+          download: BigInt(download),
+          upload: BigInt(upload),
+          date: today,
+          hour,
+        },
+      });
+    }
+
     const existing = await this.prisma.trafficUsage.findFirst({
       where: {
         userId,
-        serverId: serverId || null,
+        serverId: null,
         date: today,
         hour,
       },
@@ -155,7 +180,7 @@ export class TrafficService {
     return this.prisma.trafficUsage.create({
       data: {
         userId,
-        serverId,
+        serverId: null,
         download: BigInt(download),
         upload: BigInt(upload),
         date: today,

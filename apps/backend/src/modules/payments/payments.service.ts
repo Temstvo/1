@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import { YooKassaService } from './providers/yookassa.service';
@@ -47,6 +48,61 @@ export class PaymentsService {
     });
   }
 
+  private async activateSubscription(subscriptionId: string) {
+    const sub = await this.prisma.subscription.findUnique({
+      where: { id: subscriptionId },
+      include: { plan: true },
+    });
+    if (!sub) return;
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + sub.plan.duration);
+
+    await this.prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: 'ACTIVE',
+        startedAt: new Date(),
+        expiresAt,
+        autoRenew: true,
+      },
+    });
+
+    await this.prisma.subscription.updateMany({
+      where: {
+        userId: sub.userId,
+        id: { not: subscriptionId },
+        status: { in: ['ACTIVE', 'GRACE_PERIOD'] },
+      },
+      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'Plan changed' },
+    });
+
+    this.logger.log(`Subscription activated: ${subscriptionId}`);
+  }
+
+  private async preparePendingSubscription(userId: string, planId: string): Promise<string> {
+    await this.prisma.subscription.updateMany({
+      where: { userId, status: 'PENDING' },
+      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'Replaced by new checkout' },
+    });
+
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + (plan?.duration || 30));
+
+    const subscription = await this.prisma.subscription.create({
+      data: {
+        userId,
+        planId,
+        status: 'PENDING',
+        paymentMethod: 'card',
+        expiresAt,
+      },
+    });
+
+    return subscription.id;
+  }
+
   async findByUserId(userId: string) {
     return this.prisma.payment.findMany({
       where: { userId },
@@ -69,7 +125,7 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Payment not found');
+      throw new NotFoundException('Платёж не найден');
     }
 
     return payment;
@@ -125,7 +181,30 @@ export class PaymentsService {
     }
   }
 
-  async handleStripeWebhook(event: any, signature?: string) {
+  private verifyStripeSignature(rawBody: Buffer | undefined, signature: string | undefined): boolean {
+    const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET', '');
+    if (!secret || !rawBody || !signature) return false;
+    try {
+      const parts = signature.split(',');
+      const timestamp = parts.find((p) => p.startsWith('t='))?.slice(2);
+      const sig = parts.find((p) => p.startsWith('v1='))?.slice(3);
+      if (!timestamp || !sig) return false;
+      const expected = crypto
+        .createHmac('sha256', secret)
+        .update(`${timestamp}.${rawBody.toString('utf8')}`)
+        .digest('hex');
+      return sig === expected;
+    } catch {
+      return false;
+    }
+  }
+
+  async handleStripeWebhook(event: any, signature?: string, rawBody?: Buffer) {
+    if (!this.verifyStripeSignature(rawBody, signature)) {
+      this.logger.warn('Stripe webhook: invalid signature — rejecting');
+      throw new BadRequestException('Invalid webhook signature');
+    }
+
     if (!event?.type) {
       this.logger.warn('Stripe webhook: missing event type');
       return;
@@ -142,10 +221,7 @@ export class PaymentsService {
         if (payment && payment.status !== 'COMPLETED') {
           await this.updateStatus(payment.id, 'COMPLETED', true);
           if (payment.subscriptionId) {
-            await this.prisma.subscription.update({
-              where: { id: payment.subscriptionId },
-              data: { status: 'ACTIVE' },
-            });
+            await this.activateSubscription(payment.subscriptionId);
           }
           await this.onPaymentCompleted(payment);
           this.logger.log(`Stripe payment completed: ${payment.id}`);
@@ -160,10 +236,7 @@ export class PaymentsService {
         if (payment && payment.status !== 'COMPLETED') {
           await this.updateStatus(payment.id, 'COMPLETED', true);
           if (payment.subscriptionId) {
-            await this.prisma.subscription.update({
-              where: { id: payment.subscriptionId },
-              data: { status: 'ACTIVE' },
-            });
+            await this.activateSubscription(payment.subscriptionId);
           }
           this.logger.log(`Stripe subscription payment succeeded: ${payment.id}`);
         }
@@ -223,7 +296,7 @@ export class PaymentsService {
   async createCheckoutSession(userId: string, planId: string, couponCode?: string, provider: string = 'YOOKASSA') {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
-      throw new NotFoundException('Plan not found or inactive');
+      throw new NotFoundException('Тариф не найден или неактивен');
     }
 
     let discount = 0;
@@ -252,7 +325,7 @@ export class PaymentsService {
     const payment = await this.findById(paymentId);
 
     if (payment.status !== 'COMPLETED') {
-      throw new BadRequestException('Can only refund completed payments');
+      throw new BadRequestException('Возврат возможен только для завершённых платежей');
     }
 
     const refundAmount = amount || Number(payment.amount);
@@ -289,7 +362,7 @@ export class PaymentsService {
   async createYooKassaPayment(userId: string, planId: string, couponCode?: string) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
-      throw new NotFoundException('Plan not found or inactive');
+      throw new NotFoundException('Тариф не найден или неактивен');
     }
 
     let discount = 0;
@@ -306,8 +379,11 @@ export class PaymentsService {
 
     const finalAmount = Math.max(0, Number(plan.price) - discount);
 
+    const subscriptionId = await this.preparePendingSubscription(userId, planId);
+
     const payment = await this.createPayment({
       userId,
+      subscriptionId,
       amount: finalAmount,
       currency: plan.currency || 'RUB',
       provider: 'YOOKASSA',
@@ -333,13 +409,14 @@ export class PaymentsService {
       confirmationUrl: yukResult.confirmationUrl,
       amount: finalAmount,
       currency: plan.currency || 'RUB',
+      subscription: { id: subscriptionId, status: 'PENDING' },
     };
   }
 
   async handleYooKassaWebhook(body: any, signature?: string) {
-    if (signature && !this.yookassaService.verifyWebhook(body, signature)) {
+    if (!this.yookassaService.verifyWebhook(body, signature || '')) {
       this.logger.warn('YooKassa webhook: invalid signature — rejecting');
-      return { event: 'rejected' };
+      throw new BadRequestException('Invalid webhook signature');
     }
 
     const event = body.event;
@@ -365,10 +442,7 @@ export class PaymentsService {
       case 'payment.succeeded': {
         await this.updateStatus(payment.id, 'COMPLETED', true);
         if (payment.subscriptionId) {
-          await this.prisma.subscription.update({
-            where: { id: payment.subscriptionId },
-            data: { status: 'ACTIVE' },
-          });
+          await this.activateSubscription(payment.subscriptionId);
         }
         await this.onPaymentCompleted(payment);
         this.logger.log(`YooKassa payment succeeded: ${payment.id}`);
@@ -399,7 +473,7 @@ export class PaymentsService {
   async createCryptomusPayment(userId: string, planId: string, couponCode?: string) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
-      throw new NotFoundException('Plan not found or inactive');
+      throw new NotFoundException('Тариф не найден или неактивен');
     }
 
     let discount = 0;
@@ -416,8 +490,11 @@ export class PaymentsService {
 
     const finalAmount = Math.max(0, Number(plan.price) - discount);
 
+    const subscriptionId = await this.preparePendingSubscription(userId, planId);
+
     const payment = await this.createPayment({
       userId,
+      subscriptionId,
       amount: finalAmount,
       currency: 'USDT',
       provider: 'CRYPTOMUS',
@@ -444,6 +521,7 @@ export class PaymentsService {
       paymentUrl: cryptoResult.payment_url,
       amount: finalAmount,
       currency: 'USDT',
+      subscription: { id: subscriptionId, status: 'PENDING' },
     };
   }
 
@@ -455,20 +533,24 @@ export class PaymentsService {
 
     const { status, order_id } = body;
 
-    const payment = await this.findById(order_id);
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: order_id },
+    });
     if (!payment) {
       this.logger.warn(`Cryptomus webhook: payment not found for ${order_id}`);
-      return;
+      return { status: 'not_found' };
+    }
+
+    if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
+      this.logger.log(`Cryptomus webhook: payment ${payment.id} already ${payment.status}, skipping`);
+      return { status: 'duplicate' };
     }
 
     switch (status) {
       case 'paid': {
         await this.updateStatus(payment.id, 'COMPLETED', true);
         if (payment.subscriptionId) {
-          await this.prisma.subscription.update({
-            where: { id: payment.subscriptionId },
-            data: { status: 'ACTIVE' },
-          });
+          await this.activateSubscription(payment.subscriptionId);
         }
         await this.onPaymentCompleted(payment);
         this.logger.log(`Cryptomus payment completed: ${payment.id}`);

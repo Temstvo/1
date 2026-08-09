@@ -9,7 +9,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
@@ -67,4 +67,8 @@ async function bootstrap() {
 
   await app.listen(port);
 }
-bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('FATAL: failed to start application', err);
+  process.exit(1);
+});

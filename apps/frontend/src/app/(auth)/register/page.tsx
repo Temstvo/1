@@ -74,7 +74,7 @@ export default function RegisterPage() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
             className="w-full px-4 py-3 bg-[hsl(222,14%,8%)] border border-[hsl(222,14%,20%)] rounded-xl text-white placeholder:text-[hsl(222,10%,40%)] focus:outline-none focus:border-[hsl(267,80%,60%)] transition-colors"
-            placeholder="Min 8 characters"
+            placeholder="Минимум 8 символов"
           />
           <p className="mt-1 text-xs text-[hsl(222,10%,40%)]">{t('register_hint')}</p>
         </div>

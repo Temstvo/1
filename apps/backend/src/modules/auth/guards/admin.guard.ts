@@ -7,7 +7,7 @@ export class AdminGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Not authenticated');
+      throw new ForbiddenException('Не авторизован');
     }
 
     if (user.role === 'SUPER_ADMIN') {

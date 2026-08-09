@@ -22,11 +22,11 @@ export class InvoicesService {
     });
 
     if (!invoice) {
-      throw new NotFoundException('Invoice not found');
+      throw new NotFoundException('Счёт не найден');
     }
 
     if (invoice.userId !== userId) {
-      throw new NotFoundException('Invoice not found');
+      throw new NotFoundException('Счёт не найден');
     }
 
     return invoice;

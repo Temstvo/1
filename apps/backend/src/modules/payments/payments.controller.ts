@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -109,7 +110,7 @@ export class PaymentsController {
   async getPayment(@CurrentUser('id') userId: string, @Param('id') id: string) {
     const payment = await this.paymentsService.findById(id);
     if (payment.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException('Доступ запрещён');
     }
     return payment;
   }
@@ -119,9 +120,10 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Stripe webhook handler' })
   async stripeWebhook(
     @Headers('stripe-signature') signature: string,
+    @Req() req: any,
     @Body() body: any,
   ) {
-    await this.paymentsService.handleStripeWebhook(body, signature);
+    await this.paymentsService.handleStripeWebhook(body, signature, req.rawBody);
     return { received: true };
   }
 
@@ -129,7 +131,7 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'YooKassa webhook handler' })
   async yookassaWebhook(
-    @Headers('x-shopify-hmac-sha256') signature: string,
+    @Headers('x-signature') signature: string,
     @Body() body: any,
   ) {
     return this.paymentsService.handleYooKassaWebhook(body, signature);

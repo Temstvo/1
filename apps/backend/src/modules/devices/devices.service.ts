@@ -12,6 +12,17 @@ export class DevicesService {
     });
   }
 
+  async create(userId: string, name: string, platform: string) {
+    return this.prisma.device.create({
+      data: {
+        userId,
+        name,
+        platform,
+        lastSeen: new Date(),
+      },
+    });
+  }
+
   async findById(id: string, userId: string) {
     const device = await this.prisma.device.findUnique({
       where: { id },

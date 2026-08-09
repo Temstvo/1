@@ -27,6 +27,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(form.password)) {
+      setError(t('register_hint'));
+      return;
+    }
+
     setLoading(true);
     try {
       const { data } = await api.post('/auth/register', {

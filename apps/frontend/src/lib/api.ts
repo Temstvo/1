@@ -102,7 +102,11 @@ api.interceptors.response.use(
 );
 
 export function apiErrorMessage(err: any, fallback: string): string {
-  if (err?.response?.data?.message) return err.response.data.message;
+  const data = err?.response?.data;
+  if (Array.isArray(data?.message)) {
+    return data.message.join(' ');
+  }
+  if (data?.message) return data.message;
   if (!err?.response || err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED') {
     return 'Сервер временно недоступен. Проверьте интернет или попробуйте позже.';
   }

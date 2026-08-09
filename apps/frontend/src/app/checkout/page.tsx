@@ -91,6 +91,10 @@ export default function CheckoutPage() {
   const handleCreateAccount = async () => {
     if (password !== confirmPassword) { setError('Пароли не совпадают'); return; }
     if (password.length < 8) { setError('Минимум 8 символов'); return; }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
+      setError('Нужны заглавная и строчная буквы, цифра и спецсимвол');
+      return;
+    }
     setProcessing(true);
     setError('');
     try {

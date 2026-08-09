@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface Server {
@@ -21,12 +21,15 @@ interface Server {
   protocols?: string[];
 }
 
+const PROTOCOLS = ['WIREGUARD', 'OPENVPN', 'XRAY_REALITY', 'VLESS'];
+
 export default function ServersPage() {
   const { t } = useTranslations();
   const router = useRouter();
   const [servers, setServers] = useState<Server[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/servers')
@@ -38,12 +41,29 @@ export default function ServersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleConnect = async (serverId: string) => {
-    setConnecting(serverId);
+  const getDeviceId = async (): Promise<string> => {
+    const res = await api.get('/devices');
+    const list = Array.isArray(res.data) ? res.data : res.data?.devices || [];
+    if (list.length > 0) return list[0].id;
+    const created = await api.post('/devices', { name: 'Веб-клиент', platform: 'WEB' });
+    return created.data?.id ?? '';
+  };
+
+  const handleConnect = async (server: Server) => {
+    setError('');
+    setConnecting(server.id);
     try {
-      const res = await api.post('/vpn/connect', { serverId });
+      const deviceId = await getDeviceId();
+      if (!deviceId) {
+        setError('Не удалось создать устройство. Попробуйте ещё раз.');
+        setConnecting(null);
+        return;
+      }
+      const protocol = (server.protocols || []).find((p) => PROTOCOLS.includes(p)) || 'VLESS';
+      await api.post('/vpn/connect', { serverId: server.id, deviceId, protocol });
       router.push('/vpn');
-    } catch {
+    } catch (err: any) {
+      setError(apiErrorMessage(err, 'Не удалось подключиться. Попробуйте ещё раз.'));
       setConnecting(null);
     }
   };
@@ -78,6 +98,12 @@ export default function ServersPage() {
         <h1 className="text-2xl font-bold text-white">{t('servers_title')}</h1>
         <p className="text-sm text-gray-500 mt-1">Выберите сервер для подключения</p>
       </div>
+
+      {error && (
+        <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {servers.map((server) => {
@@ -114,7 +140,7 @@ export default function ServersPage() {
                 </div>
               </div>
               <button
-                onClick={() => handleConnect(server.id)}
+                onClick={() => handleConnect(server)}
                 disabled={!isOnline || connecting === server.id}
                 className="w-full rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >

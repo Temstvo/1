@@ -472,10 +472,10 @@ log_to    = /dev/null`}</pre>
                 </div>
               </div>
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Реквизиты</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">Контакты</h4>
                 <div className="space-y-2 text-gray-400">
-                  <span className="block text-xs leading-relaxed">ООО «АППИ ВПН»<br />ул. Примерная, д. 1, офис 1<br />Москва, Россия</span>
-                  <span className="block text-xs leading-relaxed">ОГРН 0000000000000<br />ИНН 0000000000</span>
+                  <a href="mailto:support@appivpn.ru" className="block hover:text-white transition-colors">support@appivpn.ru</a>
+                  <a href="https://t.me/appivpn" className="block hover:text-white transition-colors">Telegram</a>
                 </div>
               </div>
             </div>

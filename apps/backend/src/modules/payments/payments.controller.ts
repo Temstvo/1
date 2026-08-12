@@ -132,9 +132,10 @@ export class PaymentsController {
   @ApiOperation({ summary: 'YooKassa webhook handler' })
   async yookassaWebhook(
     @Headers('x-signature') signature: string,
+    @Req() req: any,
     @Body() body: any,
   ) {
-    return this.paymentsService.handleYooKassaWebhook(body, signature);
+    return this.paymentsService.handleYooKassaWebhook(body, signature, req.rawBody);
   }
 
   @Post('webhook/cryptomus')

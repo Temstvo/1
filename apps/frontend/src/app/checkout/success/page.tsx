@@ -2,47 +2,76 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
+
+const MAX_ATTEMPTS = 15;
+const RETRY_DELAY_MS = 5000;
 
 export default function CheckoutSuccessPage() {
   const [link, setLink] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [statusMsg, setStatusMsg] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const generateLink = async (): Promise<string> => {
+    const servers = await api.get('/servers', { timeout: 8000 });
+    const list = Array.isArray(servers.data) ? servers.data : servers.data?.servers || [];
+    const server = list.find((s: any) => s.status === 'ONLINE' || s.status === 'online') || list[0];
+    if (!server) throw new Error('no servers');
+
+    const res = await api.post(
+      '/vpn/config/generate',
+      { serverId: server.id, protocol: 'VLESS' },
+      { timeout: 15000 },
+    );
+
+    let uri = '';
+    if (typeof res.data?.config === 'string') uri = res.data.config;
+    else if (typeof res.data?.uri === 'string') uri = res.data.uri;
+    return uri;
+  };
 
   useEffect(() => {
     let cancelled = false;
 
-    async function generateLink() {
+    async function run() {
       try {
-        const servers = await api.get('/servers', { timeout: 8000 });
-        const list = Array.isArray(servers.data) ? servers.data : servers.data?.servers || [];
-        const server = list.find((s: any) => s.status === 'ONLINE' || s.status === 'online') || list[0];
-        if (!server) throw new Error('no servers');
-
-        const res = await api.post(
-          '/vpn/config/generate',
-          { serverId: server.id, protocol: 'VLESS' },
-          { timeout: 15000 },
-        );
-
-        let uri = '';
-        if (typeof res.data?.config === 'string') uri = res.data.config;
-        else if (typeof res.data?.uri === 'string') uri = res.data.uri;
-
-        if (!cancelled) {
-          if (uri) {
-            setLink(uri);
-            setStatus('ready');
-          } else {
-            setStatus('error');
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          if (cancelled) return;
+          setStatusMsg(
+            attempt === 1
+              ? 'Активируем подписку и создаём ссылку...'
+              : `Активация подписки... попытка ${attempt}`,
+          );
+          try {
+            const uri = await generateLink();
+            if (uri) {
+              if (!cancelled) {
+                setLink(uri);
+                setStatus('ready');
+              }
+              return;
+            }
+          } catch (err: any) {
+            const isSubscriptionPending =
+              err?.response?.status === 404 &&
+              String(err?.response?.data?.message || '').includes('подписк');
+            if (!isSubscriptionPending && attempt === MAX_ATTEMPTS) throw err;
           }
+          if (!cancelled) await wait(RETRY_DELAY_MS);
         }
-      } catch {
         if (!cancelled) setStatus('error');
+      } catch (err: any) {
+        if (!cancelled) {
+          setStatus('error');
+          setStatusMsg(apiErrorMessage(err, ''));
+        }
       }
     }
 
-    generateLink();
+    run();
     return () => { cancelled = true; };
   }, []);
 
@@ -70,9 +99,12 @@ export default function CheckoutSuccessPage() {
         <div className="bg-[#111] border border-white/10 rounded-2xl p-5 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-white">Ваша ссылка для подключения</h2>
-            {status === 'loading' && (
+          {status === 'loading' && (
+            <div className="flex items-center gap-3 text-sm text-gray-400">
               <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            )}
+              {statusMsg}
+            </div>
+          )}
           </div>
 
           {status === 'ready' && (
@@ -101,7 +133,7 @@ export default function CheckoutSuccessPage() {
 
           {status === 'error' && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-sm text-red-400 mb-3">
-              Не удалось создать ссылку — сервер подключения временно недоступен. Зайдите в кабинет и попробуйте ещё раз.
+              {statusMsg || 'Не удалось создать ссылку — сервер подключения временно недоступен. Зайдите в кабинет и попробуйте ещё раз.'}
             </div>
           )}
         </div>

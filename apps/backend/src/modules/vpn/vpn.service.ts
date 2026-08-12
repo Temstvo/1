@@ -121,12 +121,18 @@ export class VpnService {
 
     this.logger.log(`VPN config generated: ${protocol} for user ${userId}`);
 
+    const uri =
+      typeof configData === 'string'
+        ? configData
+        : JSON.stringify(configData);
+
     return {
       id: vpnConfig.id,
       userId: vpnConfig.userId,
       serverId: vpnConfig.serverId,
       protocol: vpnConfig.protocol,
       config: vpnConfig.config,
+      uri,
       publicKey: vpnConfig.publicKey,
       ipAddress: vpnConfig.ipAddress,
       port: vpnConfig.port,

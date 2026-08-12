@@ -78,15 +78,13 @@ export class YooKassaService {
     return this.request('GET', `/payments/${paymentId}`);
   }
 
-  verifyWebhook(body: any, signatureHeader: string): boolean {
-    if (!signatureHeader) return false;
-    
-    const sortedKeys = Object.keys(body).sort();
-    const signData = sortedKeys.map(k => `${k}=${JSON.stringify(body[k])}`).join('&');
+  verifyWebhook(rawBody: string, signatureHeader: string): boolean {
+    if (!signatureHeader || !rawBody) return false;
+
     const hmac = crypto.createHmac('sha256', this.secretKey);
-    hmac.update(signData);
-    const expectedSignature = hmac.digest('hex');
-    
+    hmac.update(rawBody, 'utf8');
+    const expectedSignature = hmac.digest('base64');
+
     return signatureHeader === expectedSignature;
   }
 

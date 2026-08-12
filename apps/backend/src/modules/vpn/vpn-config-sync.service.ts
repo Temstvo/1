@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import * as crypto from 'crypto';
 
@@ -232,7 +232,7 @@ export class VpnConfigSyncService {
 
   async getConfigById(id: string) {
     const config = await this.prisma.vpnConfig.findUnique({ where: { id } });
-    if (!config) return null;
+    if (!config) throw new NotFoundException('Конфиг не найден');
     return {
       id: config.id,
       protocol: config.protocol,

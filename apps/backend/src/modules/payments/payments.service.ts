@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
@@ -391,6 +391,16 @@ export class PaymentsService {
       metadata: { planId, couponCode: couponCode || null },
     });
 
+    if (!this.yookassaService.isConfigured()) {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'FAILED' },
+      });
+      throw new ServiceUnavailableException(
+        'Платёжная система временно недоступна. Попробуйте позже или выберите другой способ оплаты',
+      );
+    }
+
     const yukResult = await this.yookassaService.createPayment({
       amount: finalAmount,
       currency: plan.currency || 'RUB',
@@ -413,8 +423,8 @@ export class PaymentsService {
     };
   }
 
-  async handleYooKassaWebhook(body: any, signature?: string) {
-    if (!this.yookassaService.verifyWebhook(body, signature || '')) {
+  async handleYooKassaWebhook(body: any, signature?: string, rawBody?: string) {
+    if (!this.yookassaService.verifyWebhook(rawBody || '', signature || '')) {
       this.logger.warn('YooKassa webhook: invalid signature — rejecting');
       throw new BadRequestException('Invalid webhook signature');
     }
@@ -501,6 +511,16 @@ export class PaymentsService {
       description: `APPI VPN — ${plan.name}`,
       metadata: { planId, couponCode: couponCode || null },
     });
+
+    if (!this.cryptomusService.isConfigured()) {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'FAILED' },
+      });
+      throw new ServiceUnavailableException(
+        'Платёжная система временно недоступна. Попробуйте позже или выберите другой способ оплаты',
+      );
+    }
 
     const cryptoResult = await this.cryptomusService.createPayment({
       amount: finalAmount.toString(),

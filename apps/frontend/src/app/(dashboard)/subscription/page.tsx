@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from '@/lib/i18n';
-import api from '@/lib/api';
+import api, { apiErrorMessage } from '@/lib/api';
 import Link from 'next/link';
 
 interface Plan {
@@ -31,6 +31,7 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -46,16 +47,30 @@ export default function SubscriptionPage() {
   const handleCancel = async () => {
     if (!confirm(t('sub_confirm_cancel'))) return;
     try {
-      await api.post('/subscriptions/cancel');
-      setSubscription(null);
-    } catch {}
+      const res = await api.post('/subscriptions/cancel');
+      if (res.data?.status === 'CANCELLED') {
+        setSubscription(null);
+        setError('Подписка отменена');
+      } else {
+        setError(apiErrorMessage(null, 'Не удалось отменить подписку'));
+      }
+    } catch (err: any) {
+      setError(apiErrorMessage(err, 'Не удалось отменить подписку'));
+    }
   };
 
   const handleChangePlan = async (planId: string) => {
     try {
       const res = await api.post('/subscriptions/change-plan', { planId });
+      const { confirmationUrl, subscription: pending } = res.data;
+      if (pending?.status === 'PENDING' && confirmationUrl) {
+        window.location.href = confirmationUrl;
+        return;
+      }
       setSubscription(res.data.subscription);
-    } catch {}
+    } catch (err: any) {
+      setError(apiErrorMessage(err, 'Не удалось сменить тариф'));
+    }
   };
 
   if (loading) {
@@ -74,6 +89,12 @@ export default function SubscriptionPage() {
         <h1 className="text-2xl font-bold text-white mb-1">{t('sub_title')}</h1>
         <p className="text-sm text-gray-500">{t('sub_subtitle')}</p>
       </div>
+
+      {error && (
+        <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
 
       {subscription ? (
         <div className="bg-[#141414] border border-white/5 rounded-2xl p-6">

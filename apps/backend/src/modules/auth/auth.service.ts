@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { TokenService } from './token.service';
 import { EmailService } from '../email/email.service';
+import { TelegramNotifyService } from '../telegram/telegram-notify.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '@prisma/client';
@@ -17,6 +18,7 @@ export class AuthService {
     private tokenService: TokenService,
     private configService: ConfigService,
     private emailService: EmailService,
+    private telegramNotify: TelegramNotifyService,
   ) {}
 
   async register(dto: RegisterDto, ip?: string, userAgent?: string) {
@@ -95,6 +97,16 @@ export class AuthService {
 
     this.logger.log(`User registered: ${user.email}`);
 
+    void this.telegramNotify.sendAdmin(
+      [
+        'Новая регистрация',
+        `Имя: ${dto.firstName ?? '—'} ${dto.lastName ?? ''}`.trim(),
+        `Email: ${user.email}`,
+        `Дата: ${new Date().toLocaleString('ru-RU')}`,
+        `Реферальный код: ${referralCode}`,
+      ].join('\n'),
+    );
+
     return {
       user: this.sanitizeUser(user),
       ...tokens,
@@ -111,14 +123,15 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    if (user.status === 'BANNED' || user.status === 'SUSPENDED' || (user.lockedUntil && user.lockedUntil > new Date())) {
+    if (
+      user.status === 'BANNED' ||
+      user.status === 'SUSPENDED' ||
+      (user.lockedUntil && user.lockedUntil > new Date())
+    ) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    const isValidPassword = await this.tokenService.verifyPassword(
-      user.passwordHash,
-      dto.password,
-    );
+    const isValidPassword = await this.tokenService.verifyPassword(user.passwordHash, dto.password);
 
     if (!isValidPassword) {
       const attempts = user.loginAttempts + 1;
@@ -400,10 +413,7 @@ export class AuthService {
       throw new UnauthorizedException('Пользователь не найден');
     }
 
-    const isValid = await this.tokenService.verifyPassword(
-      user.passwordHash,
-      currentPassword,
-    );
+    const isValid = await this.tokenService.verifyPassword(user.passwordHash, currentPassword);
 
     if (!isValid) {
       throw new UnauthorizedException('Текущий пароль неверный');
@@ -497,7 +507,13 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { passwordHash, twoFactorSecret, emailVerificationTokenHash, passwordResetTokenHash, ...sanitized } = user as any;
+    const {
+      passwordHash,
+      twoFactorSecret,
+      emailVerificationTokenHash,
+      passwordResetTokenHash,
+      ...sanitized
+    } = user as any;
     return sanitized;
   }
 

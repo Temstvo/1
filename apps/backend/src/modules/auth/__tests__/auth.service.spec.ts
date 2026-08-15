@@ -4,6 +4,7 @@ import { TokenService } from '../token.service';
 import { PrismaService } from '../../../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../../email/email.service';
+import { TelegramNotifyService } from '../../telegram/telegram-notify.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 
 describe('AuthService', () => {
@@ -39,6 +40,10 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        {
+          provide: TelegramNotifyService,
+          useValue: { sendAdmin: jest.fn() },
+        },
         {
           provide: PrismaService,
           useValue: {

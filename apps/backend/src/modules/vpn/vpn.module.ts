@@ -5,6 +5,7 @@ import { VpnConfigSyncService } from './vpn-config-sync.service';
 import { VpnConfigScheduler } from './vpn-config-scheduler';
 import { HealthCheckService } from './health-check.service';
 import { MigrationService } from './migration.service';
+import { NodeRegistryService } from './node-registry.service';
 import { VpnController } from './vpn.controller';
 import { ConnectionsService } from './connections.service';
 import { ConnectionsController } from './connections.controller';
@@ -12,10 +13,7 @@ import { ServersModule } from '../servers/servers.module';
 import { PrismaModule } from '../../database/prisma.module';
 
 @Module({
-  imports: [
-    forwardRef(() => ServersModule),
-    PrismaModule,
-  ],
+  imports: [forwardRef(() => ServersModule), PrismaModule],
   controllers: [VpnController, ConnectionsController],
   providers: [
     VpnService,
@@ -25,6 +23,7 @@ import { PrismaModule } from '../../database/prisma.module';
     HealthCheckService,
     MigrationService,
     ConnectionsService,
+    NodeRegistryService,
   ],
   exports: [
     VpnService,
@@ -32,6 +31,7 @@ import { PrismaModule } from '../../database/prisma.module';
     VpnConfigSyncService,
     HealthCheckService,
     ConnectionsService,
+    NodeRegistryService,
   ],
 })
 export class VpnModule {}

@@ -17,7 +17,8 @@ export class HealthCheckService {
   private readonly logger = new Logger(HealthCheckService.name);
   private consecutiveFailures = new Map<string, number>();
   private deadByHealthCheck = new Set<string>();
-  private lastCheckResult: { total: number; alive: number; dead: number; timestamp: Date } | null = null;
+  private lastCheckResult: { total: number; alive: number; dead: number; timestamp: Date } | null =
+    null;
 
   constructor(
     private prisma: PrismaService,
@@ -58,9 +59,7 @@ export class HealthCheckService {
 
     for (let i = 0; i < configs.length; i += batchSize) {
       const batch = configs.slice(i, i + batchSize);
-      const batchResults = await Promise.allSettled(
-        batch.map((c) => this.checkConfig(c)),
-      );
+      const batchResults = await Promise.allSettled(batch.map((c) => this.checkConfig(c)));
 
       for (const r of batchResults) {
         if (r.status === 'fulfilled') results.push(r.value);
@@ -78,6 +77,18 @@ export class HealthCheckService {
     };
 
     this.logger.log(`Health check complete: ${alive} alive, ${dead} dead out of ${results.length}`);
+
+    const aliveIds = results.filter((r) => r.reachable && r.latencyMs !== null);
+    for (const r of aliveIds) {
+      try {
+        await this.prisma.vpnConfig.update({
+          where: { id: r.configId },
+          data: { latency: r.latencyMs, lastChecked: new Date() },
+        });
+      } catch (error: any) {
+        this.logger.debug(`Failed to update latency for ${r.configId}: ${error?.message}`);
+      }
+    }
 
     // Mark dead configs
     for (const result of results) {
@@ -124,7 +135,12 @@ export class HealthCheckService {
     }
   }
 
-  private async checkConfig(config: { id: string; protocol: string; server: string; country: string }): Promise<HealthResult> {
+  private async checkConfig(config: {
+    id: string;
+    protocol: string;
+    server: string;
+    country: string;
+  }): Promise<HealthResult> {
     const start = Date.now();
     const [host, portStr] = config.server.split(':');
     const port = parseInt(portStr || '443', 10);

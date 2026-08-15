@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import * as crypto from 'crypto';
+import { parseConfigUri, validateSecurity, ParsedConfig } from './config-parser';
 
 const CONFIG_SOURCES = [
   {
@@ -30,31 +30,16 @@ const CONFIG_SOURCES = [
   },
 ];
 
-const FLAG_MAP: Record<string, string> = {
-  DE: 'Germany', NL: 'Netherlands', GB: 'United Kingdom', FR: 'France',
-  US: 'United States', CA: 'Canada', FI: 'Finland', SE: 'Sweden',
-  LV: 'Latvia', EE: 'Estonia', RS: 'Serbia', JP: 'Japan',
-  SG: 'Singapore', PL: 'Poland', CZ: 'Czech Republic', AT: 'Austria',
-  CH: 'Switzerland', BE: 'Belgium', IE: 'Ireland', PT: 'Portugal',
-  ES: 'Spain', IT: 'Italy', NO: 'Norway', DK: 'Denmark',
-  RO: 'Romania', BG: 'Bulgaria', HR: 'Croatia', UA: 'Ukraine',
-  KZ: 'Kazakhstan', TR: 'Turkey', IN: 'India', KR: 'South Korea',
-  BR: 'Brazil', MX: 'Mexico', AU: 'Australia', NZ: 'New Zealand',
-  ZA: 'South Africa', IL: 'Israel', AE: 'UAE', TH: 'Thailand',
-  VN: 'Vietnam', ID: 'Indonesia', MY: 'Malaysia', PH: 'Philippines',
-  TW: 'Taiwan', HK: 'Hong Kong', AR: 'Argentina', CL: 'Chile',
-  CO: 'Colombia', PE: 'Peru', NG: 'Nigeria', KE: 'Kenya',
-  EG: 'Egypt', MA: 'Morocco', GH: 'Ghana', PK: 'Pakistan',
-  BD: 'Bangladesh', LK: 'Sri Lanka', NP: 'Nepal', MM: 'Myanmar',
-  KH: 'Cambodia', LA: 'Laos', MN: 'Mongolia', GE: 'Georgia',
-  AM: 'Armenia', AZ: 'Azerbaijan', MD: 'Moldova', BY: 'Belarus',
-  LT: 'Lithuania', SI: 'Slovenia', SK: 'Slovakia', HU: 'Hungary',
-  GR: 'Greece', CY: 'Cyprus', MT: 'Malta', LU: 'Luxembourg',
-  IS: 'Iceland', GL: 'Greenland', GI: 'Gibraltar', AD: 'Andorra',
-  MC: 'Monaco', LI: 'Liechtenstein', SM: 'San Marino', VA: 'Vatican',
-};
-
-const SUPPORTED_PROTOCOLS = ['vless', 'trojan', 'shadowsocks', 'ss', 'hysteria2', 'hysteria', 'vmess', 'tuic'];
+export interface SyncResults {
+  fetched: number;
+  parsed: number;
+  rejected: number;
+  created: number;
+  updated: number;
+  duplicates: number;
+  errors: number;
+  sources: number;
+}
 
 @Injectable()
 export class VpnConfigSyncService {
@@ -66,9 +51,18 @@ export class VpnConfigSyncService {
     return this.prisma.vpnConfig.count({ where: { isActive: true } });
   }
 
-  async syncAll(): Promise<{ fetched: number; stored: number; errors: number; sources: number }> {
+  async syncAll(): Promise<SyncResults> {
     this.logger.log('Starting VPN config sync...');
-    const results = { fetched: 0, stored: 0, errors: 0, sources: 0 };
+    const results: SyncResults = {
+      fetched: 0,
+      parsed: 0,
+      rejected: 0,
+      created: 0,
+      updated: 0,
+      duplicates: 0,
+      errors: 0,
+      sources: 0,
+    };
     const syncStart = new Date();
     let okSources = 0;
 
@@ -91,27 +85,61 @@ export class VpnConfigSyncService {
         okSources++;
         this.logger.log(`${source.name}: ${lines.length} configs found`);
 
-        const rows: any[] = [];
+        const rows: ParsedConfig[] = [];
         for (const line of lines) {
-          try {
-            const config = this.parseConfigUri(line.trim(), source.listType);
-            if (config) rows.push(config);
-          } catch (_err) {
+          const config = parseConfigUri(line.trim(), source.listType);
+          if (!config) {
             results.errors++;
+            continue;
           }
+          const verdict = validateSecurity(config);
+          if (!verdict.ok) {
+            results.rejected++;
+            this.logger.debug(`Rejected config (${verdict.reason}): ${config.host}`);
+            continue;
+          }
+          rows.push(config);
         }
 
-        for (const config of rows) {
-          try {
-            await this.prisma.vpnConfig.upsert({
-              where: { id: config.id },
-              update: { isActive: true, lastChecked: new Date() },
-              create: config,
-            });
-            results.stored++;
-          } catch (_err) {
-            results.errors++;
-          }
+        results.parsed += rows.length;
+
+        if (rows.length === 0) continue;
+
+        const existing = await this.prisma.vpnConfig.findMany({
+          where: { id: { in: rows.map((r) => r.id) } },
+          select: { id: true },
+        });
+        const existingIds = new Set(existing.map((e) => e.id));
+
+        const newRows = rows.filter((r) => !existingIds.has(r.id));
+        const dupRows = rows.filter((r) => existingIds.has(r.id));
+
+        if (newRows.length > 0) {
+          const created = await this.prisma.vpnConfig.createMany({
+            data: newRows.map((r) => ({
+              id: r.id,
+              protocol: r.protocol,
+              uri: r.uri,
+              label: r.label,
+              country: r.country,
+              countryCode: r.countryCode,
+              server: r.server,
+              listType: r.listType,
+              isActive: true,
+              lastChecked: new Date(),
+            })),
+            skipDuplicates: true,
+          });
+          results.created += created.count;
+        }
+
+        if (dupRows.length > 0) {
+          const updated = await this.prisma.vpnConfig.updateMany({
+            where: { id: { in: dupRows.map((r) => r.id) } },
+            data: { isActive: true, lastChecked: new Date() },
+          });
+          results.updated += updated.count;
+          results.duplicates += dupRows.length - updated.count;
         }
       } catch (error: any) {
         this.logger.error(`Error syncing ${source.name}: ${error.message}`);
@@ -137,69 +165,12 @@ export class VpnConfigSyncService {
     return results;
   }
 
-  private parseConfigUri(uri: string, listType: string) {
-    const match = uri.match(/^(\w+):\/\//);
-    if (!match) return null;
-
-    const protocol = match[1].toLowerCase();
-    if (!SUPPORTED_PROTOCOLS.includes(protocol)) return null;
-
-    const hashIndex = uri.indexOf('#');
-    const label = hashIndex > -1 ? decodeURIComponent(uri.substring(hashIndex + 1)) : '';
-    const configUri = hashIndex > -1 ? uri.substring(0, hashIndex) : uri;
-
-    const afterProtocol = uri.substring(match[0].length);
-    const atMatch = afterProtocol.match(/@([^:]+):(\d+)/);
-    const server = atMatch ? `${atMatch[1]}:${atMatch[2]}` : 'unknown';
-
-    const country = this.extractCountry(label, uri);
-
-    const id = crypto.createHash('md5').update(configUri).digest('hex');
-    const uuid = `${id.substring(0, 8)}-${id.substring(8, 12)}-${id.substring(12, 16)}-${id.substring(16, 20)}-${id.substring(20, 32)}`;
-
-    return {
-      id: uuid,
-      protocol: protocol === 'ss' ? 'shadowsocks' : protocol,
-      uri,
-      label,
-      country: country.name,
-      countryCode: country.code,
-      server,
-      listType,
-      isActive: true,
-      lastChecked: new Date(),
-    };
-  }
-
-  private extractCountry(label: string, uri: string): { name: string; code: string } {
-    const flagMatch = label.match(/[\u{1F1E0}-\u{1F1FF}]{2}/u);
-    if (flagMatch) {
-      const flag = flagMatch[0];
-      const code = this.flagToCode(flag);
-      if (code && FLAG_MAP[code]) {
-        return { name: FLAG_MAP[code], code };
-      }
-    }
-
-    for (const [code, name] of Object.entries(FLAG_MAP)) {
-      if (label.toLowerCase().includes(name.toLowerCase())) {
-        return { name, code };
-      }
-    }
-
-    if (label.toLowerCase().includes('anycast')) {
-      return { name: 'Anycast', code: 'XX' };
-    }
-
-    return { name: 'Unknown', code: 'XX' };
-  }
-
-  private flagToCode(flag: string): string | null {
-    const codePoints = [...flag].map((c) => c.codePointAt(0)! - 0x1f1e6 + 65);
-    return String.fromCharCode(...codePoints);
-  }
-
-  async getConfigs(filters?: { protocol?: string; country?: string; listType?: string; search?: string }) {
+  async getConfigs(filters?: {
+    protocol?: string;
+    country?: string;
+    listType?: string;
+    search?: string;
+  }) {
     const where: any = { isActive: true };
 
     if (filters?.protocol) where.protocol = filters.protocol;

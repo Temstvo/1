@@ -5,15 +5,17 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { VpnService } from './vpn.service';
+import { NodeRegistryService } from './node-registry.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { IsString, IsEnum } from 'class-validator';
+import { IsString, IsEnum, IsOptional } from 'class-validator';
 
 class GenerateConfigDto {
   @IsString()
@@ -23,10 +25,27 @@ class GenerateConfigDto {
   protocol: string;
 }
 
+class AutoConfigQueryDto {
+  @IsOptional()
+  @IsString()
+  protocol?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  exclude?: string;
+}
+
 @ApiTags('vpn')
 @Controller('vpn')
 export class VpnController {
-  constructor(private readonly vpnService: VpnService) {}
+  constructor(
+    private readonly vpnService: VpnService,
+    private readonly nodeRegistryService: NodeRegistryService,
+  ) {}
 
   @Post('config/generate')
   @UseGuards(JwtAuthGuard)
@@ -34,11 +53,21 @@ export class VpnController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Generate VPN configuration' })
   @ApiResponse({ status: 201, description: 'Config generated' })
-  async generateConfig(
-    @CurrentUser('id') userId: string,
-    @Body() dto: GenerateConfigDto,
-  ) {
+  async generateConfig(@CurrentUser('id') userId: string, @Body() dto: GenerateConfigDto) {
     return this.vpnService.generateConfig(userId, dto.serverId, dto.protocol as any);
+  }
+
+  @Get('config/auto')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Auto-select best working config' })
+  @ApiResponse({ status: 200, description: 'Best config with fallbacks' })
+  async getAutoConfig(@CurrentUser('id') userId: string, @Query() query: AutoConfigQueryDto) {
+    return this.nodeRegistryService.assignBest(userId, {
+      protocol: query.protocol,
+      country: query.country,
+      exclude: query.exclude,
+    });
   }
 
   @Get('configs')
@@ -55,10 +84,7 @@ export class VpnController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get config QR code data' })
   @ApiResponse({ status: 200, description: 'Config QR data' })
-  async getConfigQr(
-    @CurrentUser('id') userId: string,
-    @Param('id') configId: string,
-  ) {
+  async getConfigQr(@CurrentUser('id') userId: string, @Param('id') configId: string) {
     return this.vpnService.getConfigQrCode(userId, configId);
   }
 
@@ -68,10 +94,7 @@ export class VpnController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete VPN configuration' })
   @ApiResponse({ status: 200, description: 'Config deleted' })
-  async deleteConfig(
-    @CurrentUser('id') userId: string,
-    @Param('id') configId: string,
-  ) {
+  async deleteConfig(@CurrentUser('id') userId: string, @Param('id') configId: string) {
     await this.vpnService.deleteConfig(userId, configId);
     return { message: 'Config deleted successfully' };
   }

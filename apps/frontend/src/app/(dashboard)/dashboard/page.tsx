@@ -50,22 +50,23 @@ export default function DashboardPage() {
       api.get('/subscriptions/current').catch(() => ({ data: null })),
       api.get('/traffic/current').catch(() => ({ data: null })),
       api.get('/devices').catch(() => ({ data: [] })),
-    ]).then(([subRes, trafRes, devRes]) => {
-      setSubscription(subRes.data);
-      if (trafRes.data) {
-        setTraffic(trafRes.data);
-      }
-      const devList = Array.isArray(devRes.data) ? devRes.data : devRes.data?.devices || [];
-      setDevices(devList);
-    }).finally(() => setLoading(false));
+    ])
+      .then(([subRes, trafRes, devRes]) => {
+        setSubscription(subRes.data);
+        if (trafRes.data) {
+          setTraffic(trafRes.data);
+        }
+        const devList = Array.isArray(devRes.data) ? devRes.data : devRes.data?.devices || [];
+        setDevices(devList);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const trafficPct = traffic && traffic.limit > 0
-    ? Math.min(100, Math.round((traffic.total / traffic.limit) * 100))
-    : 0;
-  const trafficRemaining = traffic && traffic.limit > 0
-    ? traffic.limit - traffic.total
-    : 0;
+  const trafficPct =
+    traffic && traffic.limit > 0
+      ? Math.min(100, Math.round((traffic.total / traffic.limit) * 100))
+      : 0;
+  const trafficRemaining = traffic && traffic.limit > 0 ? traffic.limit - traffic.total : 0;
 
   if (loading) {
     return (
@@ -88,19 +89,30 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-white/5 bg-[#111] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500">Тариф</p>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              subscription?.status === 'ACTIVE' ? 'bg-green-500/10 text-green-400' :
-              subscription?.status === 'TRIAL' ? 'bg-blue-500/10 text-blue-400' :
-              'bg-gray-500/10 text-gray-500'
-            }`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                subscription?.status === 'ACTIVE'
+                  ? 'bg-green-500/10 text-green-400'
+                  : subscription?.status === 'TRIAL'
+                    ? 'bg-blue-500/10 text-blue-400'
+                    : 'bg-gray-500/10 text-gray-500'
+              }`}
+            >
               {subscription?.status === 'ACTIVE' ? 'Активен' : subscription?.status || 'Нет'}
             </span>
           </div>
           <p className="text-xl font-bold text-white">{subscription?.plan?.name || '—'}</p>
           {subscription ? (
-            <p className="text-xs text-gray-500 mt-1">Осталось {daysUntil(subscription.expiresAt)} дн.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Осталось {daysUntil(subscription.expiresAt)} дн.
+            </p>
           ) : (
-            <Link href="/checkout" className="text-xs text-purple-400 hover:text-purple-300 mt-1 inline-block">Выбрать тариф →</Link>
+            <Link
+              href="/checkout"
+              className="text-xs text-purple-400 hover:text-purple-300 mt-1 inline-block"
+            >
+              Выбрать тариф →
+            </Link>
           )}
         </div>
 
@@ -111,7 +123,7 @@ export default function DashboardPage() {
             <>
               <div className="mt-3 h-1.5 rounded-full bg-[#222]">
                 <div
-                  className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all"
+                  className="h-1.5 rounded-full bg-purple-600 transition-all"
                   style={{ width: `${trafficPct}%` }}
                 />
               </div>
@@ -124,7 +136,10 @@ export default function DashboardPage() {
 
         <div className="rounded-2xl border border-white/5 bg-[#111] p-5">
           <p className="text-xs text-gray-500 mb-3">Устройства</p>
-          <p className="text-xl font-bold text-white">{devices.length}{subscription?.plan?.deviceLimit ? ` / ${subscription.plan.deviceLimit}` : ''}</p>
+          <p className="text-xl font-bold text-white">
+            {devices.length}
+            {subscription?.plan?.deviceLimit ? ` / ${subscription.plan.deviceLimit}` : ''}
+          </p>
           <p className="text-xs text-gray-500 mt-1">
             {subscription?.plan?.deviceLimit
               ? `${Math.max(0, subscription.plan.deviceLimit - devices.length)} слот${Math.max(0, subscription.plan.deviceLimit - devices.length) === 1 ? '' : 'ов'} свободно`
@@ -148,21 +163,60 @@ export default function DashboardPage() {
       <div className="rounded-2xl border border-white/5 bg-[#111] p-6">
         <h3 className="mb-4 text-base font-semibold text-white">Быстрые действия</h3>
         <div className="grid gap-3 md:grid-cols-3">
-          <Link href="/vpn" className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" />
+          <Link
+            href="/vpn"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3"
+              />
             </svg>
             Конфиги VPN
           </Link>
-          <Link href="/downloads" className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          <Link
+            href="/downloads"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+              />
             </svg>
             Скачать приложение
           </Link>
-          <Link href="/subscription" className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+          <Link
+            href="/subscription"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#0a0a0a] px-4 py-3.5 text-sm font-medium text-gray-300 hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 transition-all"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"
+              />
             </svg>
             Управление тарифом
           </Link>

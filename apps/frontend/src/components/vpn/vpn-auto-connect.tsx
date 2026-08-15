@@ -85,12 +85,12 @@ export function VpnAutoConnect() {
 
   const circleClass =
     status === 'connected'
-      ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl shadow-green-500/30'
+      ? 'bg-green-600 hover:bg-green-500'
       : status === 'connecting' || status === 'restoring'
-        ? 'bg-gradient-to-br from-yellow-500 to-orange-500 shadow-2xl shadow-yellow-500/30'
+        ? 'bg-yellow-600'
         : status === 'failed'
-          ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-2xl shadow-red-500/30'
-          : 'bg-gradient-to-br from-purple-600 to-cyan-500 shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105';
+          ? 'bg-red-600 hover:bg-red-500'
+          : 'bg-purple-600 hover:bg-purple-500';
 
   const statusText =
     status === 'connected'
@@ -106,91 +106,78 @@ export function VpnAutoConnect() {
   return (
     <div className="w-full">
       <div className="flex flex-col items-center gap-5 py-8">
-        <div className="relative">
-          <div
-            className={`absolute inset-0 rounded-full transition-all duration-500 ${
-              status === 'connected'
-                ? 'bg-green-500/20 blur-2xl scale-125'
-                : status === 'connecting' || status === 'restoring'
-                  ? 'bg-yellow-500/20 blur-2xl scale-125 animate-pulse'
-                  : status === 'failed'
-                    ? 'bg-red-500/10 blur-2xl scale-110'
-                    : 'bg-purple-500/10 blur-2xl scale-110'
-            }`}
-          />
-          <button
-            onClick={handleConnect}
-            disabled={status === 'connecting' || status === 'restoring'}
-            className={`relative h-36 w-36 rounded-full transition-all duration-500 ${circleClass} ${status === 'failed' ? 'animate-none' : ''}`}
-          >
-            <div className="flex h-full flex-col items-center justify-center">
-              {status === 'connected' ? (
-                <>
-                  <svg
-                    className="mb-1 h-12 w-12 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
+        <button
+          onClick={handleConnect}
+          disabled={status === 'connecting' || status === 'restoring'}
+          className={`relative h-36 w-36 rounded-full transition-colors duration-300 ${circleClass} ${status === 'failed' ? 'animate-none' : ''}`}
+        >
+          <div className="flex h-full flex-col items-center justify-center">
+            {status === 'connected' ? (
+              <>
+                <svg
+                  className="mb-1 h-12 w-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
+                  {statusText}
+                </span>
+              </>
+            ) : status === 'connecting' || status === 'restoring' ? (
+              <>
+                <svg
+                  className="mb-1 h-12 w-12 text-white animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
                     stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
-                    {statusText}
-                  </span>
-                </>
-              ) : status === 'connecting' || status === 'restoring' ? (
-                <>
-                  <svg
-                    className="mb-1 h-12 w-12 text-white animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
-                    {statusText}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="mb-1 h-12 w-12 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3"
-                    />
-                  </svg>
-                  <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
-                    {statusText}
-                  </span>
-                </>
-              )}
-            </div>
-          </button>
-        </div>
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
+                  {statusText}
+                </span>
+              </>
+            ) : (
+              <>
+                <svg
+                  className="mb-1 h-12 w-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3"
+                  />
+                </svg>
+                <span className="px-2 text-center text-white text-xs font-semibold leading-tight">
+                  {statusText}
+                </span>
+              </>
+            )}
+          </div>
+        </button>
 
         {result && (status === 'connected' || status === 'restoring') && (
           <div className="w-full max-w-md space-y-4">

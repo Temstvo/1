@@ -303,7 +303,7 @@ export default function VpnPage() {
   return (
     <div className="flex h-full flex-col md:flex-row">
       {!isTauri && (
-        <div className="bg-gradient-to-r from-purple-600/10 to-blue-600/10 border-b border-[hsl(var(--border))] px-4 py-3 flex items-center justify-between">
+        <div className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] px-4 py-3 flex items-center justify-between">
           <p className="text-sm text-[hsl(var(--foreground))]">{t('vpn_download_banner')}</p>
           <a
             href="/downloads"

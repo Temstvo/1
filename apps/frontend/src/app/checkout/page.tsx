@@ -22,18 +22,33 @@ interface Plan {
 
 const LOCAL_PLANS: Plan[] = [
   {
-    id: 'personal', name: 'Личный', price: 99, currency: 'RUB', duration: 30,
-    trafficLimit: 1099511627776, deviceLimit: 2,
+    id: 'personal',
+    name: 'Личный',
+    price: 99,
+    currency: 'RUB',
+    duration: 30,
+    trafficLimit: 1099511627776,
+    deviceLimit: 2,
     features: ['До 1 Гбит/с, TLS 1.3', '305 серверов в 7 странах', 'VLESS · Hysteria2'],
   },
   {
-    id: 'advanced', name: 'Продвинутый', price: 199, currency: 'RUB', duration: 30,
-    trafficLimit: 1099511627776, deviceLimit: 4,
+    id: 'advanced',
+    name: 'Продвинутый',
+    price: 199,
+    currency: 'RUB',
+    duration: 30,
+    trafficLimit: 1099511627776,
+    deviceLimit: 4,
     features: ['Всё из «Личного»', 'VLESS-XHTTP — приоритетный канал', 'Приоритетная поддержка'],
   },
   {
-    id: 'family', name: 'Семья', price: 299, currency: 'RUB', duration: 30,
-    trafficLimit: 1099511627776, deviceLimit: 8,
+    id: 'family',
+    name: 'Семья',
+    price: 299,
+    currency: 'RUB',
+    duration: 30,
+    trafficLimit: 1099511627776,
+    deviceLimit: 8,
     features: ['Всё из «Продвинутого»', 'Управление членами через Telegram', 'Family-режим'],
   },
 ];
@@ -64,7 +79,8 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    api.get('/plans')
+    api
+      .get('/plans')
       .then((res) => {
         const data = res.data;
         const list = Array.isArray(data) ? data : data.plans || [];
@@ -85,12 +101,20 @@ export default function CheckoutPage() {
       const parsed = new URL(url);
       const allowed = ['yookassa.ru', 'yoomoney.ru', 'cryptomus.com', 'pay.cryptomus.com'];
       return allowed.some((h) => parsed.hostname === h || parsed.hostname.endsWith('.' + h));
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   };
 
   const handleCreateAccount = async () => {
-    if (password !== confirmPassword) { setError('Пароли не совпадают'); return; }
-    if (password.length < 8) { setError('Минимум 8 символов'); return; }
+    if (password !== confirmPassword) {
+      setError('Пароли не совпадают');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Минимум 8 символов');
+      return;
+    }
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
       setError('Нужны заглавная и строчная буквы, цифра и спецсимвол');
       return;
@@ -105,7 +129,9 @@ export default function CheckoutPage() {
       setStep('payment');
     } catch (err: any) {
       setError(apiErrorMessage(err, 'Ошибка регистрации'));
-    } finally { setProcessing(false); }
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handlePay = async () => {
@@ -145,7 +171,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      <header className="border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-xl">
+      <header className="border-b border-white/10 bg-[#0a0a0a]">
         <div className="max-w-5xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="APPI VPN" className="w-7 h-7" />
@@ -153,9 +179,13 @@ export default function CheckoutPage() {
           </Link>
           <div className="flex items-center gap-3 text-sm">
             {isLoggedIn ? (
-              <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Кабинет</Link>
+              <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
+                Кабинет
+              </Link>
             ) : (
-              <Link href="/login" className="text-gray-400 hover:text-white transition-colors">Войти</Link>
+              <Link href="/login" className="text-gray-400 hover:text-white transition-colors">
+                Войти
+              </Link>
             )}
           </div>
         </div>
@@ -164,14 +194,18 @@ export default function CheckoutPage() {
       <div className="flex-1 flex items-start justify-center py-8 md:py-14 px-4">
         <div className="w-full max-w-md">
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">{error}</div>
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+              {error}
+            </div>
           )}
 
           {/* ===== ШАГ 1: ТАРИФ ===== */}
           {step === 'plan' && (
             <div>
               <h1 className="text-2xl font-bold text-white mb-1 text-center">Выберите тариф</h1>
-              <p className="text-gray-400 text-center mb-8 text-sm">Платите за месяц или год. Возврат — 7 дней без вопросов.</p>
+              <p className="text-gray-400 text-center mb-8 text-sm">
+                Платите за месяц или год. Возврат — 7 дней без вопросов.
+              </p>
 
               <div className="space-y-3">
                 {plans.map((p) => (
@@ -180,14 +214,18 @@ export default function CheckoutPage() {
                     onClick={() => setSelectedPlan(p.id)}
                     className={`w-full flex items-center justify-between p-5 rounded-xl border transition-all text-left ${
                       selectedPlan === p.id
-                        ? 'border-purple-500 bg-purple-500/5 shadow-lg shadow-purple-500/5'
+                        ? 'border-purple-500 bg-purple-600/10'
                         : 'border-white/5 bg-[#111] hover:border-white/10'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        selectedPlan === p.id ? 'border-purple-500 bg-purple-500' : 'border-gray-600'
-                      }`}>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          selectedPlan === p.id
+                            ? 'border-purple-500 bg-purple-500'
+                            : 'border-gray-600'
+                        }`}
+                      >
                         {selectedPlan === p.id && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                       <div>
@@ -198,7 +236,9 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold text-purple-400">₽{p.price.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-purple-400">
+                        ₽{p.price.toLocaleString()}
+                      </span>
                       <span className="text-xs text-gray-500">/мес</span>
                     </div>
                   </button>
@@ -215,11 +255,27 @@ export default function CheckoutPage() {
 
               <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-600">
                 <span className="flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  <svg
+                    className="w-3.5 h-3.5 text-green-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
                   Возврат 7 дней
                 </span>
                 <span className="flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                  <svg
+                    className="w-3.5 h-3.5 text-green-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.5"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
                   Без скрытых платежей
                 </span>
               </div>
@@ -230,7 +286,9 @@ export default function CheckoutPage() {
           {step === 'account' && (
             <div>
               <h1 className="text-2xl font-bold text-white mb-1 text-center">Создайте аккаунт</h1>
-              <p className="text-gray-400 text-center mb-6 text-sm">Email и пароль — для входа в кабинет.</p>
+              <p className="text-gray-400 text-center mb-6 text-sm">
+                Email и пароль — для входа в кабинет.
+              </p>
 
               <div className="bg-[#111] border border-white/5 rounded-xl p-5 space-y-4">
                 <div>
@@ -266,7 +324,10 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep('plan')} className="flex-1 py-3.5 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">
+                <button
+                  onClick={() => setStep('plan')}
+                  className="flex-1 py-3.5 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors"
+                >
                   Назад
                 </button>
                 <button
@@ -279,7 +340,10 @@ export default function CheckoutPage() {
               </div>
 
               <p className="text-center text-xs text-gray-600 mt-3">
-                Уже есть аккаунт? <Link href="/login" className="text-purple-400 hover:text-purple-300">Войти</Link>
+                Уже есть аккаунт?{' '}
+                <Link href="/login" className="text-purple-400 hover:text-purple-300">
+                  Войти
+                </Link>
               </p>
             </div>
           )}
@@ -301,22 +365,41 @@ export default function CheckoutPage() {
                 </div>
                 <div className="border-t border-white/5 pt-2 mt-2 flex justify-between">
                   <span className="font-semibold text-white">Итого</span>
-                  <span className="font-bold text-lg text-purple-400">₽{plan.price.toLocaleString()}</span>
+                  <span className="font-bold text-lg text-purple-400">
+                    ₽{plan.price.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               <p className="text-xs text-gray-500 mb-3 px-1">Способ оплаты</p>
               <div className="space-y-2.5">
                 {[
-                  { id: 'yookassa' as PaymentMethod, icon: '💳', title: 'Карта', desc: 'Visa, Mastercard, МИР' },
-                  { id: 'sbp' as PaymentMethod, icon: '⚡', title: 'СБП', desc: 'Без комиссии, из вашего банка' },
-                  { id: 'crypto' as PaymentMethod, icon: '₮', title: 'USDT', desc: 'BSC · TON · TRON' },
+                  {
+                    id: 'yookassa' as PaymentMethod,
+                    icon: '💳',
+                    title: 'Карта',
+                    desc: 'Visa, Mastercard, МИР',
+                  },
+                  {
+                    id: 'sbp' as PaymentMethod,
+                    icon: '⚡',
+                    title: 'СБП',
+                    desc: 'Без комиссии, из вашего банка',
+                  },
+                  {
+                    id: 'crypto' as PaymentMethod,
+                    icon: '₮',
+                    title: 'USDT',
+                    desc: 'BSC · TON · TRON',
+                  },
                 ].map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setPaymentMethod(m.id)}
                     className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                      paymentMethod === m.id ? 'border-purple-500 bg-purple-500/5' : 'border-white/5 bg-[#111] hover:border-white/10'
+                      paymentMethod === m.id
+                        ? 'border-purple-500 bg-purple-500/5'
+                        : 'border-white/5 bg-[#111] hover:border-white/10'
                     }`}
                   >
                     <span className="text-xl w-8 text-center">{m.icon}</span>
@@ -324,7 +407,11 @@ export default function CheckoutPage() {
                       <div className="font-medium text-white text-sm">{m.title}</div>
                       <div className="text-xs text-gray-500">{m.desc}</div>
                     </div>
-                    {paymentMethod === m.id && <div className="w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-white" /></div>}
+                    {paymentMethod === m.id && (
+                      <div className="w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -343,15 +430,25 @@ export default function CheckoutPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setStep(isLoggedIn ? 'plan' : 'account')} className="flex-1 py-3.5 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors" disabled={processing}>
+                <button
+                  onClick={() => setStep(isLoggedIn ? 'plan' : 'account')}
+                  className="flex-1 py-3.5 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors"
+                  disabled={processing}
+                >
                   Назад
                 </button>
-                <button onClick={handlePay} className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-full font-semibold text-sm transition-colors disabled:opacity-50" disabled={processing}>
+                <button
+                  onClick={handlePay}
+                  className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-500 rounded-full font-semibold text-sm transition-colors disabled:opacity-50"
+                  disabled={processing}
+                >
                   {processing ? 'Обработка...' : `Оплатить ₽${plan.price.toLocaleString()}`}
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-600 mt-4">🔒 Безопасная оплата · 7 дней на возврат</p>
+              <p className="text-center text-xs text-gray-600 mt-4">
+                🔒 Безопасная оплата · 7 дней на возврат
+              </p>
             </div>
           )}
 
@@ -359,13 +456,31 @@ export default function CheckoutPage() {
           {step === 'success' && (
             <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                <svg
+                  className="w-10 h-10 text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">Оплата прошла!</h1>
               <p className="text-gray-400 mb-8">Ваш тариф активирован. Приятного пользования.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/downloads" className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-full text-sm font-semibold transition-colors">Скачать приложение</Link>
-                <Link href="/dashboard" className="px-6 py-3 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors">Кабинет</Link>
+                <Link
+                  href="/downloads"
+                  className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-full text-sm font-semibold transition-colors"
+                >
+                  Скачать приложение
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="px-6 py-3 border border-white/10 rounded-full text-sm font-semibold text-gray-400 hover:bg-white/5 transition-colors"
+                >
+                  Кабинет
+                </Link>
               </div>
             </div>
           )}

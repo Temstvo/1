@@ -32,7 +32,8 @@ export default function TrafficPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/traffic/current')
+    api
+      .get('/traffic/current')
       .then((res) => setStats(res.data))
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
@@ -50,8 +51,16 @@ export default function TrafficPage() {
   }
 
   const rows = [
-    { label: t('stats_download'), value: formatBytes(stats?.download || stats?.totalDownload || 0), color: 'text-green-400' },
-    { label: t('stats_upload'), value: formatBytes(stats?.upload || stats?.totalUpload || 0), color: 'text-blue-400' },
+    {
+      label: t('stats_download'),
+      value: formatBytes(stats?.download || stats?.totalDownload || 0),
+      color: 'text-green-400',
+    },
+    {
+      label: t('stats_upload'),
+      value: formatBytes(stats?.upload || stats?.totalUpload || 0),
+      color: 'text-blue-400',
+    },
   ];
 
   return (
@@ -71,11 +80,15 @@ export default function TrafficPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
               <div className="text-xs text-gray-500 mb-2">{t('stats_download')}</div>
-              <div className="text-xl font-bold text-green-400">{formatBytes(stats.download || stats.totalDownload || 0)}</div>
+              <div className="text-xl font-bold text-green-400">
+                {formatBytes(stats.download || stats.totalDownload || 0)}
+              </div>
             </div>
             <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
               <div className="text-xs text-gray-500 mb-2">{t('stats_upload')}</div>
-              <div className="text-xl font-bold text-blue-400">{formatBytes(stats.upload || stats.totalUpload || 0)}</div>
+              <div className="text-xl font-bold text-blue-400">
+                {formatBytes(stats.upload || stats.totalUpload || 0)}
+              </div>
             </div>
           </div>
 
@@ -83,12 +96,16 @@ export default function TrafficPage() {
             <div className="bg-[#111] border border-white/5 rounded-2xl p-5">
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-gray-400">{t('stats_data_proxy')}</span>
-                <span className="text-white font-medium">{formatBytes(stats.total || 0)} / {formatBytes(stats.limit)}</span>
+                <span className="text-white font-medium">
+                  {formatBytes(stats.total || 0)} / {formatBytes(stats.limit)}
+                </span>
               </div>
               <div className="h-2 rounded-full bg-[#222]">
                 <div
-                  className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-cyan-400"
-                  style={{ width: `${Math.min(100, Math.round(((stats.total || 0) / stats.limit) * 100))}%` }}
+                  className="h-2 rounded-full bg-purple-600"
+                  style={{
+                    width: `${Math.min(100, Math.round(((stats.total || 0) / stats.limit) * 100))}%`,
+                  }}
                 />
               </div>
             </div>
@@ -96,7 +113,10 @@ export default function TrafficPage() {
 
           <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden">
             {rows.map((r) => (
-              <div key={r.label} className="flex items-center justify-between px-5 py-4 border-b border-white/5 last:border-0">
+              <div
+                key={r.label}
+                className="flex items-center justify-between px-5 py-4 border-b border-white/5 last:border-0"
+              >
                 <span className="text-sm text-gray-400">{r.label}</span>
                 <span className={`text-sm font-medium ${r.color}`}>{r.value}</span>
               </div>

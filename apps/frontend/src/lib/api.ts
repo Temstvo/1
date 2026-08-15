@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'https://appi-api-proxy.appivpn.workers.dev').replace(/\/+$/, '');
+const baseURL = (
+  process.env.NEXT_PUBLIC_API_URL || 'https://appi-api-proxy.appivpn.workers.dev'
+).replace(/\/+$/, '');
 const api = axios.create({
   baseURL: baseURL.endsWith('/api') ? baseURL : `${baseURL}/api`,
   timeout: 10000,
@@ -47,8 +49,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     const isAuthEndpoint =
-      typeof originalRequest?.url === 'string' &&
-      originalRequest.url.includes('/auth/');
+      typeof originalRequest?.url === 'string' && originalRequest.url.includes('/auth/');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
@@ -69,10 +70,9 @@ api.interceptors.response.use(
         if (typeof window !== 'undefined') {
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
-            const response = await axios.post(
-              `${api.defaults.baseURL}/auth/refresh`,
-              { refreshToken },
-            );
+            const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
+              refreshToken,
+            });
 
             const { accessToken, refreshToken: newRefreshToken } = response.data;
             localStorage.setItem('accessToken', accessToken);
@@ -85,9 +85,11 @@ api.interceptors.response.use(
             return api(originalRequest);
           }
         }
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         processQueue(refreshError, null);
-        if (typeof window !== 'undefined') {
+        const isAuthFailure =
+          refreshError?.response?.status === 401 || refreshError?.response?.status === 403;
+        if (typeof window !== 'undefined' && isAuthFailure) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';

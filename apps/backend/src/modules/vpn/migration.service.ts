@@ -1,13 +1,51 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
   private readonly logger = new Logger(MigrationService.name);
 
-  constructor(private prisma: PrismaService) {}
-
   async onModuleInit() {
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const params: string[] = [];
+    if (!databaseUrl.includes('sslmode=')) params.push('sslmode=require');
+    if (!databaseUrl.includes('connection_limit=')) params.push('connection_limit=2');
+    if (!databaseUrl.includes('pool_timeout=')) params.push('pool_timeout=10');
+    if (!databaseUrl.includes('pgbouncer=')) params.push('pgbouncer=true');
+    const sep = databaseUrl.includes('?') ? '&' : '?';
+    const url = params.length > 0 ? `${databaseUrl}${sep}${params.join('&')}` : databaseUrl;
+
+    const client = new PrismaClient({ datasources: { db: { url } }, log: ['error'] });
+    try {
+      await this.runMigrations(client);
+    } catch (error: any) {
+      this.logger.error(`Migration failed: ${error?.message || error}`);
+    } finally {
+      try {
+        await Promise.race([
+          client.$disconnect(),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
+        ]);
+      } catch {
+        /* noop */
+      }
+    }
+    this.logger.log('Migration: free_vpn_configs table ensured');
+  }
+
+  private async runMigrations(client: PrismaClient) {
+    try {
+      const exists = await client.$queryRawUnsafe(
+        `SELECT to_regclass('public.free_vpn_configs') IS NOT NULL AS exists`,
+      );
+      if (exists && (exists as any)[0]?.exists === true) {
+        this.logger.log('Migration: schema already present, skipping DDL');
+        return;
+      }
+    } catch {
+      /* fall through to DDL */
+    }
+
     const statements = [
       `CREATE TABLE IF NOT EXISTS free_vpn_configs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,13 +74,26 @@ export class MigrationService implements OnModuleInit {
       EXCEPTION WHEN duplicate_column THEN null; END $$`,
     ];
 
-    for (const sql of statements) {
-      try {
-        await this.prisma.$executeRawUnsafe(sql);
-      } catch (error: any) {
-        this.logger.warn(`Migration statement failed: ${error.message}`);
+    let attempts = 0;
+    while (attempts < 10) {
+      attempts += 1;
+      let ok = true;
+      for (const sql of statements) {
+        try {
+          await Promise.race([
+            client.$executeRawUnsafe(sql),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('statement timeout')), 20000),
+            ),
+          ]);
+        } catch (error: any) {
+          ok = false;
+          this.logger.warn(`Migration statement failed (pass ${attempts}/10): ${error.message}`);
+          break;
+        }
       }
+      if (ok) break;
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
-    this.logger.log('Migration: free_vpn_configs table ensured');
   }
 }

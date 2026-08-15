@@ -31,7 +31,8 @@ const translations = {
     vpn_all_protocols: 'All protocols',
     vpn_configs_count: '{n} configs',
     vpn_select_config: 'Select a config to view details',
-    vpn_select_hint: 'Copy the config URI and import it into your VPN client (Karing, v2rayN, Streisand, etc.)',
+    vpn_select_hint:
+      'Copy the config URI and import it into your VPN client (Karing, v2rayN, Streisand, etc.)',
     vpn_copy_config: 'Copy Config',
     vpn_copied: 'Copied!',
     vpn_show_config: 'Show Full Config',
@@ -42,12 +43,22 @@ const translations = {
     vpn_step3: '3. Add a new server and paste the URI',
     vpn_step4: '4. Connect and browse freely',
     vpn_black_explain: 'Black List — bypasses RKN blocks. Use this in Russia.',
-    vpn_white_explain: 'White List — only routes Russian traffic through proxy. For split tunneling.',
+    vpn_white_explain:
+      'White List — only routes Russian traffic through proxy. For split tunneling.',
     vpn_latency: 'Latency',
     vpn_no_configs: 'No configs found',
     vpn_loading: 'Loading configs...',
     vpn_download_banner: 'Download the app to use VPN on your device',
     vpn_download_btn: 'Download',
+    vpn_auto_connect: 'Connect',
+    vpn_auto_finding: 'Finding the best server...',
+    vpn_auto_ready: 'Protected',
+    vpn_auto_restoring: 'Restoring connection...',
+    vpn_auto_failed: 'Could not connect',
+    vpn_auto_connected_to: 'Connected via {node}',
+    vpn_auto_best_match: 'Best available node selected automatically',
+    vpn_auto_fallback: 'Fallback {n}',
+    vpn_auto_try_again: 'Connect again',
 
     // Settings page
     settings_title: 'Settings',
@@ -126,7 +137,8 @@ const translations = {
     modal_unsafe: 'Allow unsafe connection',
     modal_unsafe_desc: 'Allow unencrypted connections',
     modal_off: 'Off',
-    modal_warning: 'If you enable hidden server settings or add an encrypted subscription, you will no longer be able to edit this subscription.',
+    modal_warning:
+      'If you enable hidden server settings or add an encrypted subscription, you will no longer be able to edit this subscription.',
     modal_add: 'Add',
     modal_adding: 'Adding...',
     modal_servers_added: 'Servers added successfully',
@@ -239,34 +251,47 @@ const translations = {
     // Terms of Service
     terms_title: 'Terms of Service',
     terms_s1_title: '1. Acceptance of Terms',
-    terms_s1_text: 'By accessing and using APPI VPN, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the service.',
+    terms_s1_text:
+      'By accessing and using APPI VPN, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the service.',
     terms_s2_title: '2. Description of Service',
-    terms_s2_text: 'APPI VPN provides a virtual private network service that enables secure, private internet access. We offer multiple protocols including VLESS, Trojan, and Shadowsocks.',
+    terms_s2_text:
+      'APPI VPN provides a virtual private network service that enables secure, private internet access. We offer multiple protocols including VLESS, Trojan, and Shadowsocks.',
     terms_s3_title: '3. User Responsibilities',
-    terms_s3_text: 'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree not to use the service for any unlawful purpose.',
+    terms_s3_text:
+      'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree not to use the service for any unlawful purpose.',
     terms_s4_title: '4. Subscription & Payments',
-    terms_s4_text: 'Paid plans are billed in advance on a recurring basis. You may cancel your subscription at any time. Refunds are handled in accordance with applicable law.',
+    terms_s4_text:
+      'Paid plans are billed in advance on a recurring basis. You may cancel your subscription at any time. Refunds are handled in accordance with applicable law.',
     terms_s5_title: '5. Privacy',
-    terms_s5_text: 'We do not log, monitor, or store your browsing activity. Please refer to our Privacy Policy for detailed information about data handling.',
+    terms_s5_text:
+      'We do not log, monitor, or store your browsing activity. Please refer to our Privacy Policy for detailed information about data handling.',
     terms_s6_title: '6. Limitation of Liability',
-    terms_s6_text: 'APPI VPN is provided "as is" without warranties. We shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.',
+    terms_s6_text:
+      'APPI VPN is provided "as is" without warranties. We shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.',
     terms_s7_title: '7. Changes to Terms',
-    terms_s7_text: 'We reserve the right to modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.',
+    terms_s7_text:
+      'We reserve the right to modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.',
 
     // Privacy Policy
     privacy_title: 'Privacy Policy',
     privacy_s1_title: '1. No-Log Policy',
-    privacy_s1_text: 'APPI VPN operates a strict no-log policy. We do not collect, store, or monitor your browsing history, DNS queries, traffic data, or connection timestamps.',
+    privacy_s1_text:
+      'APPI VPN operates a strict no-log policy. We do not collect, store, or monitor your browsing history, DNS queries, traffic data, or connection timestamps.',
     privacy_s2_title: '2. Information We Collect',
-    privacy_s2_text: 'We only collect information necessary to provide the service: your email address (for account creation), payment information (processed by third-party providers), and basic account settings.',
+    privacy_s2_text:
+      'We only collect information necessary to provide the service: your email address (for account creation), payment information (processed by third-party providers), and basic account settings.',
     privacy_s3_title: '3. How We Use Your Information',
-    privacy_s3_text: 'Your email is used for account authentication and service communications. We never sell, share, or distribute your personal information to third parties.',
+    privacy_s3_text:
+      'Your email is used for account authentication and service communications. We never sell, share, or distribute your personal information to third parties.',
     privacy_s4_title: '4. Data Storage',
-    privacy_s4_text: 'All user data is stored on secure, encrypted servers. We use industry-standard encryption protocols to protect your information at rest and in transit.',
+    privacy_s4_text:
+      'All user data is stored on secure, encrypted servers. We use industry-standard encryption protocols to protect your information at rest and in transit.',
     privacy_s5_title: '5. Third-Party Services',
-    privacy_s5_text: 'We use third-party payment processors for subscription billing. These providers have their own privacy policies governing the use of your payment information.',
+    privacy_s5_text:
+      'We use third-party payment processors for subscription billing. These providers have their own privacy policies governing the use of your payment information.',
     privacy_s6_title: '6. Your Rights',
-    privacy_s6_text: 'You have the right to access, modify, or delete your personal data at any time. Contact support to exercise these rights.',
+    privacy_s6_text:
+      'You have the right to access, modify, or delete your personal data at any time. Contact support to exercise these rights.',
     privacy_s7_title: '7. Contact',
     privacy_s7_text: 'For privacy-related inquiries, contact us at support@appivpn.com.',
 
@@ -277,7 +302,8 @@ const translations = {
     nav_signin: 'Sign In',
     nav_get_vpn: 'Get VPN',
     hero_title: 'Online security starts with a VPN',
-    hero_desc: 'Access the web safely and privately. VLESS Reality, Trojan, Shadowsocks — bypass any block.',
+    hero_desc:
+      'Access the web safely and privately. VLESS Reality, Trojan, Shadowsocks — bypass any block.',
     hero_cta: 'Get APPI VPN',
     hero_guarantee: '30-day money-back guarantee',
     trust_users: 'Active users',
@@ -298,7 +324,7 @@ const translations = {
     step2_title: 'Create account',
     step2_desc: 'Enter your email and create a password. Takes 30 seconds.',
     step3_title: 'Download & connect',
-    step3_desc: 'Install the app, log in, and press Connect. That\'s it.',
+    step3_desc: "Install the app, log in, and press Connect. That's it.",
     download_title: 'Download APPI VPN',
     download_desc: 'Available on all major platforms.',
     download_cta: 'Download for',
@@ -309,9 +335,11 @@ const translations = {
     pricing_guarantee: '30-day money-back guarantee. No questions asked.',
     faq_title: 'Frequently Asked Questions',
     faq_q1: 'How does APPI VPN bypass blocks?',
-    faq_a1: 'We use VLESS Reality and Trojan protocols that disguise VPN traffic as regular HTTPS. DPI systems cannot distinguish it from normal browsing.',
+    faq_a1:
+      'We use VLESS Reality and Trojan protocols that disguise VPN traffic as regular HTTPS. DPI systems cannot distinguish it from normal browsing.',
     faq_q2: 'Do you keep logs?',
-    faq_a2: 'No. Strict zero-logs policy. We do not store your browsing activity, connection timestamps, or IP addresses.',
+    faq_a2:
+      'No. Strict zero-logs policy. We do not store your browsing activity, connection timestamps, or IP addresses.',
     faq_q3: 'How many devices can I use?',
     faq_a3: 'Basic: 3 devices. Pro: 10 devices. Premium: unlimited.',
     faq_q4: 'Is there a free trial?',
@@ -358,7 +386,8 @@ const translations = {
     vpn_all_protocols: 'Все протоколы',
     vpn_configs_count: '{n} конфигов',
     vpn_select_config: 'Выберите конфиг для просмотра',
-    vpn_select_hint: 'Скопируйте URI конфига и импортируйте в VPN-клиент (Karing, v2rayN, Streisand и др.)',
+    vpn_select_hint:
+      'Скопируйте URI конфига и импортируйте в VPN-клиент (Karing, v2rayN, Streisand и др.)',
     vpn_copy_config: 'Скопировать',
     vpn_copied: 'Скопировано!',
     vpn_show_config: 'Показать конфиг',
@@ -369,12 +398,22 @@ const translations = {
     vpn_step3: '3. Добавьте новый сервер и вставьте URI',
     vpn_step4: '4. Подключитесь и пользуйтесь интернетом свободно',
     vpn_black_explain: 'Чёрный список — обходит блокировки РКН. Используйте в России.',
-    vpn_white_explain: 'Белый список — только российский трафик через прокси. Для раздельной маршрутизации.',
+    vpn_white_explain:
+      'Белый список — только российский трафик через прокси. Для раздельной маршрутизации.',
     vpn_latency: 'Пинг',
     vpn_no_configs: 'Конфиги не найдены',
     vpn_loading: 'Загрузка конфигов...',
     vpn_download_banner: 'Скачайте приложение чтобы пользоваться VPN на устройстве',
     vpn_download_btn: 'Скачать',
+    vpn_auto_connect: 'Подключиться',
+    vpn_auto_finding: 'Подключаемся...',
+    vpn_auto_ready: 'Защищено',
+    vpn_auto_restoring: 'Восстанавливаем соединение...',
+    vpn_auto_failed: 'Не удалось подключиться',
+    vpn_auto_connected_to: 'Подключено через {node}',
+    vpn_auto_best_match: 'Лучший доступный узел выбран автоматически',
+    vpn_auto_fallback: 'Запасной {n}',
+    vpn_auto_try_again: 'Подключиться снова',
 
     // Settings page
     settings_title: 'Настройки',
@@ -453,7 +492,8 @@ const translations = {
     modal_unsafe: 'Разрешить небезопасное подключение',
     modal_unsafe_desc: 'Разрешить незашифрованные подключения',
     modal_off: 'Выкл.',
-    modal_warning: 'Если вы включите скрытые настройки сервера или добавите зашифрованную подписку, вы больше не сможете редактировать эту подписку.',
+    modal_warning:
+      'Если вы включите скрытые настройки сервера или добавите зашифрованную подписку, вы больше не сможете редактировать эту подписку.',
     modal_add: 'Добавить',
     modal_adding: 'Добавление...',
     modal_servers_added: 'Серверы успешно добавлены',
@@ -566,34 +606,47 @@ const translations = {
     // Terms of Service
     terms_title: 'Условия использования',
     terms_s1_title: '1. Принятие условий',
-    terms_s1_text: 'Используя APPI VPN, вы соглашаетесь с данными Условиями использования. Если вы не согласны с этими условиями, пожалуйста, не используйте сервис.',
+    terms_s1_text:
+      'Используя APPI VPN, вы соглашаетесь с данными Условиями использования. Если вы не согласны с этими условиями, пожалуйста, не используйте сервис.',
     terms_s2_title: '2. Описание сервиса',
-    terms_s2_text: 'APPI VPN предоставляет сервис виртуальной частной сети для безопасного и приватного доступа в интернет. Мы поддерживаем протоколы VLESS, Trojan и Shadowsocks.',
+    terms_s2_text:
+      'APPI VPN предоставляет сервис виртуальной частной сети для безопасного и приватного доступа в интернет. Мы поддерживаем протоколы VLESS, Trojan и Shadowsocks.',
     terms_s3_title: '3. Обязанности пользователя',
-    terms_s3_text: 'Вы несёте ответственность за конфиденциальность данных вашего аккаунта и за все действия, совершённые под вашей учётной записью. Вы соглашаетесь не использовать сервис в незаконных целях.',
+    terms_s3_text:
+      'Вы несёте ответственность за конфиденциальность данных вашего аккаунта и за все действия, совершённые под вашей учётной записью. Вы соглашаетесь не использовать сервис в незаконных целях.',
     terms_s4_title: '4. Подписка и оплата',
-    terms_s4_text: 'Платные планы оплачиваются авансом на регулярной основе. Вы можете отменить подписку в любое время. Возврат средств осуществляется в соответствии с действующим законодательством.',
+    terms_s4_text:
+      'Платные планы оплачиваются авансом на регулярной основе. Вы можете отменить подписку в любое время. Возврат средств осуществляется в соответствии с действующим законодательством.',
     terms_s5_title: '5. Конфиденциальность',
-    terms_s5_text: 'Мы не ведём логи и не храним данные о вашей активности в сети. Подробную информацию смотрите в нашей Политике конфиденциальности.',
+    terms_s5_text:
+      'Мы не ведём логи и не храним данные о вашей активности в сети. Подробную информацию смотрите в нашей Политике конфиденциальности.',
     terms_s6_title: '6. Ограничение ответственности',
-    terms_s6_text: 'APPI VPN предоставляется «как есть» без каких-либо гарантий. Мы не несём ответственности за косвенные, случайные или косвенные убытки, возникшие в результате использования сервиса.',
+    terms_s6_text:
+      'APPI VPN предоставляется «как есть» без каких-либо гарантий. Мы не несём ответственности за косвенные, случайные или косвенные убытки, возникшие в результате использования сервиса.',
     terms_s7_title: '7. Изменение условий',
-    terms_s7_text: 'Мы оставляем за собой право изменять эти условия в любое время. Продолжение использования сервиса после изменений означает принятие новых условий.',
+    terms_s7_text:
+      'Мы оставляем за собой право изменять эти условия в любое время. Продолжение использования сервиса после изменений означает принятие новых условий.',
 
     // Privacy Policy
     privacy_title: 'Политика конфиденциальности',
     privacy_s1_title: '1. Политика без логов',
-    privacy_s1_text: 'APPI VPN придерживается строгой политики отсутствия логов. Мы не собираем, не храним и не отслеживаем вашу историю просмотров, DNS-запросы, данные о трафике или временные метки подключений.',
+    privacy_s1_text:
+      'APPI VPN придерживается строгой политики отсутствия логов. Мы не собираем, не храним и не отслеживаем вашу историю просмотров, DNS-запросы, данные о трафике или временные метки подключений.',
     privacy_s2_title: '2. Какие данные мы собираем',
-    privacy_s2_text: 'Мы собираем только информацию, необходимую для предоставления сервиса: адрес электронной почты (для создания аккаунта), платёжную информацию (обрабатывается сторонними провайдерами) и базовые настройки аккаунта.',
+    privacy_s2_text:
+      'Мы собираем только информацию, необходимую для предоставления сервиса: адрес электронной почты (для создания аккаунта), платёжную информацию (обрабатывается сторонними провайдерами) и базовые настройки аккаунта.',
     privacy_s3_title: '3. Как мы используем ваши данные',
-    privacy_s3_text: 'Ваш адрес электронной почты используется для аутентификации аккаунта и уведомлений о сервисе. Мы никогда не продаём, не передаём и не распространяем вашу личную информацию третьим лицам.',
+    privacy_s3_text:
+      'Ваш адрес электронной почты используется для аутентификации аккаунта и уведомлений о сервисе. Мы никогда не продаём, не передаём и не распространяем вашу личную информацию третьим лицам.',
     privacy_s4_title: '4. Хранение данных',
-    privacy_s4_text: 'Все пользовательские данные хранятся на защищённых зашифрованных серверах. Мы используем шифрование стандартов отрасли для защиты вашей информации.',
+    privacy_s4_text:
+      'Все пользовательские данные хранятся на защищённых зашифрованных серверах. Мы используем шифрование стандартов отрасли для защиты вашей информации.',
     privacy_s5_title: '5. Сторонние сервисы',
-    privacy_s5_text: 'Мы используем сторонние платёжные системы для обработки подписок. Эти провайдеры имеют собственные политики конфиденциальности.',
+    privacy_s5_text:
+      'Мы используем сторонние платёжные системы для обработки подписок. Эти провайдеры имеют собственные политики конфиденциальности.',
     privacy_s6_title: '6. Ваши права',
-    privacy_s6_text: 'Вы имеете право получить доступ, изменить или удалить свои персональные данные в любое время. Свяжитесь с поддержкой для реализации этих прав.',
+    privacy_s6_text:
+      'Вы имеете право получить доступ, изменить или удалить свои персональные данные в любое время. Свяжитесь с поддержкой для реализации этих прав.',
     privacy_s7_title: '7. Контакты',
     privacy_s7_text: 'По вопросам конфиденциальности свяжитесь с нами: support@appivpn.com.',
 
@@ -604,7 +657,8 @@ const translations = {
     nav_signin: 'Войти',
     nav_get_vpn: 'Получить VPN',
     hero_title: 'Безопасность в интернете начинается с VPN',
-    hero_desc: 'Безопасный и приватный доступ к интернету. VLESS Reality, Trojan, Shadowsocks — обходите любые блокировки.',
+    hero_desc:
+      'Безопасный и приватный доступ к интернету. VLESS Reality, Trojan, Shadowsocks — обходите любые блокировки.',
     hero_cta: 'Получить APPI VPN',
     hero_guarantee: '30-дневная гарантия возврата денег',
     trust_users: 'Пользователей',
@@ -618,7 +672,8 @@ const translations = {
     f2_title: 'Непробиваемая защита',
     f2_desc: 'Военное шифрование. Политика нулевого логирования. Ваши данные остаются вашими.',
     f3_title: 'Обход любых блокировок',
-    f3_desc: 'VLESS Reality и Trojan маскируют трафик под обычный HTTPS. Файрволы не могут обнаружить или заблокировать.',
+    f3_desc:
+      'VLESS Reality и Trojan маскируют трафик под обычный HTTPS. Файрволы не могут обнаружить или заблокировать.',
     steps_title: 'Начните за 3 шага',
     step1_title: 'Выберите тариф',
     step1_desc: 'Подходящий план для ваших нужд. Все тарифы включают 30-дневную гарантию.',
@@ -636,9 +691,11 @@ const translations = {
     pricing_guarantee: '30-дневная гарантия возврата. Без вопросов.',
     faq_title: 'Часто задаваемые вопросы',
     faq_q1: 'Как APPI VPN обходит блокировки?',
-    faq_a1: 'Мы используем протоколы VLESS Reality и Trojan, которые маскируют VPN-трафик под обычный HTTPS. DPI системы не могут отличить его от обычного серфинга.',
+    faq_a1:
+      'Мы используем протоколы VLESS Reality и Trojan, которые маскируют VPN-трафик под обычный HTTPS. DPI системы не могут отличить его от обычного серфинга.',
     faq_q2: 'Вы ведёте логи?',
-    faq_a2: 'Нет. Строгая политика нулевого логирования. Мы не храним активность, время подключения или IP-адреса.',
+    faq_a2:
+      'Нет. Строгая политика нулевого логирования. Мы не храним активность, время подключения или IP-адреса.',
     faq_q3: 'Сколько устройств я могу использовать?',
     faq_a3: 'Basic: 3 устройства. Pro: 10 устройств. Premium: безлимит.',
     faq_q4: 'Есть ли бесплатная пробная версия?',
@@ -683,14 +740,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('appi-lang', l);
   }, []);
 
-  const t = useCallback((key: TranslationKey): string => {
-    return translations[lang]?.[key] || translations.en[key] || key;
-  }, [lang]);
+  const t = useCallback(
+    (key: TranslationKey): string => {
+      return translations[lang]?.[key] || translations.en[key] || key;
+    },
+    [lang],
+  );
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
-      {children}
-    </LanguageContext.Provider>
+    <LanguageContext.Provider value={{ lang, setLang, t }}>{children}</LanguageContext.Provider>
   );
 }
 

@@ -36,11 +36,9 @@ export class TokenService {
     return argon2.verify(hash, password);
   }
 
-  async generateTokenPair(user: {
-    id: string;
-    email: string;
-    role: string;
-  }): Promise<TokenPair> {
+  async generateTokenPair(user: { id: string; email: string; role: string }): Promise<TokenPair> {
+    const expiresIn = this.configService.get<string>('JWT_EXPIRATION', '15m');
+    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d');
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         {
@@ -51,7 +49,7 @@ export class TokenService {
         },
         {
           secret: this.configService.get<string>('JWT_SECRET'),
-          expiresIn: this.configService.get<string>('JWT_EXPIRATION', '15m'),
+          expiresIn,
         },
       ),
       this.jwtService.signAsync(
@@ -63,7 +61,7 @@ export class TokenService {
         },
         {
           secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-          expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
+          expiresIn: refreshExpiresIn,
         },
       ),
     ]);

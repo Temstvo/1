@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
@@ -8,14 +9,22 @@ export class MigrationService implements OnModuleInit {
   async onModuleInit() {
     const databaseUrl = process.env.DATABASE_URL || '';
     const params: string[] = [];
-    if (!databaseUrl.includes('sslmode=')) params.push('sslmode=require');
     if (!databaseUrl.includes('connection_limit=')) params.push('connection_limit=2');
     if (!databaseUrl.includes('pool_timeout=')) params.push('pool_timeout=10');
     if (!databaseUrl.includes('pgbouncer=')) params.push('pgbouncer=true');
     const sep = databaseUrl.includes('?') ? '&' : '?';
     const url = params.length > 0 ? `${databaseUrl}${sep}${params.join('&')}` : databaseUrl;
 
-    const client = new PrismaClient({ datasources: { db: { url } }, log: ['error'] });
+    const client = new PrismaClient({
+      adapter: new PrismaPg({
+        connectionString: url,
+        ssl: { rejectUnauthorized: false },
+        max: 1,
+        idleTimeoutMillis: 1,
+        connectionTimeoutMillis: 15000,
+      }),
+      log: ['error'],
+    });
     try {
       await this.runMigrations(client);
     } catch (error: any) {

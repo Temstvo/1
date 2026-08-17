@@ -10,7 +10,7 @@ const c = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL 
       FROM pg_stat_activity
       WHERE usename = 'postgres'
         AND pid <> pg_backend_pid()
-        AND (state = 'idle' OR wait_event = 'ClientRead')
+        AND state IS DISTINCT FROM 'active'
     `);
     console.log('terminated:', killed.length);
     await new Promise((r) => setTimeout(r, 1500));

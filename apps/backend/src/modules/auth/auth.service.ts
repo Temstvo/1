@@ -50,9 +50,6 @@ export class AuthService {
           },
         },
       },
-      include: {
-        profile: true,
-      },
     });
 
     if (dto.referralCode) {
@@ -70,26 +67,30 @@ export class AuthService {
       }
     }
 
-    await this.prisma.securityEvent.create({
-      data: {
-        userId: user.id,
-        type: 'USER_CREATED',
-        ip,
-        userAgent,
-      },
-    });
+    void Promise.resolve(
+      this.prisma.securityEvent.create({
+        data: {
+          userId: user.id,
+          type: 'USER_CREATED',
+          ip,
+          userAgent,
+        },
+      }),
+    ).catch((e) => this.logger.warn(`securityEvent failed: ${e?.message?.split('\n')[0]}`));
 
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: user.id,
-        action: 'REGISTER',
-        resource: 'USER',
-        resourceId: user.id,
-        ip,
-        userAgent,
-        result: 'success',
-      },
-    });
+    void Promise.resolve(
+      this.prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: 'REGISTER',
+          resource: 'USER',
+          resourceId: user.id,
+          ip,
+          userAgent,
+          result: 'success',
+        },
+      }),
+    ).catch((e) => this.logger.warn(`auditLog failed: ${e?.message?.split('\n')[0]}`));
 
     const tokens = await this.tokenService.generateTokenPair(user);
 
@@ -452,7 +453,7 @@ export class AuthService {
     provider: string;
     providerId: string;
   }) {
-    let user = await this.prisma.user.findUnique({
+    let user: User | null = await this.prisma.user.findUnique({
       where: { email: profile.email.toLowerCase() },
       include: { profile: true },
     });
@@ -481,7 +482,6 @@ export class AuthService {
           },
         },
       },
-      include: { profile: true },
     });
 
     const tokens = await this.tokenService.generateTokenPair(user);

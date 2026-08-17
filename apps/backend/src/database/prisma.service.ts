@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -8,14 +9,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor() {
     const databaseUrl = process.env.DATABASE_URL || '';
     const params: string[] = [];
-    if (!databaseUrl.includes('sslmode=')) params.push('sslmode=require');
     if (!databaseUrl.includes('connection_limit=')) params.push('connection_limit=5');
     if (!databaseUrl.includes('pool_timeout=')) params.push('pool_timeout=10');
     if (!databaseUrl.includes('pgbouncer=')) params.push('pgbouncer=true');
     const sep = databaseUrl.includes('?') ? '&' : '?';
     const url = params.length > 0 ? `${databaseUrl}${sep}${params.join('&')}` : databaseUrl;
+    const adapter = new PrismaPg({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+      max: 1,
+      idleTimeoutMillis: 1,
+      connectionTimeoutMillis: 15000,
+    });
     super({
-      datasourceUrl: url,
+      adapter,
       log: ['error', 'warn'],
     });
     this.logger.log(`Connecting to database: ${url.replace(/:[^:@]+@/, ':***@')}`);
@@ -24,7 +31,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     try {
       await Promise.race([
-        this.$connect(),
+        this.$queryRawUnsafe('SELECT 1'),
         new Promise((_, reject) => setTimeout(() => reject(new Error('connect timeout')), 10000)),
       ]);
       this.logger.log('Database connected');

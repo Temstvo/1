@@ -1,7 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { VpnService } from './vpn.service';
+import { HealthCheckService } from './health-check.service';
 import { Protocol } from '@prisma/client';
+import * as net from 'net';
 
 export interface NodeCandidate {
   source: 'FREE' | 'OWN';
@@ -29,6 +31,7 @@ export class NodeRegistryService {
   constructor(
     private prisma: PrismaService,
     private vpnService: VpnService,
+    private healthCheckService: HealthCheckService,
   ) {}
 
   async getCandidates(filters?: { protocol?: string; country?: string }): Promise<NodeCandidate[]> {
@@ -44,6 +47,11 @@ export class NodeRegistryService {
           latency: true,
           lastChecked: true,
         },
+        orderBy: [
+          { latency: { sort: 'asc', nulls: 'last' } },
+          { lastChecked: { sort: 'desc', nulls: 'last' } },
+        ],
+        take: 60,
       }),
       this.prisma.server.findMany({
         where: { status: 'ONLINE' },
@@ -141,15 +149,34 @@ export class NodeRegistryService {
       }
     }
 
-    const best = pool[0];
-    const fallbacks = pool.slice(1, 1 + fallbackCount).map((c) => ({
-      id: c.id,
-      source: c.source,
-      protocol: c.protocol,
-      country: c.country,
-      endpoint: c.endpoint,
-      score: c.score,
-    }));
+    // Probe candidates on the fly so dead configs are replaced with live ones
+    const probeLimit = Math.min(pool.length, 12);
+    const probed = await Promise.all(
+      pool.slice(0, probeLimit).map(async (c) => {
+        const [host, portStr] = c.endpoint.split(':');
+        const port = parseInt(portStr || '443', 10);
+        const alive = await this.tcpProbe(host, port, 3500);
+        if (!alive && c.source === 'FREE') {
+          this.healthCheckService.reportFailure(c.id).catch(() => {});
+        }
+        return { candidate: c, alive };
+      }),
+    );
+
+    const alive = probed.filter((p) => p.alive).map((p) => p.candidate);
+    const best = alive.length > 0 ? alive[0] : pool[0];
+    const fallbackSource = alive.length > 1 ? alive : pool;
+    const fallbacks = fallbackSource
+      .filter((c) => c.id !== best.id)
+      .slice(0, fallbackCount)
+      .map((c) => ({
+        id: c.id,
+        source: c.source,
+        protocol: c.protocol,
+        country: c.country,
+        endpoint: c.endpoint,
+        score: c.score,
+      }));
 
     if (best.source === 'OWN') {
       const protocol = best.protocol.toUpperCase() as Protocol;
@@ -201,6 +228,27 @@ export class NodeRegistryService {
       byProtocol,
       best: candidates.slice(0, 5),
     };
+  }
+
+  private tcpProbe(host: string, port: number, timeoutMs: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const socket = new net.Socket();
+      let settled = false;
+
+      const done = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        resolve(result);
+      };
+
+      socket.setTimeout(timeoutMs);
+      socket.on('connect', () => done(true));
+      socket.on('timeout', () => done(false));
+      socket.on('error', () => done(false));
+
+      socket.connect(port, host);
+    });
   }
 
   private scoreFree(latency: number | null, lastChecked: Date | null): number {

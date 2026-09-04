@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { RobustPg } from './robust-pg.adapter';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -14,12 +14,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (!databaseUrl.includes('pgbouncer=')) params.push('pgbouncer=true');
     const sep = databaseUrl.includes('?') ? '&' : '?';
     const url = params.length > 0 ? `${databaseUrl}${sep}${params.join('&')}` : databaseUrl;
-    const adapter = new PrismaPg({
+    const adapter = new RobustPg({
       connectionString: url,
       ssl: { rejectUnauthorized: false },
       max: 1,
       idleTimeoutMillis: 1,
       connectionTimeoutMillis: 15000,
+      query_timeout: 20000,
+      keepAlive: true,
     });
     super({
       adapter,

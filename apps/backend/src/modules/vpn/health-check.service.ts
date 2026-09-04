@@ -20,6 +20,8 @@ export class HealthCheckService {
   private lastCheckResult: { total: number; alive: number; dead: number; timestamp: Date } | null =
     null;
 
+  private static readonly FAIL_THRESHOLD = 2;
+
   constructor(
     private prisma: PrismaService,
     private syncService: VpnConfigSyncService,
@@ -93,12 +95,7 @@ export class HealthCheckService {
     // Mark dead configs
     for (const result of results) {
       if (!result.reachable) {
-        const fails = (this.consecutiveFailures.get(result.configId) || 0) + 1;
-        this.consecutiveFailures.set(result.configId, fails);
-
-        if (fails >= 3) {
-          await this.markConfigDead(result.configId, fails);
-        }
+        await this.reportFailure(result.configId);
       } else {
         this.consecutiveFailures.delete(result.configId);
 
@@ -199,6 +196,26 @@ export class HealthCheckService {
     this.deadByHealthCheck.add(configId);
     this.logger.warn(`Marked config ${configId} as dead after ${failCount} consecutive failures`);
     this.consecutiveFailures.delete(configId);
+  }
+
+  /**
+   * Reports a failed liveness probe from outside (e.g. on-the-fly check in
+   * assignBest). Deactivates the config after FAIL_THRESHOLD consecutive
+   * failures so dead configs are replaced with live ones quickly.
+   */
+  async reportFailure(configId: string) {
+    const fails = (this.consecutiveFailures.get(configId) || 0) + 1;
+    if (fails < HealthCheckService.FAIL_THRESHOLD) {
+      this.consecutiveFailures.set(configId, fails);
+      return;
+    }
+
+    try {
+      await this.markConfigDead(configId, fails);
+    } catch (error: any) {
+      this.logger.debug(`Failed to deactivate ${configId}: ${error?.message}`);
+      this.consecutiveFailures.delete(configId);
+    }
   }
 
   async getHealthStatus() {

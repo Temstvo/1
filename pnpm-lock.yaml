@@ -135,6 +135,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@prisma/driver-adapter-utils':
+        specifier: 6.19.3
+        version: 6.19.3
       '@types/passport-github2':
         specifier: ^1.2.9
         version: 1.2.9
@@ -177,6 +180,9 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
+      postgres-array:
+        specifier: 3.0.2
+        version: 3.0.2
       prisma:
         specifier: ^6.19.3
         version: 6.19.3(typescript@5.9.3)
@@ -4236,6 +4242,10 @@ packages:
   postgres-array@2.0.0:
     resolution: {integrity: sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==}
     engines: {node: '>=4'}
+
+  postgres-array@3.0.2:
+    resolution: {integrity: sha512-6faShkdFugNQCLwucjPcY5ARoW1SlbnrZjmGl0IrrqewpvxvhSLHimCVzqeuULCbG0fQv7Dtk1yDbG3xv7Veog==}
+    engines: {node: '>=12'}
 
   postgres-array@3.0.4:
     resolution: {integrity: sha512-nAUSGfSDGOaOAEGwqsRY27GPOea7CNipJPOA7lPbdEpx5Kg3qzdP0AaWC5MlhTWV9s4hFX39nomVZ+C4tnGOJQ==}
@@ -9264,6 +9274,8 @@ snapshots:
       source-map-js: 1.2.1
 
   postgres-array@2.0.0: {}
+
+  postgres-array@3.0.2: {}
 
   postgres-array@3.0.4: {}
 

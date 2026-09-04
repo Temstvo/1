@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NodeRegistryService, NodeCandidate } from '../node-registry.service';
 import { PrismaService } from '../../../database/prisma.service';
 import { VpnService } from '../vpn.service';
+import { HealthCheckService } from '../health-check.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('NodeRegistryService', () => {
@@ -12,6 +13,7 @@ describe('NodeRegistryService', () => {
     user: { findUnique: jest.Mock };
   };
   let vpnService: { generateConfig: jest.Mock };
+  let healthCheckService: { reportFailure: jest.Mock };
 
   const freeConfig = {
     id: 'free-1',
@@ -41,16 +43,19 @@ describe('NodeRegistryService', () => {
       user: { findUnique: jest.fn() },
     };
     vpnService = { generateConfig: jest.fn() };
+    healthCheckService = { reportFailure: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NodeRegistryService,
         { provide: PrismaService, useValue: prisma },
         { provide: VpnService, useValue: vpnService },
+        { provide: HealthCheckService, useValue: healthCheckService },
       ],
     }).compile();
 
     service = module.get<NodeRegistryService>(NodeRegistryService);
+    (service as any).tcpProbe = jest.fn().mockResolvedValue(true);
   });
 
   it('should be defined', () => {

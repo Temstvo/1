@@ -23,7 +23,13 @@ export class VpnConfigScheduler implements OnModuleInit {
           this.logger.log(`Startup sync skipped: ${count} active configs already present`);
           return;
         }
-        this.logger.log('No active configs found, running initial sync...');
+        this.logger.log('No active configs found, running local sync first...');
+        const local = await this.syncService.syncFromLocal();
+        if ((local.parsed ?? 0) > 0) {
+          this.logger.log(`Startup local sync completed: ${JSON.stringify(local)}`);
+          return;
+        }
+        this.logger.log('Local sync empty, falling back to GitHub sync...');
         const result = await this.syncService.syncAll();
         this.logger.log(`Startup sync completed: ${JSON.stringify(result)}`);
       } catch (error: any) {
@@ -34,9 +40,9 @@ export class VpnConfigScheduler implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleSync() {
-    this.logger.log('Auto-syncing VPN configs...');
+    this.logger.log('Auto-syncing VPN configs from local serv-configs...');
     try {
-      const result = await this.syncService.syncAll();
+      const result = await this.syncService.syncFromLocal();
       this.logger.log(`Auto-sync completed: ${JSON.stringify(result)}`);
     } catch (error: any) {
       this.logger.error(`Auto-sync failed: ${error.message}`);

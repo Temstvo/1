@@ -416,7 +416,7 @@ export class VpnConfigSyncService {
    * Готовая выдача для Happ: проверенные (с latency) серверы первыми,
    * лимит количества, имена в стиле «⚡ Страна» / «⚡ Страна 2».
    */
-  async getSubscriptionLines(limit = 150): Promise<string[]> {
+  async getSubscriptionLines(limit = 250): Promise<string[]> {
     const take = Math.min(Math.max(limit, 20), 500);
     const configs = await this.prisma.vpnConfig.findMany({
       where: { isActive: true },
@@ -558,6 +558,8 @@ export class VpnConfigSyncService {
         '\uD83C\uDDFA\uD83C\uDDF8': 'US',
         '\uD83C\uDDF3\uD83C\uDDF4': 'NO',
         '\uD83C\uDDEB\uD83C\uDDF7': 'FR',
+        '\uD83C\uDDE9\uD83C\uDDEA': 'DE',
+        '\uD83C\uDDF5\uD83C\uDDF1': 'PL',
       };
       for (const [flag, code] of Object.entries(map))
         if (remark.includes(flag)) {

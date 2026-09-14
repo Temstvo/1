@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="50%" style="stop-color:#0d1025"/>
+      <stop offset="100%" style="stop-color:#0a0a1a"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00b4ff"/>
+      <stop offset="50%" style="stop-color:#00d4ff"/>
+      <stop offset="100%" style="stop-color:#0090ff"/>
+    </linearGradient>
+    <linearGradient id="subGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00c8ff"/>
+      <stop offset="100%" style="stop-color:#0080ff"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0060ff;stop-opacity:0"/>
+      <stop offset="50%" style="stop-color:#00aaff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0060ff;stop-opacity:0"/>
+    </linearGradient>
+    <radialGradient id="spot1" cx="15%" cy="20%">
+      <stop offset="0%" style="stop-color:#0066ff;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#0066ff;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="spot2" cx="85%" cy="80%">
+      <stop offset="0%" style="stop-color:#0088ff;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#0088ff;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#spot1)"/>
+  <rect width="1200" height="630" fill="url(#spot2)"/>
+
+  <!-- Grid lines -->
+  <g opacity="0.06" stroke="#00aaff" stroke-width="0.5">
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="500" x2="1200" y2="500"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- Decorative lines -->
+  <line x1="100" y1="520" x2="500" y2="520" stroke="url(#lineGrad)" stroke-width="1" opacity="0.4"/>
+  <line x1="700" y1="520" x2="1100" y2="520" stroke="url(#lineGrad)" stroke-width="1" opacity="0.4"/>
+  <line x1="200" y1="120" x2="400" y2="120" stroke="url(#lineGrad)" stroke-width="0.5" opacity="0.3"/>
+  <line x1="800" y1="120" x2="1000" y2="120" stroke="url(#lineGrad)" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- Corner accents -->
+  <path d="M50,50 L50,100" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M50,50 L100,50" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M1150,50 L1150,100" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M1150,50 L1100,50" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M50,580 L50,530" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M50,580 L100,580" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M1150,580 L1150,530" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+  <path d="M1150,580 L1100,580" stroke="#00aaff" stroke-width="1" opacity="0.3"/>
+
+  <!-- Floating particles -->
+  <circle cx="150" cy="150" r="2" fill="#00aaff" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="350" cy="80" r="1.5" fill="#00ccff" opacity="0.4"/>
+  <circle cx="900" cy="120" r="2" fill="#0088ff" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="1050" cy="200" r="1.5" fill="#00aaff" opacity="0.3"/>
+  <circle cx="200" cy="450" r="1.5" fill="#00ccff" opacity="0.4"/>
+  <circle cx="1000" cy="480" r="2" fill="#00aaff" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="750" cy="550" r="1" fill="#00ccff" opacity="0.3"/>
+  <circle cx="450" cy="560" r="1.5" fill="#0088ff" opacity="0.4"/>
+
+  <!-- Logo icon -->
+  <g transform="translate(600,95)" filter="url(#strongGlow)">
+    <path d="M0,-35 L25,15 L15,15 L10,5 L-10,5 L-15,15 L-25,15 Z" fill="none" stroke="#00aaff" stroke-width="2"/>
+    <path d="M-5,0 L0,-10 L5,0" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+  </g>
+
+  <!-- APPI VPN text -->
+  <text x="600" y="115" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#8899bb" letter-spacing="8">APPI VPN</text>
+
+  <!-- Main title -->
+  <text x="600" y="230" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="90" font-weight="900" fill="url(#textGrad)" filter="url(#strongGlow)" letter-spacing="6">APPI VPN</text>
+
+  <!-- Subtitle line 1 -->
+  <text x="600" y="290" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="400" fill="#aabbdd" letter-spacing="4">ТВОЙ НАДЁЖНЫЙ VPN</text>
+
+  <!-- Subtitle line 2 -->
+  <text x="600" y="330" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="32" font-weight="700" fill="url(#subGrad)" filter="url(#glow)" letter-spacing="6">БЕЗ ОГРАНИЧЕНИЙ</text>
+
+  <!-- Divider -->
+  <line x1="400" y1="370" x2="800" y2="370" stroke="url(#lineGrad)" stroke-width="1" opacity="0.5"/>
+
+  <!-- Feature icons row -->
+  <g transform="translate(0,410)" font-family="Arial, sans-serif" text-anchor="middle">
+    <!-- Speed -->
+    <g transform="translate(190,0)">
+      <text font-size="32" fill="#00aaff" filter="url(#glow)">&#9889;</text>
+      <text y="40" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ВЫСОКАЯ</text>
+      <text y="55" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">СКОРОСТЬ</text>
+    </g>
+    <!-- Access -->
+    <g transform="translate(390,0)">
+      <text font-size="32" fill="#00aaff" filter="url(#glow)">&#127760;</text>
+      <text y="40" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ДОСТУП К</text>
+      <text y="55" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ЛЮБЫМ САЙТАМ</text>
+    </g>
+    <!-- Security -->
+    <g transform="translate(600,0)">
+      <text font-size="32" fill="#00aaff" filter="url(#glow)">&#128274;</text>
+      <text y="40" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">НАДЁЖНАЯ</text>
+      <text y="55" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">БЕЗОПАСНОСТЬ</text>
+    </g>
+    <!-- Protection -->
+    <g transform="translate(810,0)">
+      <text font-size="32" fill="#00aaff" filter="url(#glow)">&#128737;</text>
+      <text y="40" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ЗАЩИТА</text>
+      <text y="55" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ДАННЫХ</text>
+    </g>
+    <!-- Devices -->
+    <g transform="translate(1010,0)">
+      <text font-size="32" fill="#00aaff" filter="url(#glow)">&#128187;</text>
+      <text y="40" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">ДЛЯ ВСЕХ</text>
+      <text y="55" font-size="11" fill="#7799bb" font-weight="600" letter-spacing="1">УСТРОЙСТВ</text>
+    </g>
+  </g>
+
+  <!-- Bottom line -->
+  <line x1="100" y1="520" x2="1100" y2="520" stroke="url(#lineGrad)" stroke-width="0.5" opacity="0.3"/>
+</svg>

@@ -15,6 +15,7 @@ import { InvoicesModule } from './modules/invoices/invoices.module';
 import { VpnModule } from './modules/vpn/vpn.module';
 import { VpnConfigsModule } from './modules/vpn/vpn-configs.module';
 import { ServersModule } from './modules/servers/servers.module';
+import { SubModule } from './modules/sub/sub.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
@@ -26,6 +27,7 @@ import { EmailModule } from './modules/email/email.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: require('path').resolve(__dirname, '..', '.env'),
     }),
     ThrottlerModule.forRoot([
       {
@@ -47,6 +49,7 @@ import { EmailModule } from './modules/email/email.module';
     VpnModule,
     VpnConfigsModule,
     ServersModule,
+    SubModule,
     TrafficModule,
     NotificationsModule,
     ReferralsModule,

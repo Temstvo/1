@@ -1,33 +1,21 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Telegraf, Context } from 'telegraf';
 import { BotService } from './bot.service';
-import { Context } from 'telegraf';
-import { mainMenuKeyboard, authKeyboard, backButton } from './keyboards';
-
-interface UserData {
-  email: string;
-  token: string;
-  refreshToken: string;
-}
-
-interface RateLimit {
-  attempts: number;
-  resetAt: number;
-}
+import { mainMenuKeyboard, backButton } from './keyboards';
 
 @Injectable()
 export class BotUpdate implements OnModuleInit {
   private readonly logger = new Logger(BotUpdate.name);
-  private userStates = new Map<number, { action: string; data?: any }>();
-  private linkedUsers = new Map<number, UserData>();
-  private rateLimits = new Map<number, RateLimit>();
   private backendUrl: string;
+  private subToken: string;
 
   constructor(
     private readonly botService: BotService,
     private readonly configService: ConfigService,
   ) {
-    this.backendUrl = this.configService.get<string>('BACKEND_URL', 'https://appibackend-production.up.railway.app');
+    this.backendUrl = this.configService.get<string>('BACKEND_URL', 'http://localhost:3000');
+    this.subToken = this.configService.get<string>('SUBSCRIPTION_TOKEN', 'K7vQ-9pL2wX4mZ8n');
   }
 
   onModuleInit() {
@@ -38,653 +26,383 @@ export class BotUpdate implements OnModuleInit {
     this.registerHandlers();
   }
 
-  private async api(path: string, options: { method?: string; token?: string; body?: any } = {}) {
-    const { method = 'GET', token, body } = options;
+  private async api(path: string, options: { method?: string; body?: any } = {}) {
+    const { method = 'GET', body } = options;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const res = await fetch(`${this.backendUrl}/api${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-
     const data = await res.json().catch(() => null);
-
     if (!res.ok) {
       const msg = data?.message || data?.error || `Error ${res.status}`;
       throw new Error(Array.isArray(msg) ? msg[0] : msg);
     }
-
     return data;
   }
 
-  private async apiWithRefresh(userId: number, path: string, options: { method?: string; body?: any } = {}) {
-    const user = this.linkedUsers.get(userId);
-    if (!user) throw new Error('Not logged in');
-
+  private async editOrReply(ctx: Context, text: string, extra?: any) {
     try {
-      return await this.api(path, { ...options, token: user.token });
-    } catch (e: any) {
-      if (e.message !== 'Unauthorized' && e.message !== 'User not found') throw e;
-
+      await ctx.editMessageText(text, extra);
+    } catch {
       try {
-        const refreshed = await this.api('/auth/refresh', {
-          method: 'POST',
-          body: { refreshToken: user.refreshToken },
-        });
-
-        user.token = refreshed.accessToken;
-        user.refreshToken = refreshed.refreshToken;
-        this.linkedUsers.set(userId, user);
-
-        return await this.api(path, { ...options, token: user.token });
-      } catch {
-        this.linkedUsers.delete(userId);
-        throw new Error('Session expired. Send /start to log in again.');
-      }
+        await ctx.reply(text, extra);
+      } catch {}
     }
-  }
-
-  private checkRateLimit(userId: number): boolean {
-    const now = Date.now();
-    const limit = this.rateLimits.get(userId);
-
-    if (!limit || now > limit.resetAt) {
-      this.rateLimits.set(userId, { attempts: 1, resetAt: now + 60_000 });
-      return true;
-    }
-
-    if (limit.attempts >= 5) return false;
-
-    limit.attempts++;
-    return true;
   }
 
   private registerHandlers() {
     const bot = this.botService.getBot();
-
     bot.start((ctx) => this.handleStart(ctx));
     bot.help((ctx) => this.handleHelp(ctx));
-
-    bot.action('auth:login', (ctx) => this.handleLoginStart(ctx));
-    bot.action('auth:register', (ctx) => this.handleRegisterStart(ctx));
-
     bot.action('menu:main', (ctx) => this.handleMainMenu(ctx));
+    bot.action('menu:subscription', (ctx) => this.handleGetSubscription(ctx));
+    bot.action('menu:mysubscription', (ctx) => this.handleMySubscription(ctx));
+    bot.action('menu:profile', (ctx) => this.handleProfile(ctx));
+    bot.action('menu:instructions', (ctx) => this.handleInstructions(ctx));
     bot.action('menu:status', (ctx) => this.handleStatus(ctx));
-    bot.action('menu:subscription', (ctx) => this.handleSubscription(ctx));
-    bot.action('menu:servers', (ctx) => this.handleServers(ctx));
-    bot.action('menu:vpnconfigs', (ctx) => this.handleVpnConfigs(ctx));
-    bot.action('menu:traffic', (ctx) => this.handleTraffic(ctx));
-    bot.action('menu:devices', (ctx) => this.handleDevices(ctx));
-    bot.action('menu:logout', (ctx) => this.handleLogout(ctx));
-
-    bot.action(/^server:(.+)$/, (ctx) => this.handleServerSelect(ctx));
-    bot.action(/^vpnconfig:(.+)$/, (ctx) => this.handleVpnConfigSelect(ctx));
-    bot.action(/^vpnfilter:(.+)$/, (ctx) => this.handleVpnFilter(ctx));
-
-    bot.on('text', (ctx) => this.handleText(ctx));
+    bot.action('menu:help', (ctx) => this.handleHelpAction(ctx));
+    bot.action('menu:info', (ctx) => this.handleInfo(ctx));
+    bot.action(/^getconfig:(.+)$/, (ctx) => this.handleGetConfig(ctx));
+    bot.action(/^configlist:(.+)$/, (ctx) => this.handleConfigList(ctx));
+    bot.action('menu:mtproto', (ctx) => this.handleMtproto(ctx));
   }
 
   private async handleStart(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
+    const infoText =
+      'Сотни рабочих серверов. Без оплат и лимитов — список обновляется сам.\n\n' +
+      'Как подключиться\n\n' +
+      '1️⃣ Установи Happ\n' +
+      'happ.su — iPhone, Android, Windows, Mac\n' +
+      '(подробнее — «📱 Инструкция / приложения»)\n\n' +
+      '2️⃣ Нажми «🚀 Импорт в Happ» внизу\n' +
+      'Подписка добавится в приложение.\n\n' +
+      '3️⃣ В Happ нажми кнопку подключения ✅\n\n' +
+      '💡 Не работает один сервер — выбери другой в списке.';
+    await ctx.replyWithPhoto('https://i.imgur.com/xXdMEEG.png', {
+      caption: infoText,
+      reply_markup: { inline_keyboard: mainMenuKeyboard },
+    });
+  }
 
-    if (this.linkedUsers.has(userId)) {
-      await ctx.reply('🔐 *APPI VPN*\n\nYou are already logged in.', {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: mainMenuKeyboard },
+  private async handleMainMenu(ctx: Context) {
+    await ctx.answerCbQuery();
+    await this.editOrReply(ctx, '🎁 Бесплатный VPN APPI\n\nВыберите действие:', {
+      reply_markup: { inline_keyboard: mainMenuKeyboard },
+    });
+  }
+
+  private async handleGetSubscription(ctx: Context) {
+    await ctx.answerCbQuery();
+    try {
+      const tgId = String((ctx.from as any)?.id || (ctx.chat as any)?.id || '0');
+      const data: any = await this.api('/sub-links', {
+        method: 'POST',
+        body: { telegramId: tgId },
       });
-      return;
+      const subUrl: string = data.url;
+      const label: string = data.label || tgId;
+      const exp = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString('ru-RU') : '';
+      await this.editOrReply(
+        ctx,
+        `🌐 Импорт в Happ\n\n` +
+          `Твоя ссылка для Happ:\n\n` +
+          `${subUrl}\n\n` +
+          `ID: ${label} • Истекает: ${exp}\n\n` +
+          `Как добавить:\n` +
+          `1. Скопируй ссылку\n` +
+          `2. Открой Happ → «+» → «Из буфера»\n` +
+          `3. Нажми подключение ✅`,
+        { reply_markup: { inline_keyboard: [[backButton]] } },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
     }
+  }
 
-    await ctx.reply(
-      '🔐 *Welcome to APPI VPN!*\n\nCreate an account or sign in to get started.',
-      {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: authKeyboard },
-      },
+  private async handleConfigList(ctx: any) {
+    const protocol = ctx.match?.[1];
+    await ctx.answerCbQuery();
+    try {
+      const allConfigs = await this.api('/vpn-configs/subscription');
+      const configs = Array.isArray(allConfigs) ? allConfigs : [];
+      const filtered =
+        protocol === 'all'
+          ? configs.slice(0, 30)
+          : configs.filter((c: any) => c.protocol === protocol).slice(0, 30);
+      if (filtered.length === 0) {
+        await this.editOrReply(ctx, 'Нет конфигов для этого протокола.', {
+          reply_markup: { inline_keyboard: [[backButton]] },
+        });
+        return;
+      }
+      const flag = (code: string) => {
+        if (!code || code.length !== 2) return '🌐';
+        return String.fromCodePoint(
+          ...[...code.toUpperCase()].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)),
+        );
+      };
+      const keyboard: any[][] = filtered.map((c: any) => [
+        {
+          text: `${flag(c.countryCode)} ${c.country || c.server} · ${c.protocol.toUpperCase()}`,
+          callback_data: `getconfig:${c.id}`,
+        },
+      ]);
+      keyboard.push([backButton]);
+      const title = protocol === 'all' ? 'Все конфиги' : protocol.toUpperCase();
+      await this.editOrReply(ctx, `🌐 ${title}\n\nВыберите сервер:`, {
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleGetConfig(ctx: any) {
+    const configId = ctx.match?.[1];
+    await ctx.answerCbQuery();
+    try {
+      const config = await this.api(`/vpn-configs/${configId}`);
+      if (!config || !config.uri) {
+        await this.editOrReply(ctx, 'Конфиг не найден.', {
+          reply_markup: { inline_keyboard: [[backButton]] },
+        });
+        return;
+      }
+      const flag = (code: string) => {
+        if (!code || code.length !== 2) return '🌐';
+        return String.fromCodePoint(
+          ...[...code.toUpperCase()].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)),
+        );
+      };
+      const f = flag(config.countryCode);
+      await this.editOrReply(
+        ctx,
+        `${f} ${config.country || config.server}\n\n` +
+          `Протокол: ${(config.protocol || '').toUpperCase()}\n` +
+          `Сервер: ${config.server || '—'}\n\n` +
+          `Ссылка:\n${config.uri}\n\n` +
+          `💡 Скопируйте ссылку выше и вставьте в Happ или другой VPN-клиент.`,
+        { reply_markup: { inline_keyboard: [[backButton]] } },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleMySubscription(ctx: Context) {
+    await ctx.answerCbQuery();
+    try {
+      const tgId = String((ctx.from as any)?.id || '0');
+      const data: any = await this.api('/sub-links', {
+        method: 'POST',
+        body: { telegramId: tgId },
+      });
+      const exp = new Date(data.expiresAt);
+      const daysLeft = Math.max(0, Math.ceil((exp.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
+      const traffic = (Number(data.trafficUsed) / 1024 / 1024 / 1024).toFixed(2);
+      await this.editOrReply(
+        ctx,
+        `🔗 Моя подписка\n\n` +
+          `ID: ${data.label}\n` +
+          `Статус: Активна\n` +
+          `Истекает: ${exp.toLocaleDateString('ru-RU')} (через ${daysLeft} дн.)\n` +
+          `Трафик: ${traffic} GiB / ∞\n` +
+          `Ссылка:\n${data.url}\n\n` +
+          `Нажми «🚀 Импорт в Happ» чтобы скопировать.`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🚀 Импорт в Happ', callback_data: 'menu:subscription' }],
+              [{ text: '🌐 Открыть в браузере', url: data.url }],
+              [backButton],
+            ],
+          },
+        },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleProfile(ctx: Context) {
+    await ctx.answerCbQuery();
+    try {
+      const tgId = String((ctx.from as any)?.id || '0');
+      const username = (ctx.from as any)?.username ? `@${(ctx.from as any).username}` : '—';
+      const data: any = await this.api('/sub-links', {
+        method: 'POST',
+        body: { telegramId: tgId },
+      });
+      const exp = new Date(data.expiresAt).toLocaleDateString('ru-RU');
+      await this.editOrReply(
+        ctx,
+        `👤 Профиль\n\n` +
+          `Telegram ID: ${tgId}\n` +
+          `Username: ${username}\n` +
+          `Подписка: ${data.label}\n` +
+          `Истекает: ${exp}\n\n` +
+          `Бесплатный VPN без регистрации.`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🔗 Моя подписка', callback_data: 'menu:mysubscription' }],
+              [backButton],
+            ],
+          },
+        },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleInstructions(ctx: Context) {
+    await ctx.answerCbQuery();
+    await this.editOrReply(
+      ctx,
+      '📱 Инструкция / приложения\n\n' +
+        'Happ — VPN-клиент для всех платформ.\n\n' +
+        'Скачать:\n' +
+        '• iPhone — https://apps.apple.com/us/app/happ-proxy-utility/id6504287215\n' +
+        '• Android — https://play.google.com/store/apps/details?id=com.happproxy\n' +
+        '• Windows/Mac/Linux — https://www.happ.su/main\n\n' +
+        'Как подключить:\n' +
+        '1. Установи Happ\n' +
+        '2. Нажми «🚀 Импорт в Happ» в главном меню\n' +
+        '3. В Happ нажми кнопку подключения ✅\n\n' +
+        '💡 Не работает один сервер — выбери другой из списка.',
+      { reply_markup: { inline_keyboard: [[backButton]] } },
+    );
+  }
+
+  private async handleStatus(ctx: Context) {
+    await ctx.answerCbQuery();
+    try {
+      const tgId = String((ctx.from as any)?.id || '0');
+      const [health, link, configs] = await Promise.all([
+        this.api('/health').catch(() => ({ status: 'unknown' })),
+        this.api('/sub-links', { method: 'POST', body: { telegramId: tgId } }).catch(() => null),
+        this.api('/vpn-configs/subscription').catch(() => []),
+      ]);
+      const count = Array.isArray(configs) ? configs.length : 0;
+      const label = (link as any)?.label || '—';
+      const exp = (link as any)?.expiresAt
+        ? new Date((link as any).expiresAt).toLocaleDateString('ru-RU')
+        : '—';
+      await this.editOrReply(
+        ctx,
+        `📊 Статус аккаунта\n\n` +
+          `• Telegram ID: ${tgId}\n` +
+          `• Подписка: ${label}\n` +
+          `• Истекает: ${exp}\n` +
+          `• Серверов: ${count}\n` +
+          `• Устройств: безлимит\n\n` +
+          `🔧 Система\n` +
+          `• API: ${(health as any).status || 'unknown'}\n` +
+          `• БД: ${(health as any).database || 'unknown'}\n` +
+          `• Аптайм: ${Math.floor(((health as any).uptime || 0) / 60)} мин`,
+        { reply_markup: { inline_keyboard: [[backButton]] } },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleHelpAction(ctx: Context) {
+    await ctx.answerCbQuery();
+    await this.editOrReply(
+      ctx,
+      '❓ Помощь\n\n' +
+        'Команды:\n' +
+        '/start — Главное меню\n' +
+        '/help — Эта справка\n\n' +
+        'Проблемы:\n' +
+        '• VPN не подключается → выберите другой сервер\n' +
+        '• Медленная скорость → смените протокол на Hysteria2\n' +
+        '• Нет интернета через VPN → отключите и подключитесь снова',
+      { reply_markup: { inline_keyboard: [[backButton]] } },
     );
   }
 
   private async handleHelp(ctx: Context) {
     await ctx.reply(
-      '📚 *Commands*\n\n' +
-      '/start - Start / re-login\n' +
-      '/help - This message\n\n' +
-      'Use the menu for all actions.',
-      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
+      '❓ Помощь\n\n' +
+        'Команды:\n' +
+        '/start — Главное меню\n' +
+        '/help — Эта справка\n\n' +
+        'Проблемы:\n' +
+        '• VPN не подключается → выберите другой сервер\n' +
+        '• Медленная скорость → смените протокол на Hysteria2\n' +
+        '• Нет интернета через VPN → отключите и подключитесь снова',
+      { reply_markup: { inline_keyboard: [[backButton]] } },
     );
   }
 
-  private async handleLoginStart(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
+  private async handleInfo(ctx: Context) {
     await ctx.answerCbQuery();
-    this.userStates.set(userId, { action: 'login_email' });
-    await ctx.editMessageText('📧 Enter your email:', { parse_mode: 'Markdown' });
+    await this.editOrReply(
+      ctx,
+      'ℹ️ APPI VPN\n\n' +
+        'Бесплатный VPN-сервис для доступа к заблокированным ресурсам.\n\n' +
+        '• Сотни серверов по всему миру\n' +
+        '• Без лимитов и оплат\n' +
+        '• Автоматическое обновление конфигов\n' +
+        '• Поддержка VLESS, Hysteria2, Trojan, Shadowsocks\n\n' +
+        '🤖 Бот: @AppiVPNBot',
+      { reply_markup: { inline_keyboard: [[backButton]] } },
+    );
   }
 
-  private async handleRegisterStart(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await ctx.answerCbQuery();
-    this.userStates.set(userId, { action: 'register_email' });
-    await ctx.editMessageText('📧 Enter your email:', { parse_mode: 'Markdown' });
-  }
-
-  private async handleMainMenu(ctx: Context) {
-    await ctx.answerCbQuery();
-    await ctx.editMessageText('🔐 *APPI VPN*\n\nSelect an option:', {
-      parse_mode: 'Markdown',
-      reply_markup: { inline_keyboard: mainMenuKeyboard },
-    });
-  }
-
-  private async handleStatus(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
-
+  private async handleMtproto(ctx: Context) {
     await ctx.answerCbQuery();
     try {
-      const [user, sub] = await Promise.all([
-        this.apiWithRefresh(userId, '/users/me'),
-        this.apiWithRefresh(userId, '/subscriptions/current').catch(() => null),
-      ]);
-
-      const planName = sub?.plan?.name || 'No plan';
-      const expiry = sub?.expiresAt ? new Date(sub.expiresAt).toLocaleDateString() : '—';
-
-      await ctx.reply(
-        `📊 *Account*\n\n` +
-        `Email: ${user.email}\n` +
-        `Plan: ${planName}\n` +
-        `Expires: ${expiry}\n` +
-        `Status: ${sub?.status || 'No active subscription'}`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
+      const res = await fetch(
+        'https://raw.githubusercontent.com/dubblebyte/free-mtproto-proxies/main/all_proxies.txt',
       );
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
-    }
-  }
-
-  private async handleSubscription(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
-
-    await ctx.answerCbQuery();
-    try {
-      const sub = await this.apiWithRefresh(userId, '/subscriptions/current').catch(() => null);
-
-      if (!sub) {
-        await ctx.reply('You have no active subscription.', {
-          reply_markup: { inline_keyboard: mainMenuKeyboard },
-        });
-        return;
-      }
-
-      const plan = sub.plan || {};
-      await ctx.reply(
-        `🔑 *Subscription*\n\n` +
-        `Plan: ${plan.name || '—'}\n` +
-        `Price: ${plan.price ? `₽${plan.price}` : '—'}\n` +
-        `Traffic: ${plan.traffic || '—'}\n` +
-        `Devices: ${plan.maxDevices || '—'}\n` +
-        `Status: ${sub.status}\n` +
-        `Expires: ${sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString() : '—'}`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
-      );
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
-    }
-  }
-
-  private async handleServers(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
-
-    await ctx.answerCbQuery();
-    try {
-      const data = await this.apiWithRefresh(userId, '/servers');
-      const servers = data.servers || data || [];
-
-      if (!Array.isArray(servers) || servers.length === 0) {
-        await ctx.reply('No servers available.', {
-          reply_markup: { inline_keyboard: mainMenuKeyboard },
-        });
-        return;
-      }
-
-      const keyboard = servers.slice(0, 10).map((s: any) => [{
-        text: `${s.name || s.city || 'Server'} (${s.country || s.code || ''})`,
-        callback_data: `server:${s.id}`,
-      }]);
-      keyboard.push([backButton]);
-
-      await ctx.reply('🌐 *Servers*\n\nSelect a server:', {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: keyboard },
-      });
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
-    }
-  }
-
-  private async handleServerSelect(ctx: any) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return;
-
-    await ctx.answerCbQuery();
-    const serverId = ctx.match?.[1];
-
-    try {
-      const server = await this.apiWithRefresh(userId, `/servers/${serverId}`);
-      await ctx.reply(
-        `🖥️ *${server.name || server.city}*\n\n` +
-        `Country: ${server.country || server.code}\n` +
-        `Protocol: ${server.protocol || 'VLESS'}\n` +
-        `Status: ${server.status || 'online'}`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
-      );
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
-    }
-  }
-
-  private async handleVpnConfigs(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await ctx.answerCbQuery();
-    try {
-      const data = await this.api('/vpn-configs?listType=black', { token: undefined });
-      const configs = Array.isArray(data) ? data : [];
-
-      if (configs.length === 0) {
-        await ctx.reply('No VPN configs available. Try again later.', {
-          reply_markup: { inline_keyboard: mainMenuKeyboard },
-        });
-        return;
-      }
-
-      const byProtocol: Record<string, number> = {};
-      for (const c of configs) {
-        byProtocol[c.protocol] = (byProtocol[c.protocol] || 0) + 1;
-      }
-
-      const keyboard: any[][] = [];
-      for (const [proto, count] of Object.entries(byProtocol)) {
-        keyboard.push([{ text: `${proto.toUpperCase()} (${count})`, callback_data: `vpnfilter:${proto}` }]);
-      }
-      keyboard.push([{ text: `📋 All configs (${configs.length})`, callback_data: 'vpnfilter:all' }]);
-      keyboard.push([backButton]);
-
-      await ctx.reply(
-        `🌐 *Free VPN Configs*\n\n` +
-        `Configs from igareck/vpn-configs-for-russia\n` +
-        `Updated every 2 hours.\n\n` +
-        `Choose a protocol or view all:`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } },
-      );
-    } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, {
-        reply_markup: { inline_keyboard: mainMenuKeyboard },
-      });
-    }
-  }
-
-  private async handleVpnFilter(ctx: any) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await ctx.answerCbQuery();
-    const filter = ctx.match?.[1];
-
-    try {
-      const url = filter === 'all' ? '/vpn-configs?listType=black' : `/vpn-configs?protocol=${filter}&listType=black`;
-      const data = await this.api(url);
-      const configs = (Array.isArray(data) ? data : []).slice(0, 20);
-
-      if (configs.length === 0) {
-        await ctx.reply('No configs found for this filter.', {
+      const text = await res.text();
+      const lines = text.split('\n').filter((l) => l.startsWith('https://t.me/proxy?'));
+      if (lines.length === 0) {
+        await this.editOrReply(ctx, '⏳ Прокси обновляются. Попробуйте позже.', {
           reply_markup: { inline_keyboard: [[backButton]] },
         });
         return;
       }
-
-      const keyboard: any[][] = configs.map((c: any) => [{
-        text: `${c.country || 'Unknown'} · ${c.protocol.toUpperCase()}`,
-        callback_data: `vpnconfig:${c.id}`,
-      }]);
-      keyboard.push([backButton]);
-
-      await ctx.reply(
-        `🌐 *${filter === 'all' ? 'All' : filter.toUpperCase()} Configs*\n\nSelect a config:`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: keyboard } },
-      );
-    } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: [[backButton]] } });
-    }
-  }
-
-  private async handleVpnConfigSelect(ctx: any) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await ctx.answerCbQuery();
-    const configId = ctx.match?.[1];
-
-    try {
-      const config = await this.api(`/vpn-configs/${configId}`);
-      if (!config || !config.uri) {
-        await ctx.reply('Config not found.', { reply_markup: { inline_keyboard: [[backButton]] } });
-        return;
-      }
-
-      const flagEmoji = (code: string) => {
-        if (!code || code.length !== 2) return '';
-        return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
-      };
-
-      const flag = flagEmoji(config.countryCode);
-
-      await ctx.reply(
-        `${flag} *${config.country || 'Unknown'}*\n\n` +
-        `Protocol: ${config.protocol?.toUpperCase()}\n` +
-        `List: ${config.listType === 'black' ? 'Black List (bypass blocks)' : 'White List'}\n` +
-        `Server: ${config.server || '—'}\n\n` +
-        `📋 *Config URI:*\n\`${config.uri}\`\n\n` +
-        `💡 Copy the URI above and paste it into your VPN client (Karing, v2rayN, Streisand, NekoBox).`,
+      const pick = lines[0];
+      const url = new URL(pick);
+      const server = url.searchParams.get('server');
+      const port = url.searchParams.get('port');
+      await this.editOrReply(
+        ctx,
+        `🛡 Прокси MTProto\n\n` +
+          `Быстрый способ открыть Telegram, если он заблокирован.\n` +
+          `Это не VPN — работает только внутри Telegram.\n\n` +
+          `Сервер: ${server}\n` +
+          `Порт: ${port}\n\n` +
+          `Нажми «Подключить прокси» — Telegram сам предложит его включить.`,
         {
-          parse_mode: 'Markdown',
-          reply_markup: { inline_keyboard: [[backButton]] },
+          reply_markup: {
+            inline_keyboard: [[{ text: '🛡 Подключить прокси', url: pick }], [backButton]],
+          },
         },
       );
     } catch (e: any) {
-      await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: [[backButton]] } });
-    }
-  }
-
-  private async handleTraffic(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
-
-    await ctx.answerCbQuery();
-    try {
-      const traffic = await this.apiWithRefresh(userId, '/traffic/current').catch(() => null);
-
-      if (!traffic) {
-        await ctx.reply('No traffic data. Start using VPN to see statistics.', {
-          reply_markup: { inline_keyboard: mainMenuKeyboard },
-        });
-        return;
-      }
-
-      await ctx.reply(
-        `📊 *Traffic*\n\n` +
-        `Download: ${traffic.download || '—'}\n` +
-        `Upload: ${traffic.upload || '—'}\n` +
-        `Total: ${traffic.total || '—'}`,
-        { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
-      );
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
-    }
-  }
-
-  private async handleDevices(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId || !this.linkedUsers.has(userId)) return this.requireLogin(ctx);
-
-    await ctx.answerCbQuery();
-    try {
-      const data = await this.apiWithRefresh(userId, '/users/devices');
-      const devices = data.devices || data || [];
-
-      if (!Array.isArray(devices) || devices.length === 0) {
-        await ctx.reply('No devices registered.', {
-          reply_markup: { inline_keyboard: mainMenuKeyboard },
-        });
-        return;
-      }
-
-      const list = devices.map((d: any, i: number) =>
-        `${i + 1}. ${d.name || d.deviceName || 'Device'} - ${d.lastSeen ? 'Last: ' + new Date(d.lastSeen).toLocaleDateString() : 'Unknown'}`
-      ).join('\n');
-
-      await ctx.reply(`📱 *Devices*\n\n${list}`, {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: mainMenuKeyboard },
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
       });
-    } catch (e: any) {
-      if (e.message.includes('Session expired')) {
-        await ctx.reply(e.message, { reply_markup: { inline_keyboard: authKeyboard } });
-      } else {
-        await ctx.reply(`Error: ${e.message}`, { reply_markup: { inline_keyboard: mainMenuKeyboard } });
-      }
     }
-  }
-
-  private async handleLogout(ctx: Context) {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    await ctx.answerCbQuery();
-    this.linkedUsers.delete(userId);
-    this.userStates.delete(userId);
-
-    await ctx.reply('Logged out.', {
-      reply_markup: { inline_keyboard: authKeyboard },
-    });
-  }
-
-  private async requireLogin(ctx: Context) {
-    if ('data' in ctx.update && 'message' in (ctx.update as any).message) {
-      // Text message - no cb to answer
-    } else {
-      try { await ctx.answerCbQuery(); } catch {}
-    }
-    await ctx.reply('🔒 Please log in first.', {
-      reply_markup: { inline_keyboard: authKeyboard },
-    });
-  }
-
-  private async handleText(ctx: Context) {
-    const userId = ctx.from?.id;
-    const text = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
-    if (!userId || !text) return;
-
-    const state = this.userStates.get(userId);
-    if (!state) return;
-
-    switch (state.action) {
-      case 'register_email': {
-        const email = text.trim();
-        if (!email.includes('@')) {
-          await ctx.reply('❌ Invalid email. Try again:');
-          return;
-        }
-        this.userStates.set(userId, { action: 'register_password', data: { email } });
-        await ctx.reply(
-          '🔒 Create a password:\n' +
-          '• min 8 characters\n' +
-          '• uppercase + lowercase\n' +
-          '• number + special char (@ $ ! % * ? &)\n\n' +
-          '⚠️ *For security, delete this message after typing your password.*',
-          { parse_mode: 'Markdown' },
-        );
-        return;
-      }
-
-      case 'register_password': {
-        if (!this.checkRateLimit(userId)) {
-          await ctx.reply('⏳ Too many attempts. Wait 1 minute and try /start again.');
-          return;
-        }
-
-        const password = text.trim();
-
-        // Delete the password message for security
-        if (ctx.message && 'message_id' in ctx.message) {
-          try { await ctx.deleteMessage(); } catch {}
-        }
-
-        if (password.length < 8) {
-          await ctx.reply('❌ Too short (min 8 characters). Try again:');
-          return;
-        }
-        this.userStates.set(userId, { action: 'register_confirm', data: { ...state.data, password } });
-        await ctx.reply('🔒 Confirm your password:');
-        return;
-      }
-
-      case 'register_confirm': {
-        const { email, password } = state.data;
-
-        if (ctx.message && 'message_id' in ctx.message) {
-          try { await ctx.deleteMessage(); } catch {}
-        }
-
-        if (text.trim() !== password) {
-          await ctx.reply('❌ Passwords do not match. Try again:');
-          return;
-        }
-
-        try {
-          const data = await this.api('/auth/register', {
-            method: 'POST',
-            body: { email, password },
-          });
-
-          this.userStates.delete(userId);
-          this.linkedUsers.set(userId, {
-            email,
-            token: data.accessToken,
-            refreshToken: data.refreshToken,
-          });
-
-          await ctx.reply(
-            `✅ *Account created!*\n\nEmail: ${email}`,
-            { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
-          );
-        } catch (e: any) {
-          const msg = e.message || '';
-          if (msg.includes('already registered') || msg.includes('already exists')) {
-            this.userStates.delete(userId);
-            await ctx.reply(
-              '❌ *Email already registered*\n\nTry /start to sign in instead.',
-              { parse_mode: 'Markdown', reply_markup: { inline_keyboard: authKeyboard } },
-            );
-          } else if (msg.includes('Password must') || msg.includes('password must')) {
-            this.userStates.set(userId, { action: 'register_password', data: { email } });
-            await ctx.reply(
-              '❌ *Invalid password*\n\nPassword must contain:\n• uppercase letter (A-Z)\n• lowercase letter (a-z)\n• number (0-9)\n• special character: @ $ ! % * ? &\n\nTry again:',
-              { parse_mode: 'Markdown' },
-            );
-          } else {
-            this.userStates.set(userId, { action: 'register_password', data: { email } });
-            await ctx.reply(
-              `❌ *Error:* ${msg}\n\nTry a different password:`,
-              { parse_mode: 'Markdown' },
-            );
-          }
-        }
-        return;
-      }
-
-      case 'login_email': {
-        const email = text.trim();
-        if (!email.includes('@')) {
-          await ctx.reply('❌ Invalid email. Try again:');
-          return;
-        }
-        this.userStates.set(userId, { action: 'login_password', data: { email } });
-        await ctx.reply('🔒 Enter your password:');
-        return;
-      }
-
-      case 'login_password': {
-        if (!this.checkRateLimit(userId)) {
-          await ctx.reply('⏳ Too many attempts. Wait 1 minute and try /start again.');
-          this.userStates.delete(userId);
-          return;
-        }
-
-        const { email } = state.data;
-
-        // Delete the password message for security
-        if (ctx.message && 'message_id' in ctx.message) {
-          try { await ctx.deleteMessage(); } catch {}
-        }
-
-        try {
-          const data = await this.api('/auth/login', {
-            method: 'POST',
-            body: { email, password: text.trim() },
-          });
-
-          this.userStates.delete(userId);
-          this.linkedUsers.set(userId, {
-            email,
-            token: data.accessToken,
-            refreshToken: data.refreshToken,
-          });
-
-          await ctx.reply(
-            `✅ *Logged in!*\n\nEmail: ${email}`,
-            { parse_mode: 'Markdown', reply_markup: { inline_keyboard: mainMenuKeyboard } },
-          );
-        } catch (e: any) {
-          this.userStates.set(userId, { action: 'login_password', data: { email } });
-          const msg = e.message || '';
-          if (msg.includes('Invalid credentials')) {
-            await ctx.reply(
-              '❌ *Wrong email or password*\n\nTry again:',
-              { parse_mode: 'Markdown' },
-            );
-          } else if (msg.includes('locked') || msg.includes('banned') || msg.includes('suspended')) {
-            this.userStates.delete(userId);
-            await ctx.reply(
-              `❌ *Account unavailable*\n\n${msg}`,
-              { parse_mode: 'Markdown', reply_markup: { inline_keyboard: authKeyboard } },
-            );
-          } else {
-            await ctx.reply(
-              `❌ *Error:* ${msg}\n\nTry again:`,
-              { parse_mode: 'Markdown' },
-            );
-          }
-        }
-        return;
-      }
-    }
-
-    if (text.startsWith('/')) return;
-
-    await ctx.reply('Use the menu or /help.', {
-      reply_markup: { inline_keyboard: mainMenuKeyboard },
-    });
   }
 }

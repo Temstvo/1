@@ -1,0 +1,755 @@
+{
+  "burstObservatory": {
+    "pingConfig": {
+      "connectivity": "http://cp.cloudflare.com/generate_204",
+      "destination": "http://cp.cloudflare.com/generate_204",
+      "interval": "10m",
+      "sampling": 1,
+      "timeout": "5s"
+    },
+    "subjectSelector": ["proxy"]
+  },
+  "dns": {
+    "queryStrategy": "UseIPv4",
+    "servers": [
+      "https://8.8.8.8/dns-query",
+      "https://8.8.4.4/dns-query",
+      "https://1.1.1.1/dns-query",
+      "https://1.0.0.1/dns-query"
+    ],
+    "tag": "dns-inbound"
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "socks"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "allowTransparent": false,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "meta": null,
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "tracker.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "tracker.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/media/v1/push/iteuSL7BEa"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "proxy.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "proxy.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/assets/v1/segment/tNDnAEKWSp"
+        }
+      },
+      "tag": "proxy-2"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "media.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "media.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/media/v2/ingest/YH4m9gMDye"
+        }
+      },
+      "tag": "proxy-3"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "upload.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "upload.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/assets/v1/ingest/5y2XX8T5BC"
+        }
+      },
+      "tag": "proxy-4"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "us.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "us.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/media/v1/push/NKdRufUu3q"
+        }
+      },
+      "tag": "proxy-5"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "cache.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "cache.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/files/v3/blob/xPpQ4NPw1u"
+        }
+      },
+      "tag": "proxy-6"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "fetch.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "fetch.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/cdn/v2/blob/uvUWSZiudw"
+        }
+      },
+      "tag": "proxy-7"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "net.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "net.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/static/v1/blob/sjrAM9Lcfn"
+        }
+      },
+      "tag": "proxy-8"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "assets.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "assets.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/static/v1/blob/SUBAhgozTk"
+        }
+      },
+      "tag": "proxy-9"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "download.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "download.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/stream/v3/upload/KAawhnLCtp"
+        }
+      },
+      "tag": "proxy-10"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "link.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "link.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/static/v3/object/OqyozN63ao"
+        }
+      },
+      "tag": "proxy-11"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "main.onecloudtraining.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2", "http/1.1"],
+          "fingerprint": "firefox",
+          "serverName": "main.onecloudtraining.com"
+        },
+        "xhttpSettings": {
+          "extra": {
+            "xmux": {
+              "cMaxReuseTimes": 0,
+              "hKeepAlivePeriod": 0,
+              "hMaxRequestTimes": "600-900",
+              "hMaxReusableSecs": "1800-3000",
+              "maxConcurrency": 0,
+              "maxConnections": 2
+            }
+          },
+          "host": "",
+          "mode": "stream-up",
+          "path": "/stream/v1/chunk/m6OfwfAj3W"
+        }
+      },
+      "tag": "proxy-12"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    },
+    {
+      "protocol": "dns",
+      "tag": "dns-out"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 120,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundDownlink": true,
+      "statsOutboundUplink": true
+    }
+  },
+  "remarks": "🇬🇧 Великобритания #2",
+  "routing": {
+    "balancers": [
+      {
+        "fallbackTag": "proxy",
+        "selector": ["proxy"],
+        "strategy": {
+          "settings": {
+            "baselines": ["400ms", "800ms"],
+            "expected": 1,
+            "maxRTT": "3s",
+            "tolerance": 0.25
+          },
+          "type": "leastLoad"
+        },
+        "tag": "balancer"
+      }
+    ],
+    "domainMatcher": "hybrid",
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "domain": ["regexp:^.{250,}$", "regexp:[^.]{64,}"],
+        "outboundTag": "block",
+        "ruleTag": "BLOCK_MALFORMED_DOMAIN",
+        "type": "field"
+      },
+      {
+        "outboundTag": "dns-out",
+        "port": 53,
+        "type": "field"
+      },
+      {
+        "domain": ["geosite:TORRENT"],
+        "outboundTag": "block",
+        "ruleTag": "TORRENT_BY_DOMAIN"
+      },
+      {
+        "outboundTag": "block",
+        "port": "6881-6889,51413,21413,17417,37305",
+        "ruleTag": "TORRENT_BY_PORT"
+      },
+      {
+        "balancerTag": "balancer",
+        "domain": [
+          "geosite:google-play",
+          "geosite:github",
+          "geosite:twitch-ads",
+          "geosite:youtube",
+          "geosite:telegram"
+        ],
+        "type": "field"
+      },
+      {
+        "domain": [
+          "geosite:private",
+          "geosite:category-ru",
+          "geosite:whitelist",
+          "geosite:microsoft",
+          "geosite:apple",
+          "geosite:epicgames",
+          "geosite:riot",
+          "geosite:escapefromtarkov",
+          "geosite:steam",
+          "geosite:twitch",
+          "geosite:pinterest",
+          "geosite:faceit"
+        ],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "outboundTag": "block",
+        "protocol": ["bittorrent"],
+        "type": "field"
+      },
+      {
+        "ip": ["geoip:private", "geoip:direct"],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "balancerTag": "balancer",
+        "network": "tcp,udp",
+        "type": "field"
+      }
+    ]
+  },
+  "stats": {}
+}

@@ -1,9 +1,7 @@
-import { Controller, Get, Query, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Query, Param, Post, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Response } from 'express';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
-import { JwtAuthGuard } from '../auth/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('vpn-configs')
 @Controller('vpn-configs')
@@ -31,6 +29,40 @@ export class VpnConfigsController {
     return this.syncService.getStats();
   }
 
+  @Get('subscription')
+  @ApiOperation({ summary: 'Get all active configs as JSON' })
+  async getSubscription() {
+    return this.syncService.getActiveSubscription();
+  }
+
+  @Get('subscription.txt')
+  @ApiOperation({ summary: 'Get all active configs as plain text (for VPN clients like Happ)' })
+  async getSubscriptionTxt(@Res() res: Response) {
+    const lines = await this.syncService.getSubscriptionLines();
+    this.sendSubscription(res, lines);
+  }
+
+  @Get('sub/:token')
+  @ApiOperation({ summary: 'Short subscription link (for VPN clients like Happ)' })
+  async getSubscriptionByToken(@Param('token') token: string, @Res() res: Response) {
+    const expected = process.env.SUBSCRIPTION_TOKEN || 'appi-vpn';
+    if (token !== expected) {
+      res.status(404).send('Not found');
+      return;
+    }
+    const lines = await this.syncService.getSubscriptionLines();
+    this.sendSubscription(res, lines);
+  }
+
+  private sendSubscription(res: Response, lines: string[]) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Profile-Title', 'APPI VPN');
+    res.setHeader('Profile-Update-Interval', '24');
+    res.setHeader('Subscription-User-Info', '0/Infinity/1756896000/1/1');
+    res.setHeader('Profile-Web-Url', 'https://t.me/appi_vpn_bot');
+    res.send(lines.join('\n'));
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get full config URI by ID' })
   async getConfig(@Param('id') id: string) {
@@ -38,11 +70,14 @@ export class VpnConfigsController {
   }
 
   @Post('sync')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Trigger config sync (admin only)' })
+  @ApiOperation({ summary: 'Trigger config sync (GitHub)' })
   async sync() {
     return this.syncService.syncAll();
+  }
+
+  @Post('sync-local')
+  @ApiOperation({ summary: 'Trigger sync from local serv-configs/*.json (desktop)' })
+  async syncLocal() {
+    return this.syncService.syncFromLocal();
   }
 }

@@ -1,0 +1,78 @@
+{
+  "remarks": "🇬🇧 Великобритания",
+  "count": 12,
+  "servers": [
+    {
+      "name": "⚡ Великобритания",
+      "host": "router.sickok.com",
+      "path": "/content/v3/segment/4veaJl5UOW",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@router.sickok.com:443?encryption=none&security=tls&sni=router.sickok.com&fp=firefox&type=xhttp&path=%2Fcontent%2Fv3%2Fsegment%2F4veaJl5UOW&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F"
+    },
+    {
+      "name": "⚡ Великобритания 2",
+      "host": "edge2.sickok.com",
+      "path": "/api/v1/ingest/KczWgyXedh",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@edge2.sickok.com:443?encryption=none&security=tls&sni=edge2.sickok.com&fp=firefox&type=xhttp&path=%2Fapi%2Fv1%2Fingest%2FKczWgyXedh&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%202"
+    },
+    {
+      "name": "⚡ Великобритания 3",
+      "host": "store.sickok.com",
+      "path": "/assets/v3/blob/mn7yH5TXQq",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@store.sickok.com:443?encryption=none&security=tls&sni=store.sickok.com&fp=firefox&type=xhttp&path=%2Fassets%2Fv3%2Fblob%2Fmn7yH5TXQq&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%203"
+    },
+    {
+      "name": "⚡ Великобритания 4",
+      "host": "hub.sickok.com",
+      "path": "/media/v1/upload/w5sM5ePwv9",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@hub.sickok.com:443?encryption=none&security=tls&sni=hub.sickok.com&fp=firefox&type=xhttp&path=%2Fmedia%2Fv1%2Fupload%2Fw5sM5ePwv9&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%204"
+    },
+    {
+      "name": "⚡ Великобритания 5",
+      "host": "net.sickok.com",
+      "path": "/stream/v2/push/wQXo0fdmk4",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@net.sickok.com:443?encryption=none&security=tls&sni=net.sickok.com&fp=firefox&type=xhttp&path=%2Fstream%2Fv2%2Fpush%2FwQXo0fdmk4&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%205"
+    },
+    {
+      "name": "⚡ Великобритания 6",
+      "host": "auth.sickok.com",
+      "path": "/files/v3/ingest/R86959GFOp",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@auth.sickok.com:443?encryption=none&security=tls&sni=auth.sickok.com&fp=firefox&type=xhttp&path=%2Ffiles%2Fv3%2Fingest%2FR86959GFOp&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%206"
+    },
+    {
+      "name": "⚡ Великобритания 7",
+      "host": "ingest.sickok.com",
+      "path": "/assets/v2/segment/MkTgjuZhLi",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@ingest.sickok.com:443?encryption=none&security=tls&sni=ingest.sickok.com&fp=firefox&type=xhttp&path=%2Fassets%2Fv2%2Fsegment%2FMkTgjuZhLi&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%207"
+    },
+    {
+      "name": "⚡ Великобритания 8",
+      "host": "origin.sickok.com",
+      "path": "/files/v2/push/TDOKpOhGSS",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@origin.sickok.com:443?encryption=none&security=tls&sni=origin.sickok.com&fp=firefox&type=xhttp&path=%2Ffiles%2Fv2%2Fpush%2FTDOKpOhGSS&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%208"
+    },
+    {
+      "name": "⚡ Великобритания 9",
+      "host": "img.sickok.com",
+      "path": "/cdn/v1/object/yBAHoG0XjR",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@img.sickok.com:443?encryption=none&security=tls&sni=img.sickok.com&fp=firefox&type=xhttp&path=%2Fcdn%2Fv1%2Fobject%2FyBAHoG0XjR&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%209"
+    },
+    {
+      "name": "⚡ Великобритания 10",
+      "host": "cloud.sickok.com",
+      "path": "/stream/v1/segment/BuJLMRqQ9m",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@cloud.sickok.com:443?encryption=none&security=tls&sni=cloud.sickok.com&fp=firefox&type=xhttp&path=%2Fstream%2Fv1%2Fsegment%2FBuJLMRqQ9m&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%2010"
+    },
+    {
+      "name": "⚡ Великобритания 11",
+      "host": "edge.sickok.com",
+      "path": "/content/v1/sync/ccC23Ul53C",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@edge.sickok.com:443?encryption=none&security=tls&sni=edge.sickok.com&fp=firefox&type=xhttp&path=%2Fcontent%2Fv1%2Fsync%2FccC23Ul53C&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%2011"
+    },
+    {
+      "name": "⚡ Великобритания 12",
+      "host": "rpc.sickok.com",
+      "path": "/static/v3/sync/Lxdt3EXmSW",
+      "uri": "vless://37eef99a-c583-40c2-a88b-6fdab1890954@rpc.sickok.com:443?encryption=none&security=tls&sni=rpc.sickok.com&fp=firefox&type=xhttp&path=%2Fstatic%2Fv3%2Fsync%2FLxdt3EXmSW&host=&mode=stream-up&alpn=h2%2Chttp%2F1.1#%E2%9A%A1%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%2012"
+    }
+  ]
+}

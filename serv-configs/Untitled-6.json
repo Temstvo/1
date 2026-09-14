@@ -1,0 +1,863 @@
+{
+  "burstObservatory": {
+    "pingConfig": {
+      "connectivity": "http://cp.cloudflare.com/generate_204",
+      "destination": "http://cp.cloudflare.com/generate_204",
+      "interval": "10m",
+      "sampling": 1,
+      "timeout": "5s"
+    },
+    "subjectSelector": ["proxy"]
+  },
+  "dns": {
+    "queryStrategy": "UseIPv4",
+    "servers": [
+      "https://8.8.8.8/dns-query",
+      "https://8.8.4.4/dns-query",
+      "https://1.1.1.1/dns-query",
+      "https://1.0.0.1/dns-query"
+    ],
+    "tag": "dns-inbound"
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "socks"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "allowTransparent": false,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "meta": null,
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "status.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "status.capitaloneok.com",
+          "mode": false,
+          "serviceName": "sync.v2.PushService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "status.capitaloneok.com"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "store.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "store.capitaloneok.com",
+          "mode": false,
+          "serviceName": "sync.v2.PushService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "store.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-2"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "edge.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "edge.capitaloneok.com",
+          "mode": false,
+          "serviceName": "sync.v2.PushService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "edge.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-3"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "grid.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "grid.capitaloneok.com",
+          "mode": false,
+          "serviceName": "media.v2.MetricsService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "grid.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-4"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "download.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "download.capitaloneok.com",
+          "mode": false,
+          "serviceName": "media.v2.MetricsService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "download.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-5"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "rpc.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "rpc.capitaloneok.com",
+          "mode": false,
+          "serviceName": "media.v2.MetricsService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "rpc.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-6"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "srv.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "srv.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "srv.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-7"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "stats.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "stats.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "stats.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-8"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "dl.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "dl.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "dl.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-9"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "img.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "img.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "img.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-10"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "router.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "router.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "router.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-11"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "cdn1.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "cdn1.capitaloneok.com",
+          "mode": false,
+          "serviceName": "stats.v2.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "cdn1.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-12"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "main.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "main.capitaloneok.com",
+          "mode": false,
+          "serviceName": "rpc.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "main.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-13"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "tracker.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "tracker.capitaloneok.com",
+          "mode": false,
+          "serviceName": "rpc.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "tracker.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-14"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "origin.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "origin.capitaloneok.com",
+          "mode": false,
+          "serviceName": "rpc.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "origin.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-15"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "video.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "video.capitaloneok.com",
+          "mode": false,
+          "serviceName": "push.v2.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "video.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-16"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "assets.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "assets.capitaloneok.com",
+          "mode": false,
+          "serviceName": "push.v2.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "assets.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-17"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "core.capitaloneok.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "core.capitaloneok.com",
+          "mode": false,
+          "serviceName": "push.v2.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "core.capitaloneok.com"
+        }
+      },
+      "tag": "proxy-18"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    },
+    {
+      "protocol": "dns",
+      "tag": "dns-out"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 120,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundDownlink": true,
+      "statsOutboundUplink": true
+    }
+  },
+  "remarks": "🇫🇷 Франция",
+  "routing": {
+    "balancers": [
+      {
+        "fallbackTag": "proxy",
+        "selector": ["proxy"],
+        "strategy": {
+          "settings": {
+            "baselines": ["400ms", "800ms"],
+            "expected": 1,
+            "maxRTT": "3s",
+            "tolerance": 0.25
+          },
+          "type": "leastLoad"
+        },
+        "tag": "balancer"
+      }
+    ],
+    "domainMatcher": "hybrid",
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "domain": ["regexp:^.{250,}$", "regexp:[^.]{64,}"],
+        "outboundTag": "block",
+        "ruleTag": "BLOCK_MALFORMED_DOMAIN",
+        "type": "field"
+      },
+      {
+        "outboundTag": "dns-out",
+        "port": 53,
+        "type": "field"
+      },
+      {
+        "domain": ["geosite:TORRENT"],
+        "outboundTag": "block",
+        "ruleTag": "TORRENT_BY_DOMAIN"
+      },
+      {
+        "outboundTag": "block",
+        "port": "6881-6889,51413,21413,17417,37305",
+        "ruleTag": "TORRENT_BY_PORT"
+      },
+      {
+        "balancerTag": "balancer",
+        "domain": [
+          "geosite:google-play",
+          "geosite:github",
+          "geosite:twitch-ads",
+          "geosite:youtube",
+          "geosite:telegram"
+        ],
+        "type": "field"
+      },
+      {
+        "domain": [
+          "geosite:private",
+          "geosite:category-ru",
+          "geosite:whitelist",
+          "geosite:microsoft",
+          "geosite:apple",
+          "geosite:epicgames",
+          "geosite:riot",
+          "geosite:escapefromtarkov",
+          "geosite:steam",
+          "geosite:twitch",
+          "geosite:pinterest",
+          "geosite:faceit"
+        ],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "outboundTag": "block",
+        "protocol": ["bittorrent"],
+        "type": "field"
+      },
+      {
+        "ip": ["geoip:private", "geoip:direct"],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "balancerTag": "balancer",
+        "network": "tcp,udp",
+        "type": "field"
+      }
+    ]
+  },
+  "stats": {}
+}

@@ -9,8 +9,9 @@ import Providers from './providers';
 const inter = 'inter';
 
 export const metadata: Metadata = {
-  title: 'APPI VPN',
-  description: 'Private Internet. Without Limits.',
+  title: 'APPI VPN — бесплатный VPN без ограничений',
+  description:
+    'Бесплатный VPN без оплат и лимитов. Серверы выдаёт Telegram-бот, подключение — через Happ.',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
@@ -36,13 +37,9 @@ export const viewport: Viewport = {
   themeColor: '#8B5CF6',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="ru" className="dark" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

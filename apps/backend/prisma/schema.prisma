@@ -613,3 +613,19 @@ model Sequence {
 
   @@map("sequences")
 }
+
+// Персональные ссылки как у AllCrash: sub/<token> для каждого Telegram-пользователя
+model SubLink {
+  id         String   @id @default(uuid()) @db.Uuid
+  token      String   @unique
+  telegramId String   @map("telegram_id")
+  label      String? // 1262369931_285252
+  expiresAt  DateTime @map("expires_at")
+  trafficUsed BigInt  @default(0) @map("traffic_used")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([telegramId])
+  @@index([token])
+  @@map("sub_links")
+}

@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next';
-import withSerwist from '@serwist/next';
 
 const isTauri = process.env.NEXT_PUBLIC_TAURI === 'true';
 
@@ -24,9 +23,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist({
-  swSrc: 'src/app/sw.ts',
-  swDest: 'public/sw.js',
-  reloadOnOnline: true,
-  register: process.env.NODE_ENV !== 'development',
-})(nextConfig);
+export default nextConfig;

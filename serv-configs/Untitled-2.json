@@ -1,0 +1,863 @@
+{
+  "burstObservatory": {
+    "pingConfig": {
+      "connectivity": "http://cp.cloudflare.com/generate_204",
+      "destination": "http://cp.cloudflare.com/generate_204",
+      "interval": "10m",
+      "sampling": 1,
+      "timeout": "5s"
+    },
+    "subjectSelector": ["proxy"]
+  },
+  "dns": {
+    "queryStrategy": "UseIPv4",
+    "servers": [
+      "https://8.8.8.8/dns-query",
+      "https://8.8.4.4/dns-query",
+      "https://1.1.1.1/dns-query",
+      "https://1.0.0.1/dns-query"
+    ],
+    "tag": "dns-inbound"
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 10808,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "socks"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 10809,
+      "protocol": "http",
+      "settings": {
+        "allowTransparent": false,
+        "userLevel": 8
+      },
+      "sniffing": {
+        "destOverride": ["http", "tls", "quic"],
+        "enabled": true,
+        "routeOnly": true
+      },
+      "tag": "http"
+    }
+  ],
+  "log": {
+    "loglevel": "warning"
+  },
+  "meta": null,
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "api.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "api.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "api.mamaamacr.com"
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "eu.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "eu.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "eu.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-2"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "cdn2.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "cdn2.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "cdn2.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-3"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "hub.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "hub.mamaamacr.com",
+          "mode": false,
+          "serviceName": "node.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "hub.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-4"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "status.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "status.mamaamacr.com",
+          "mode": false,
+          "serviceName": "node.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "status.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-5"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "live.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "live.mamaamacr.com",
+          "mode": false,
+          "serviceName": "node.v2.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "live.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-6"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "gateway.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "gateway.mamaamacr.com",
+          "mode": false,
+          "serviceName": "sync.v1.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "gateway.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-7"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "auth.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "auth.mamaamacr.com",
+          "mode": false,
+          "serviceName": "sync.v1.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "auth.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-8"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "download.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "download.mamaamacr.com",
+          "mode": false,
+          "serviceName": "sync.v1.ApiService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "download.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-9"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "net.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "net.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "net.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-10"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "tracker.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "tracker.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "tracker.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-11"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "ingest.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "ingest.mamaamacr.com",
+          "mode": false,
+          "serviceName": "app.v1.SyncService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "ingest.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-12"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "upload.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "upload.mamaamacr.com",
+          "mode": false,
+          "serviceName": "media.v1.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "upload.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-13"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "mirror.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "mirror.mamaamacr.com",
+          "mode": false,
+          "serviceName": "media.v1.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "mirror.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-14"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "relay.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "relay.mamaamacr.com",
+          "mode": false,
+          "serviceName": "media.v1.RelayService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "relay.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-15"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "edge1.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "edge1.mamaamacr.com",
+          "mode": false,
+          "serviceName": "gw.v2.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "edge1.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-16"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "grid.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "grid.mamaamacr.com",
+          "mode": false,
+          "serviceName": "gw.v2.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "grid.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-17"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "content.mamaamacr.com",
+            "port": 443,
+            "users": [
+              {
+                "encryption": "none",
+                "flow": "",
+                "id": "37eef99a-c583-40c2-a88b-6fdab1890954"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "grpcSettings": {
+          "authority": "content.mamaamacr.com",
+          "mode": false,
+          "serviceName": "gw.v2.StreamService"
+        },
+        "network": "grpc",
+        "security": "tls",
+        "sockopt": {
+          "tcpKeepAliveIdle": 30,
+          "tcpKeepAliveInterval": 10,
+          "tcpUserTimeout": 15000
+        },
+        "tlsSettings": {
+          "alpn": ["h2"],
+          "fingerprint": "firefox",
+          "serverName": "content.mamaamacr.com"
+        }
+      },
+      "tag": "proxy-18"
+    },
+    {
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    },
+    {
+      "protocol": "dns",
+      "tag": "dns-out"
+    }
+  ],
+  "policy": {
+    "levels": {
+      "8": {
+        "connIdle": 300,
+        "downlinkOnly": 1,
+        "handshake": 4,
+        "uplinkOnly": 1
+      }
+    },
+    "system": {
+      "statsOutboundDownlink": true,
+      "statsOutboundUplink": true
+    }
+  },
+  "remarks": "🇱🇹 Литва",
+  "routing": {
+    "balancers": [
+      {
+        "fallbackTag": "proxy",
+        "selector": ["proxy"],
+        "strategy": {
+          "settings": {
+            "baselines": ["400ms", "800ms"],
+            "expected": 1,
+            "maxRTT": "3s",
+            "tolerance": 0.25
+          },
+          "type": "leastLoad"
+        },
+        "tag": "balancer"
+      }
+    ],
+    "domainMatcher": "hybrid",
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "domain": ["regexp:^.{250,}$", "regexp:[^.]{64,}"],
+        "outboundTag": "block",
+        "ruleTag": "BLOCK_MALFORMED_DOMAIN",
+        "type": "field"
+      },
+      {
+        "outboundTag": "dns-out",
+        "port": 53,
+        "type": "field"
+      },
+      {
+        "domain": ["geosite:TORRENT"],
+        "outboundTag": "block",
+        "ruleTag": "TORRENT_BY_DOMAIN"
+      },
+      {
+        "outboundTag": "block",
+        "port": "6881-6889,51413,21413,17417,37305",
+        "ruleTag": "TORRENT_BY_PORT"
+      },
+      {
+        "balancerTag": "balancer",
+        "domain": [
+          "geosite:google-play",
+          "geosite:github",
+          "geosite:twitch-ads",
+          "geosite:youtube",
+          "geosite:telegram"
+        ],
+        "type": "field"
+      },
+      {
+        "domain": [
+          "geosite:private",
+          "geosite:category-ru",
+          "geosite:whitelist",
+          "geosite:microsoft",
+          "geosite:apple",
+          "geosite:epicgames",
+          "geosite:riot",
+          "geosite:escapefromtarkov",
+          "geosite:steam",
+          "geosite:twitch",
+          "geosite:pinterest",
+          "geosite:faceit"
+        ],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "outboundTag": "block",
+        "protocol": ["bittorrent"],
+        "type": "field"
+      },
+      {
+        "ip": ["geoip:private", "geoip:direct"],
+        "outboundTag": "direct",
+        "type": "field"
+      },
+      {
+        "balancerTag": "balancer",
+        "network": "tcp,udp",
+        "type": "field"
+      }
+    ]
+  },
+  "stats": {}
+}

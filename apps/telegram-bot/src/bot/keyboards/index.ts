@@ -1,34 +1,21 @@
-export const authKeyboard = [
-  [
-    { text: '🔑 Sign In', callback_data: 'auth:login' },
-    { text: '📝 Create Account', callback_data: 'auth:register' },
-  ],
-];
-
 export const mainMenuKeyboard = [
+  [{ text: '🚀 Импорт в Happ', callback_data: 'menu:subscription' }],
+  [{ text: '🔗 Моя подписка', callback_data: 'menu:mysubscription' }],
+  [{ text: '👤 Профиль', callback_data: 'menu:profile' }],
   [
-    { text: '🌐 Free VPN Configs', callback_data: 'menu:vpnconfigs' },
+    { text: '📱 Инструкция', callback_data: 'menu:instructions' },
+    { text: '🔧 Статус', callback_data: 'menu:status' },
   ],
   [
-    { text: '📊 Account', callback_data: 'menu:status' },
-    { text: '🔑 Subscription', callback_data: 'menu:subscription' },
+    { text: '❓ Помощь', callback_data: 'menu:help' },
+    { text: 'ℹ️ Информация', callback_data: 'menu:info' },
   ],
-  [
-    { text: '🖥 Servers', callback_data: 'menu:servers' },
-    { text: '📈 Traffic', callback_data: 'menu:traffic' },
-  ],
-  [
-    { text: '📱 Devices', callback_data: 'menu:devices' },
-  ],
-  [
-    { text: '🚀 Get Paid VPN', url: 'https://appi-frontend.vercel.app/checkout' },
-  ],
-  [
-    { text: '🚪 Logout', callback_data: 'menu:logout' },
-  ],
+  [{ text: '🌐 Сайт', url: 'https://appi-frontend.vercel.app' }],
+  [{ text: '🛡 Прокси MTProto', callback_data: 'menu:mtproto' }],
+  [{ text: '🛡 TG WS Proxy', url: 'https://github.com/Flowseal/tg-ws-proxy/releases' }],
 ];
 
 export const backButton = {
-  text: '◀️ Back',
+  text: '◀️ Назад',
   callback_data: 'menu:main',
 };

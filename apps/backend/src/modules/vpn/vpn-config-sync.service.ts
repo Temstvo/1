@@ -1,5 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Client } from 'pg';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { parseConfigUri, validateSecurity, ParsedConfig } from './config-parser';
 
@@ -7,6 +10,9 @@ const GITHUB_RAW = 'https://raw.githubusercontent.com/igareck/vpn-configs-for-ru
 const GITLAB_RAW = 'https://gitlab.com/igareck/vpn-configs-for-russia/-/raw/main';
 const CODEBERG_RAW = 'https://codeberg.org/igareck/vpn-configs-for-russia/raw/branch/main';
 const GITHACK_RAW = 'https://raw.githack.com/igareck/vpn-configs-for-russia/main';
+
+const RJSXRD_RAW =
+  'https://raw.githubusercontent.com/whoahaow/rjsxrd/main/githubmirror/split-by-protocols';
 
 const CHUNK_INSERT = 10;
 const CHUNK_UPDATE = 100;
@@ -83,6 +89,34 @@ const CONFIG_SOURCES = [
     listType: 'white',
     name: 'White List SNI',
   },
+  {
+    url: `${RJSXRD_RAW}/vless-secure.txt`,
+    mirrors: [`${RJSXRD_RAW}/vless.txt`],
+    listType: 'black',
+    name: 'RJSXRD VLESS Secure',
+  },
+  {
+    url: `${RJSXRD_RAW}/hysteria2-secure.txt`,
+    mirrors: [
+      `${RJSXRD_RAW}/hysteria2.txt`,
+      `${RJSXRD_RAW}/hy2-secure.txt`,
+      `${RJSXRD_RAW}/hy2.txt`,
+    ],
+    listType: 'black',
+    name: 'RJSXRD Hysteria2 Secure',
+  },
+  {
+    url: `${RJSXRD_RAW}/trojan-secure.txt`,
+    mirrors: [`${RJSXRD_RAW}/trojan.txt`],
+    listType: 'black',
+    name: 'RJSXRD Trojan Secure',
+  },
+  {
+    url: `${RJSXRD_RAW}/ss-secure.txt`,
+    mirrors: [`${RJSXRD_RAW}/ss.txt`],
+    listType: 'black',
+    name: 'RJSXRD Shadowsocks Secure',
+  },
 ];
 
 export interface SyncResults {
@@ -107,7 +141,7 @@ export class VpnConfigSyncService {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
       connectionTimeoutMillis: 15000,
-      query_timeout: 30000,
+      query_timeout: 60000,
     });
     client.on('error', () => {});
     return client;
@@ -351,6 +385,307 @@ export class VpnConfigSyncService {
       server: config.server,
       listType: config.listType,
     };
+  }
+
+  async getActiveSubscription() {
+    const configs = await this.prisma.vpnConfig.findMany({
+      where: { isActive: true },
+      orderBy: { country: 'asc' },
+      select: {
+        id: true,
+        protocol: true,
+        uri: true,
+        label: true,
+        country: true,
+        countryCode: true,
+        server: true,
+      },
+    });
+    return configs.map((c) => ({
+      id: c.id,
+      protocol: c.protocol,
+      uri: c.uri,
+      label: c.label,
+      country: c.country,
+      countryCode: c.countryCode,
+      server: c.server,
+    }));
+  }
+
+  /**
+   * Готовая выдача для Happ: проверенные (с latency) серверы первыми,
+   * лимит количества, имена в стиле «⚡ Страна» / «⚡ Страна 2».
+   */
+  async getSubscriptionLines(limit = 150): Promise<string[]> {
+    const take = Math.min(Math.max(limit, 20), 500);
+    const configs = await this.prisma.vpnConfig.findMany({
+      where: { isActive: true },
+      orderBy: [{ lastChecked: 'desc' }],
+      take: take * 2,
+      select: {
+        protocol: true,
+        uri: true,
+        label: true,
+        country: true,
+        countryCode: true,
+        server: true,
+        latency: true,
+      },
+    });
+
+    const RU: Record<string, string> = {
+      'United Kingdom': 'Великобритания',
+      Germany: 'Германия',
+      France: 'Франция',
+      Netherlands: 'Нидерланды',
+      'United States': 'США',
+      Canada: 'Канада',
+      Sweden: 'Швеция',
+      Finland: 'Финляндия',
+      Poland: 'Польша',
+      Italy: 'Италия',
+      Spain: 'Испания',
+      Turkey: 'Турция',
+      Singapore: 'Сингапур',
+      Japan: 'Япония',
+      'South Korea': 'Корея',
+      Thailand: 'Таиланд',
+      Seychelles: 'Сейшелы',
+      Anycast: 'Anycast',
+      Unknown: 'VPN',
+    };
+
+    // Живые (есть latency от health-check) — первыми, дальше по скорости
+    const sorted = [...configs].sort((a, b) => {
+      if (a.latency == null && b.latency == null) return 0;
+      if (a.latency == null) return 1;
+      if (b.latency == null) return -1;
+      return a.latency - b.latency;
+    });
+
+    const counters = new Map<string, number>();
+    const lines: string[] = [];
+    const flagFromLabel = (label?: string | null): string | null => {
+      if (!label) return null;
+      const m = label.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+      return m ? m[0] : null;
+    };
+    const flagFromCode = (code?: string | null): string | null => {
+      if (!code || code.length !== 2) return null;
+      const cc = code.toUpperCase();
+      if (cc === 'XX' || !/^[A-Z]{2}$/.test(cc)) return null;
+      return String.fromCodePoint(...[...cc].map((ch) => 0x1f1e6 - 65 + ch.charCodeAt(0)));
+    };
+    for (const c of sorted) {
+      if (!c.uri || lines.length >= take) break;
+      const base = c.uri.split('#')[0];
+      // Флаг: из сохранённой метки, иначе из countryCode — Happ рисует флаг из эмодзи в названии
+      const flag = flagFromLabel(c.label) ?? flagFromCode(c.countryCode);
+      // Если в БД уже лежит красивая метка вида «⚡ Великобрит...» — берём её как есть (сохраняем твой русский)
+      if (c.label && c.label.trim().startsWith('⚡')) {
+        const clean = c.label.trim();
+        const existing = flagFromLabel(clean) ?? flagFromCode(c.countryCode);
+        const withFlag = existing && !clean.includes(existing) ? `${existing} ${clean}` : clean;
+        lines.push(`${base}#${encodeURIComponent(withFlag)}`);
+        continue;
+      }
+      const rawPlace = (c.country || c.server || c.protocol || 'VPN').trim();
+      const place = RU[rawPlace] ?? rawPlace;
+      const n = (counters.get(place) ?? 0) + 1;
+      counters.set(place, n);
+      const core = n === 1 ? `⚡ ${place}` : `⚡ ${place} ${n}`;
+      const name = flag ? `${flag} ${core}` : core;
+      lines.push(`${base}#${encodeURIComponent(name)}`);
+    }
+    return lines;
+  }
+
+  /** Синк из локальных JSON на рабочем столе — твои 31 файл из serv configs, которым ты доверяешь */
+  async syncFromLocal(): Promise<SyncResults> {
+    const results: SyncResults = {
+      fetched: 0,
+      parsed: 0,
+      rejected: 0,
+      created: 0,
+      updated: 0,
+      duplicates: 0,
+      errors: 0,
+      sources: 0,
+    };
+    const candidates = [
+      path.resolve(process.cwd(), '..', '..', 'serv-configs'),
+      path.resolve(process.cwd(), 'serv-configs'),
+      path.resolve(__dirname, '../../../serv-configs'),
+      path.resolve(__dirname, '../../../../serv-configs'),
+      'C:\\Users\\Артём\\Desktop\\serv configs',
+    ];
+    let dir: string | null = null;
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
+          dir = p;
+          break;
+        }
+      } catch {}
+    }
+    if (!dir) {
+      this.logger.error(`syncFromLocal: serv-configs not found tried ${candidates.join(', ')}`);
+      return results;
+    }
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith('.json') && fs.statSync(path.join(dir, f)).isFile());
+    // also check subfolder sickok
+    const sub = path.join(dir, 'sickok');
+    if (fs.existsSync(sub)) {
+      for (const f of fs.readdirSync(sub).filter((f) => f.endsWith('.json')))
+        files.push(path.join('sickok', f));
+    }
+    this.logger.log(`syncFromLocal: ${files.length} files in ${dir}`);
+    const buildId = (uri: string) => {
+      const h = crypto.createHash('md5').update(uri).digest('hex');
+      return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+    };
+    const extractCountry = (remark: string) => {
+      const map: Record<string, string> = {
+        '\uD83C\uDDEC\uD83C\uDDE7': 'GB',
+        '\uD83C\uDDF3\uD83C\uDDF1': 'NL',
+        '\uD83C\uDDED\uD83C\uDDF0': 'HK',
+        '\uD83C\uDDF7\uD83C\uDDFA': 'RU',
+        '\uD83C\uDDF8\uD83C\uDDEA': 'SE',
+        '\uD83C\uDDEB\uD83C\uDDEE': 'FI',
+        '\uD83C\uDDF1\uD83C\uDDF9': 'LT',
+        '\uD83C\uDDFA\uD83C\uDDF8': 'US',
+        '\uD83C\uDDF3\uD83C\uDDF4': 'NO',
+        '\uD83C\uDDEB\uD83C\uDDF7': 'FR',
+      };
+      for (const [flag, code] of Object.entries(map))
+        if (remark.includes(flag)) {
+          const name = remark
+            .replace(flag, '')
+            .replace(/[\uFE0F\u200D]/g, '')
+            .split(/[—#^~]/)[0]
+            .trim()
+            .split('  ')[0]
+            .trim();
+          return { code, name: name || remark.slice(0, 30) };
+        }
+      return {
+        code: 'XX',
+        name:
+          remark
+            .replace(/\p{Emoji}/gu, '')
+            .trim()
+            .slice(0, 30) || 'VPN',
+      };
+    };
+    const toUri = (o: any, remark: string, idx: number) => {
+      if (o.protocol !== 'vless') return null;
+      const v = o.settings?.vnext?.[0];
+      if (!v) return null;
+      const host = v.address,
+        port = v.port,
+        uuid = v.users?.[0]?.id,
+        flow = v.users?.[0]?.flow || '',
+        enc = v.users?.[0]?.encryption || 'none';
+      const ss = o.streamSettings || {};
+      const net = ss.network || 'tcp',
+        sec = ss.security || 'none';
+      const params = new URLSearchParams();
+      params.set('encryption', enc);
+      if (flow) params.set('flow', flow);
+      params.set('security', sec);
+      params.set('type', net);
+      if (sec === 'tls') {
+        const t = ss.tlsSettings || {};
+        if (t.serverName) params.set('sni', t.serverName);
+        if (t.fingerprint) params.set('fp', t.fingerprint);
+        if (t.alpn) params.set('alpn', Array.isArray(t.alpn) ? t.alpn.join(',') : t.alpn);
+      } else if (sec === 'reality') {
+        const r = ss.realitySettings || {};
+        if (r.serverName) params.set('sni', r.serverName);
+        if (r.fingerprint) params.set('fp', r.fingerprint);
+        if (r.publicKey) params.set('pbk', r.publicKey);
+        if (r.shortId) params.set('sid', r.shortId);
+        if (r.spiderX) params.set('spx', r.spiderX);
+      }
+      if (net === 'grpc') {
+        const g = ss.grpcSettings || {};
+        if (g.serviceName) params.set('serviceName', g.serviceName);
+        if (g.authority) params.set('authority', g.authority);
+      } else if (net === 'xhttp') {
+        const x = ss.xhttpSettings || {};
+        if (x.path) params.set('path', x.path);
+        if (x.host !== undefined) params.set('host', x.host);
+        if (x.mode) params.set('mode', x.mode);
+      } else if (net === 'ws') {
+        const w = ss.wsSettings || {};
+        if (w.path) params.set('path', w.path);
+        if (w.headers?.Host) params.set('host', w.headers.Host);
+      }
+      const base = `vless://${uuid}@${host}:${port}?${params.toString()}`;
+      const clean = remark.replace(/[\uFE0F\u200D]/g, '').trim();
+      const name = idx === 0 ? clean : `${clean} ${idx + 1}`;
+      return { uri: `${base}#${encodeURIComponent(name)}`, host, port };
+    };
+    const allRows: any[] = [];
+    const seen = new Set<string>();
+    for (const file of files) {
+      const full = path.join(dir, file);
+      let j: any;
+      try {
+        j = JSON.parse(fs.readFileSync(full, 'utf8'));
+      } catch (e: any) {
+        this.logger.warn(`skip ${file}: ${e.message}`);
+        results.errors++;
+        continue;
+      }
+      const remark = j.remarks || file;
+      const outs = (j.outbounds || []).filter((o: any) => o.protocol === 'vless');
+      results.fetched += outs.length;
+      results.sources++;
+      for (let i = 0; i < outs.length; i++) {
+        const res = toUri(outs[i], remark, i);
+        if (!res) {
+          results.rejected++;
+          continue;
+        }
+        const cfgUri = res.uri.split('#')[0];
+        const id = buildId(cfgUri);
+        if (seen.has(id)) {
+          results.duplicates++;
+          continue;
+        }
+        seen.add(id);
+        const c = extractCountry(remark);
+        const label = decodeURIComponent(res.uri.split('#')[1] || '');
+        allRows.push([id, 'vless', res.uri, label, c.name, c.code, res.host + ':' + res.port]);
+        results.parsed++;
+      }
+    }
+    for (let i = 0; i < allRows.length; i += 10) {
+      const chunk = allRows.slice(i, i + 10);
+      if (i > 0) await new Promise((r) => setTimeout(r, 200));
+      const db = { client: this.createDbClient() };
+      await db.client.connect();
+      try {
+        for (const row of chunk) {
+          const [id, proto, uri, label, country, code, server] = row;
+          await this.runQuery(
+            db,
+            'INSERT INTO free_vpn_configs (id, protocol, uri, label, country, country_code, server, list_type, is_active, last_checked, created_at, updated_at, latency) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,now(),now(),now(),5) ON CONFLICT (id) DO UPDATE SET uri=EXCLUDED.uri, label=EXCLUDED.label, country=EXCLUDED.country, country_code=EXCLUDED.country_code, server=EXCLUDED.server, is_active=true, last_checked=now(), latency=5',
+            [id, proto, uri, label, country, code, server, 'desktop'],
+          );
+          results.created++;
+        }
+      } finally {
+        try {
+          await db.client.end();
+        } catch {}
+      }
+    }
+    this.logger.log(`syncFromLocal done: ${JSON.stringify(results)}`);
+    return results;
   }
 
   async getStats() {

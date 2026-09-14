@@ -32,7 +32,7 @@ export class VpnConfigScheduler implements OnModuleInit {
     }, 5000);
   }
 
-  @Cron(CronExpression.EVERY_2_HOURS)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleSync() {
     this.logger.log('Auto-syncing VPN configs...');
     try {

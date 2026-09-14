@@ -1,15 +1,18 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { BigIntInterceptor } from './common/interceptors/bigint.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
@@ -18,7 +21,11 @@ async function bootstrap() {
   app.use(helmet());
   const loggerMiddleware = new RequestLoggerMiddleware();
   app.use(loggerMiddleware.use.bind(loggerMiddleware));
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: [{ method: RequestMethod.GET, path: 'sub/:token' }],
+  });
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 

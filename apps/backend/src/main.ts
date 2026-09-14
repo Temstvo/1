@@ -22,7 +22,10 @@ async function bootstrap() {
   const loggerMiddleware = new RequestLoggerMiddleware();
   app.use(loggerMiddleware.use.bind(loggerMiddleware));
   app.setGlobalPrefix(apiPrefix, {
-    exclude: [{ method: RequestMethod.GET, path: 'sub/:token' }],
+    exclude: [
+      { method: RequestMethod.GET, path: 'sub/:token' },
+      { method: RequestMethod.GET, path: 'sub/miku/:token' },
+    ],
   });
 
   app.useStaticAssets(join(__dirname, '..', 'public'));

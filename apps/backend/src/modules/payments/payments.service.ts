@@ -1,10 +1,17 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import { YooKassaService } from './providers/yookassa.service';
 import { CryptomusService } from './providers/cryptomus.service';
+import { TelegramWalletService } from './providers/telegram-wallet.service';
 import { InvoicesService } from '../invoices/invoices.service';
 import { EmailService } from '../email/email.service';
 
@@ -19,11 +26,18 @@ export class PaymentsService {
     private readonly configService: ConfigService,
     private readonly yookassaService: YooKassaService,
     private readonly cryptomusService: CryptomusService,
+    private readonly telegramWalletService: TelegramWalletService,
     private readonly invoicesService: InvoicesService,
     private readonly emailService: EmailService,
   ) {
-    this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://appi-frontend.vercel.app');
-    this.backendUrl = this.configService.get<string>('BACKEND_URL', 'https://appibackend-production.up.railway.app');
+    this.frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'https://appi-frontend.vercel.app',
+    );
+    this.backendUrl = this.configService.get<string>(
+      'BACKEND_URL',
+      'https://appibackend-production.up.railway.app',
+    );
   }
 
   async createPayment(data: {
@@ -83,7 +97,11 @@ export class PaymentsService {
   private async preparePendingSubscription(userId: string, planId: string): Promise<string> {
     await this.prisma.subscription.updateMany({
       where: { userId, status: 'PENDING' },
-      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'Replaced by new checkout' },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelReason: 'Replaced by new checkout',
+      },
     });
 
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
@@ -165,7 +183,8 @@ export class PaymentsService {
       });
 
       const planName = payment.metadata?.planId
-        ? (await this.prisma.plan.findUnique({ where: { id: payment.metadata.planId } }))?.name || 'Pro'
+        ? (await this.prisma.plan.findUnique({ where: { id: payment.metadata.planId } }))?.name ||
+          'Pro'
         : 'Pro';
 
       if (user) {
@@ -181,7 +200,10 @@ export class PaymentsService {
     }
   }
 
-  private verifyStripeSignature(rawBody: Buffer | undefined, signature: string | undefined): boolean {
+  private verifyStripeSignature(
+    rawBody: Buffer | undefined,
+    signature: string | undefined,
+  ): boolean {
     const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET', '');
     if (!secret || !rawBody || !signature) return false;
     try {
@@ -293,7 +315,12 @@ export class PaymentsService {
     }
   }
 
-  async createCheckoutSession(userId: string, planId: string, couponCode?: string, provider: string = 'YOOKASSA') {
+  async createCheckoutSession(
+    userId: string,
+    planId: string,
+    couponCode?: string,
+    provider: string = 'YOOKASSA',
+  ) {
     const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
       throw new NotFoundException('Тариф не найден или неактивен');
@@ -317,8 +344,60 @@ export class PaymentsService {
     if (paymentProvider === 'CRYPTOMUS') {
       return this.createCryptomusPayment(userId, planId, couponCode);
     }
+    if (paymentProvider === 'TELEGRAM_WALLET') {
+      return this.createTelegramWalletPayment(userId, planId, couponCode);
+    }
 
     return this.createYooKassaPayment(userId, planId, couponCode);
+  }
+
+  async createTelegramWalletPayment(userId: string, planId: string, couponCode?: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan || !plan.isActive) throw new NotFoundException('Тариф не найден');
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (coupon && coupon.isActive) {
+        if (coupon.type === 'PERCENTAGE')
+          discount = Number(plan.price) * (Number(coupon.value) / 100);
+        else if (coupon.type === 'FIXED') discount = Number(coupon.value);
+      }
+    }
+    const finalAmount = Math.max(0, Number(plan.price) - discount);
+    const subscriptionId = await this.preparePendingSubscription(userId, planId);
+    const payment = await this.createPayment({
+      userId,
+      subscriptionId,
+      amount: finalAmount,
+      currency: plan.currency || 'RUB',
+      provider: 'TELEGRAM' as any,
+      description: `APPI VPN — ${plan.name} (Telegram-кошелёк)`,
+      metadata: { planId, couponCode: couponCode || null, provider: 'TELEGRAM_WALLET' },
+    });
+    if (!this.telegramWalletService.isConfigured()) {
+      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
+      throw new ServiceUnavailableException(
+        'Telegram-кошелёк не настроен. Укажи TELEGRAM_WALLET_USERNAME в .env',
+      );
+    }
+    const { url } = this.telegramWalletService.createInvoiceLink(
+      finalAmount,
+      plan.currency || 'RUB',
+      payment.id,
+    );
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: `tg_wallet_${payment.id}` },
+    });
+    return {
+      paymentId: payment.id,
+      paymentUrl: url,
+      confirmationUrl: url,
+      amount: finalAmount,
+      currency: plan.currency || 'RUB',
+      provider: 'TELEGRAM_WALLET',
+      subscription: { id: subscriptionId, status: 'PENDING' },
+    };
   }
 
   async refund(paymentId: string, amount?: number) {
@@ -444,7 +523,9 @@ export class PaymentsService {
     }
 
     if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
-      this.logger.log(`YooKassa webhook: payment ${payment.id} already ${payment.status}, skipping`);
+      this.logger.log(
+        `YooKassa webhook: payment ${payment.id} already ${payment.status}, skipping`,
+      );
       return { event: 'duplicate' };
     }
 
@@ -562,7 +643,9 @@ export class PaymentsService {
     }
 
     if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
-      this.logger.log(`Cryptomus webhook: payment ${payment.id} already ${payment.status}, skipping`);
+      this.logger.log(
+        `Cryptomus webhook: payment ${payment.id} already ${payment.status}, skipping`,
+      );
       return { status: 'duplicate' };
     }
 

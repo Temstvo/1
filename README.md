@@ -1,94 +1,58 @@
-# APPI VPN
+# APPI VPN — Бесплатный VPN без ограничений
 
-Production-ready SaaS VPN platform with subscriptions, payments, Telegram bot, admin panel, and multi-protocol VPN infrastructure.
+> Бесплатный VPN как у Sansara/Happ: сотни серверов, без оплат и лимитов. Подписка выдаётся Telegram-ботом, подключение — через [Happ](https://happ.su).
 
-## Features
+[![Telegram Bot](https://img.shields.io/badge/Telegram-@AppiVPNBot-2CA5E0?style=flat&logo=telegram)](https://t.me/AppiVPNBot)
+[![Happ](https://img.shields.io/badge/Happ-Proxy-3b82ff?style=flat)](https://happ.su)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-- **Multi-protocol VPN**: WireGuard, OpenVPN, Xray Reality, VLESS
-- **Subscription plans**: Free trial, Basic, Pro, Premium
-- **Payment processing**: Stripe, Cryptocurrency, Telegram
-- **Telegram bot**: Manage subscriptions, quick connect
-- **Admin panel**: Full dashboard with user/server/payment management
-- **Monitoring**: Prometheus, Grafana, Loki, Alertmanager
+## 🛍️ Stores — Скачать Happ
 
-## Tech Stack
+| iOS                                                                                                                                                                         | Android                                                                                                                                                                             | Desktop                                                                                                                                                                                                           | TV                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/us/app/happ-proxy-utility/id6504287215) | [![Google Play](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.happproxy) | Windows [x64](https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe) · macOS [dmg](https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.macOS.universal.dmg) | [Android TV](https://play.google.com/store/apps/details?id=com.happproxy)        |
+| [TestFlight](https://testflight.apple.com/join/XMls6Ckd)                                                                                                                    | [APK](https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk)                                                                                                 | Linux [deb](https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.linux.x64.deb) · [rpm](https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.linux.x64.rpm)               | [Apple TV](https://apps.apple.com/us/app/happ-proxy-utility-for-tv/id6748297274) |
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 15, React 19, TypeScript, TailwindCSS |
-| Backend | NestJS, TypeScript, Prisma ORM |
-| Database | PostgreSQL 16, Redis 7 |
-| VPN | WireGuard, OpenVPN, Xray Reality, VLESS |
-| Bot | Telegraf (Telegram) |
-| Infrastructure | Docker, Nginx, Prometheus, Grafana |
+## 📥 Как подключить — 3 шага
 
-## Quick Start
+1. **Открой бота** → [@AppiVPNBot](https://t.me/AppiVPNBot) → нажми **🚀 Импорт в Happ**
+2. **Установи Happ** — ссылки выше (iOS/Android/Desktop)
+3. **Вставь подписку** в Happ → `+` → `Из буфера` → подключись
 
-### Prerequisites
+Подписка — одна персональная ссылка вида `http://192.168.1.48:3000/sub/<token>` (как `https://sub.allcrash.ru/...`), автообновление каждый час.
 
-- Node.js 20+
-- pnpm
-- Docker & Docker Compose
-
-### Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start infrastructure
-docker-compose up -d
-
-# Run migrations
-pnpm --filter @appi/backend exec prisma migrate dev
-
-# Start development servers
-pnpm run dev
-```
-
-### Production
-
-```bash
-# Configure environment
-cp .env.production .env
-# Edit .env with your settings
-
-# Deploy
-./scripts/deploy.sh
-
-# Run migrations
-./scripts/migrate.sh
-```
-
-## Project Structure
+## 🗂️ Репозиторий
 
 ```
 appi-vpn/
 ├── apps/
-│   ├── frontend/          # User app (port 3001)
-│   ├── backend/           # API server (port 3000)
-│   ├── admin/             # Admin panel (port 3002)
-│   ├── landing/           # Landing page (port 3003)
-│   └── telegram-bot/      # Telegram bot
-├── packages/
-│   ├── ui/                # Shared UI components
-│   ├── shared/            # Shared utilities
-│   ├── sdk/               # API client SDK
-│   └── configs/           # Shared configs
-├── docker/                # Docker configurations
-├── scripts/               # Deployment scripts
-└── docs/                  # Documentation
+│   ├── backend/        # API + подписка + проверка 2ip (NestJS, Prisma, 192.168.1.48:3000)
+│   ├── telegram-bot/   # Бот @AppiVPNBot (только Happ, персональные ссылки)
+│   ├── frontend/       # Лендинг как happ.su (Next.js, / — Happ-only)
+│   └── admin/          # Админка (опционально)
+├── serv-configs/       # 31 JSON с рабочими серверами (твои, проверяются через 2ip)
+│   ├── desktop/        # 243 VLESS Reality/xhttp
+│   └── sickok/         # 8 MikuVPN
+├── packages/           # ui, shared, sdk, configs
+└── docker/             # compose, monitoring
 ```
 
-## Documentation
+## 🚀 Быстрый старт
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Testing](docs/TESTING.md)
-- [Security](docs/SECURITY_AUDIT.md)
-- [Launch Checklist](docs/LAUNCH_CHECKLIST.md)
-- [Release Notes](docs/RELEASE_NOTES.md)
+```bash
+pnpm install
+cp apps/backend/.env.example apps/backend/.env  # DATABASE_URL, JWT_*, BACKEND_URL=http://192.168.1.48:3000, SUB_LINK_BASE_URL=...
+pnpm --filter @appi/backend prisma migrate dev
+pnpm dev  # backend 3000 + bot + frontend 3001
+```
 
-## License
+## 👩‍🏫 Community
 
-Private - All rights reserved.
+| Платформа | Ссылка                                   |
+| --------- | ---------------------------------------- |
+| Telegram  | [@AppiVPNBot](https://t.me/AppiVPNBot)   |
+| Happ Chat | [t.me/happ_chat](https://t.me/happ_chat) |
+
+## 📄 Лицензия
+
+MIT — как у Happ. См. [LICENSE](LICENSE).

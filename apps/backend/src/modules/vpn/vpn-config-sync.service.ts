@@ -500,6 +500,41 @@ export class VpnConfigSyncService {
     return lines;
   }
 
+  async getMikuSubscriptionLines(): Promise<string[]> {
+    const mikuHosts = [
+      '3cge.67resserv67.info:443',
+      'rcge.67resserv67.info:443',
+      '3cnd.67resserv67.info:443',
+      '4mediaopt.reverspromk.info:443',
+      '7mediaopt.reverspromk.info:443',
+      '9mediaopt.reverspromk.info:443',
+      'mcus.67resserv67.info:443',
+      '8filestorage.reverspromk.info:443',
+    ];
+    const configs = await this.prisma.vpnConfig.findMany({
+      where: { isActive: true, server: { in: mikuHosts } },
+      select: { uri: true, label: true, server: true, countryCode: true },
+    });
+    const order = ['3cge', 'rcge', '3cnd', '4media', '7media', '9media', 'mcus', '8file'];
+    const sorted = [...configs].sort((a, b) => {
+      const ai = order.findIndex((o) => a.server.includes(o));
+      const bi = order.findIndex((o) => b.server.includes(o));
+      return ai - bi;
+    });
+    return sorted.map((c) => {
+      const base = c.uri.split('#')[0];
+      const flag = c.label?.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u)?.[0] ?? null;
+      const rawName = (c.label || '')
+        .replace(/[\u{1F1E6}-\u{1F1FF}\uFE0F\u200D]/gu, '')
+        .replace('⚡', '')
+        .trim()
+        .replace(/\s+/g, ' ');
+      // Screenshot: "Германия №1" etc without ⚡, flag shown as icon via countryCode, but include flag in URI for Windows fallback
+      const name = flag ? `${flag} ${rawName}` : rawName;
+      return `${base}#${encodeURIComponent(name)}`;
+    });
+  }
+
   /** Синк из локальных JSON на рабочем столе — твои 31 файл из serv configs, которым ты доверяешь */
   async syncFromLocal(): Promise<SyncResults> {
     const results: SyncResults = {

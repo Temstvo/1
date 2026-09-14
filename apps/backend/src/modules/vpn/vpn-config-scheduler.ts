@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
 import { HealthCheckService } from './health-check.service';
+import { PrivacyCheckService } from './privacy-check.service';
 import { MigrationService } from './migration.service';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class VpnConfigScheduler implements OnModuleInit {
   constructor(
     private readonly syncService: VpnConfigSyncService,
     private readonly healthCheckService: HealthCheckService,
+    private readonly privacyCheckService: PrivacyCheckService,
     private readonly migrationService: MigrationService,
   ) {}
 
@@ -56,6 +58,16 @@ export class VpnConfigScheduler implements OnModuleInit {
       await this.healthCheckService.forceCheck();
     } catch (error: any) {
       this.logger.error(`Health check failed: ${error.message}`);
+    }
+  }
+
+  @Cron('0 */2 * * *')
+  async handlePrivacyCheck() {
+    this.logger.log('Running 2ip.io privacy check...');
+    try {
+      await this.privacyCheckService.runBatch(50);
+    } catch (error: any) {
+      this.logger.error(`Privacy check failed: ${error.message}`);
     }
   }
 }

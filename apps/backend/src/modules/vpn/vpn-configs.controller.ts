@@ -2,11 +2,15 @@ import { Controller, Get, Query, Param, Post, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
+import { PrivacyCheckService } from './privacy-check.service';
 
 @ApiTags('vpn-configs')
 @Controller('vpn-configs')
 export class VpnConfigsController {
-  constructor(private readonly syncService: VpnConfigSyncService) {}
+  constructor(
+    private readonly syncService: VpnConfigSyncService,
+    private readonly privacyCheckService: PrivacyCheckService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get available VPN configs' })
@@ -79,5 +83,11 @@ export class VpnConfigsController {
   @ApiOperation({ summary: 'Trigger sync from local serv-configs/*.json (desktop)' })
   async syncLocal() {
     return this.syncService.syncFromLocal();
+  }
+
+  @Post('check-privacy')
+  @ApiOperation({ summary: 'Check configs through 2ip.io/privacy (50 at a time)' })
+  async checkPrivacy() {
+    return this.privacyCheckService.runBatch(50);
   }
 }

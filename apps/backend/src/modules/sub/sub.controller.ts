@@ -72,10 +72,14 @@ export class SubController {
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#070b14;color:#d6e1ff;min-height:100vh;position:relative;overflow-x:hidden}
-body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(800px 400px at 50% -10%, rgba(59,130,246,.18), transparent 60%), radial-gradient(600px 300px at 90% 90%, rgba(34,211,238,.10), transparent 60%), linear-gradient(180deg,#070b14,#0a1020)}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(900px 500px at 50% -10%, rgba(59,130,246,.20), transparent 60%), radial-gradient(700px 400px at 95% 95%, rgba(34,211,238,.12), transparent 60%), linear-gradient(180deg,#070b14,#0a1020)}
 a{color:#38bdf8;text-decoration:none}
-.wrap{max-width:780px;margin:0 auto;padding:28px 16px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.wrap{max-width:780px;margin:0 auto;padding:24px 16px}
+.hero{position:relative;overflow:hidden;border-radius:20px;padding:22px;border:1px solid rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(17,28,51,.98) 0%, rgba(11,20,40,.98) 55%, rgba(14,42,26,.9) 100%);box-shadow:0 16px 50px rgba(0,0,0,.5);margin-bottom:16px}
+.hero:before{content:"";position:absolute;inset:-1px;border-radius:20px;background:linear-gradient(90deg,rgba(59,130,246,.35),rgba(34,211,238,.18),transparent);opacity:.6;z-index:-1}
+.hero h1{margin:0;font-size:22px;font-weight:800;letter-spacing:.3px;background:linear-gradient(90deg,#60a5fa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:8px 0 0 0;color:#93a4c1;font-size:13px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .logo{color:#60a5fa;font-weight:800;letter-spacing:.4px;display:flex;gap:10px;align-items:center;font-size:15px}
 .logo i{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3b82ff 0%,#06b6d4 100%);display:inline-block;box-shadow:0 4px 12px rgba(59,130,246,.4)}
 .actions{display:flex;gap:10px}
@@ -107,7 +111,8 @@ code.url{word-break:break-all;background:rgba(13,26,51,.9);border:1px solid rgba
 </style>
 </head><body>
 <div class="wrap">
-  <div class="header"><div class="logo"><i></i> Subscription</div><div class="actions"><button class="iconbtn" onclick="navigator.clipboard.writeText('${subUrl}')" title="Копировать ссылку">🔗</button><a class="iconbtn" href="https://t.me/AppiVPNBot" title="Чат">💬</a></div></div>
+  <div class="hero"><h1>APPI VPN & MikuVPN</h1><p>Одна ссылка — 243 сервера. Включая 8 MikuVPN как на скрине. Без оплат и лимитов.</p></div>
+  <div class="header"><div class="logo"><i></i> Subscription — ${link.label}</div><div class="actions"><button class="iconbtn" onclick="navigator.clipboard.writeText('${subUrl}')" title="Копировать ссылку">🔗</button><a class="iconbtn" href="https://t.me/AppiVPNBot" title="Чат">💬</a></div></div>
 
   <div class="card">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:28px;height:28px;border-radius:50%;background:#12301a;border:1px solid #1a7a3a;display:grid;place-items:center;color:#5ee17b">✓</div><div><div style="font-weight:800">${link.label}</div><div style="font-size:12px;color:#5ee17b">Истекает через ${daysLeft} дн.</div></div></div>
@@ -179,5 +184,16 @@ setPlatform('Windows');
       `${(process.env.SUB_LINK_BASE_URL || process.env.BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '')}/sub/${link.token}`,
     );
     return lines.join('\n');
+  }
+
+  @Get('sub/miku/:token')
+  @ApiOperation({ summary: 'MikuVPN — alias to main (одна ссылка на всё)' })
+  async getMikuSub(
+    @Param('token') token: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // Одна подписка на всё — редиректим на основную, чтобы не плодить две ссылки
+    return this.getSub(token, req, res);
   }
 }

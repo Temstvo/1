@@ -50,11 +50,13 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Create checkout session' })
   @ApiResponse({ status: 200, description: 'Checkout session created' })
-  async createCheckout(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CreateCheckoutDto,
-  ) {
-    return this.paymentsService.createCheckoutSession(userId, dto.planId, dto.couponCode, dto.provider);
+  async createCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
+    return this.paymentsService.createCheckoutSession(
+      userId,
+      dto.planId,
+      dto.couponCode,
+      dto.provider,
+    );
   }
 
   @Post('checkout/yookassa')
@@ -63,10 +65,7 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Create YooKassa checkout' })
   @ApiResponse({ status: 200, description: 'YooKassa checkout created' })
-  async createYooKassaCheckout(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CreateCheckoutDto,
-  ) {
+  async createYooKassaCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
     return this.paymentsService.createYooKassaPayment(userId, dto.planId, dto.couponCode);
   }
 
@@ -76,11 +75,30 @@ export class PaymentsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Create Cryptomus checkout' })
   @ApiResponse({ status: 200, description: 'Cryptomus checkout created' })
-  async createCryptomusCheckout(
+  async createCryptomusCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
+    return this.paymentsService.createCryptomusPayment(userId, dto.planId, dto.couponCode);
+  }
+
+  @Post('checkout/telegram-wallet')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create Telegram wallet checkout (best for donations)' })
+  @ApiResponse({ status: 200, description: 'Telegram wallet link' })
+  async createTelegramWalletCheckout(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateCheckoutDto,
   ) {
-    return this.paymentsService.createCryptomusPayment(userId, dto.planId, dto.couponCode);
+    return this.paymentsService.createTelegramWalletPayment(userId, dto.planId, dto.couponCode);
+  }
+
+  @Get('telegram-wallet/info')
+  @ApiOperation({ summary: 'Get Telegram wallet config' })
+  @ApiResponse({ status: 200, description: 'Wallet info' })
+  async getTelegramWalletInfo() {
+    // публичный, без guard — чтобы бот мог показать куда платить
+    const svc: any = (this.paymentsService as any).telegramWalletService;
+    return svc.getWalletInfo();
   }
 
   @Get()
@@ -141,10 +159,7 @@ export class PaymentsController {
   @Post('webhook/cryptomus')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cryptomus webhook handler' })
-  async cryptomusWebhook(
-    @Headers('sign') signature: string,
-    @Body() body: any,
-  ) {
+  async cryptomusWebhook(@Headers('sign') signature: string, @Body() body: any) {
     return this.paymentsService.handleCryptomusWebhook(body, signature);
   }
 }

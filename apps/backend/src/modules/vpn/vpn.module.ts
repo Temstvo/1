@@ -4,6 +4,7 @@ import { VpnConfigService } from './vpn-config.service';
 import { VpnConfigSyncService } from './vpn-config-sync.service';
 import { VpnConfigScheduler } from './vpn-config-scheduler';
 import { HealthCheckService } from './health-check.service';
+import { PrivacyCheckService } from './privacy-check.service';
 import { MigrationService } from './migration.service';
 import { NodeRegistryService } from './node-registry.service';
 import { VpnController } from './vpn.controller';
@@ -21,6 +22,7 @@ import { PrismaModule } from '../../database/prisma.module';
     VpnConfigSyncService,
     VpnConfigScheduler,
     HealthCheckService,
+    PrivacyCheckService,
     MigrationService,
     ConnectionsService,
     NodeRegistryService,
@@ -30,6 +32,7 @@ import { PrismaModule } from '../../database/prisma.module';
     VpnConfigService,
     VpnConfigSyncService,
     HealthCheckService,
+    PrivacyCheckService,
     ConnectionsService,
     NodeRegistryService,
   ],

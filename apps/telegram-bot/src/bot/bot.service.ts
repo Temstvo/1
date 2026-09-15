@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Telegraf } from 'telegraf';
+import * as https from 'https';
 
 @Injectable()
 export class BotService implements OnModuleDestroy {
@@ -15,13 +16,34 @@ export class BotService implements OnModuleDestroy {
       return;
     }
 
-    this.bot = new Telegraf(token);
+    // Обход блокировки api.telegram.org через прямой IP 149.154.167.220 (проверено curl -k)
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+      // @ts-ignore — кастомный lookup, чтобы api.telegram.org резолвился в 149.154.167.220
+      lookup: (hostname: string, opts: any, cb: any) => {
+        if (typeof opts === 'function') {
+          cb = opts;
+          opts = {};
+        }
+        if (hostname === 'api.telegram.org') {
+          if (opts?.all) return cb(null, [{ address: '149.154.167.220', family: 4 }]);
+          return cb(null, '149.154.167.220', 4);
+        }
+        return (require('dns') as any).lookup(hostname, opts, cb);
+      },
+    } as any);
+    this.bot = new Telegraf(token, {
+      telegram: {
+        apiRoot: 'https://api.telegram.org',
+        agent,
+      } as any,
+    });
 
     this.bot.catch((err, ctx) => {
       this.logger.error(`Bot error for ${ctx.updateType}:`, err);
     });
 
-    this.logger.log('Bot initialized');
+    this.logger.log('Bot initialized (direct IP)');
   }
 
   async onModuleDestroy() {

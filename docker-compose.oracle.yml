@@ -1,0 +1,67 @@
+# Oracle Cloud Always Free — только backend + bot + frontend, БД в Supabase
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: appi-backend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL} # Supabase pooler
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - BACKEND_URL=${BACKEND_URL:-http://__ORACLE_IP__:3000}
+      - SUB_LINK_BASE_URL=${SUB_LINK_BASE_URL:-http://__ORACLE_IP__:3000}
+      - SUBSCRIPTION_TOKEN=${SUBSCRIPTION_TOKEN:-K7vQ-9pL2wX4mZ8n}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_WALLET_USERNAME=${TELEGRAM_WALLET_USERNAME:-AppiVPNBot}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://__ORACLE_IP__:3001}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - appi-network
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: apps/telegram-bot/Dockerfile
+    container_name: appi-telegram-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - BACKEND_URL=http://backend:3000
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - appi-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: appi-frontend
+    restart: unless-stopped
+    ports:
+      - '80:3001'
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:3000/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - appi-network
+
+networks:
+  appi-network:
+    driver: bridge

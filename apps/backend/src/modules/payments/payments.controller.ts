@@ -120,6 +120,20 @@ export class PaymentsController {
     return this.paymentsService.getPaymentStats();
   }
 
+  @Post('telegram-wallet/bot-create')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create Telegram wallet payment for bot user (no JWT)' })
+  async createTelegramWalletForBot(
+    @Body() dto: { telegramId: string; amount?: number; currency?: string },
+  ) {
+    if (!dto.telegramId) throw new ForbiddenException('telegramId required');
+    return this.paymentsService.createTelegramWalletForTelegramId(
+      String(dto.telegramId),
+      dto.amount || 100,
+      dto.currency || 'RUB',
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

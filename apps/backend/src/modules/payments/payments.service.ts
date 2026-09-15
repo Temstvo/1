@@ -400,6 +400,39 @@ export class PaymentsService {
     };
   }
 
+  async createTelegramWalletForTelegramId(telegramId: string, amount = 100, currency = 'RUB') {
+    let user = await this.prisma.user.findFirst({
+      where: { email: `tg_${telegramId}@telegram.local` },
+    });
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: `tg_${telegramId}@telegram.local`,
+          passwordHash: crypto.randomBytes(16).toString('hex'),
+          referralCode: `tg_${telegramId}_${Date.now()}`,
+        },
+      });
+    }
+    const payment = await this.createPayment({
+      userId: user.id,
+      amount,
+      currency,
+      provider: 'TELEGRAM' as any,
+      description: `APPI VPN — донат ${amount} ${currency} от tg:${telegramId}`,
+      metadata: { telegramId, provider: 'TELEGRAM_WALLET', kind: 'donate' },
+    });
+    if (!this.telegramWalletService.isConfigured()) {
+      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
+      throw new ServiceUnavailableException('Telegram-кошелёк не настроен');
+    }
+    const { url } = this.telegramWalletService.createInvoiceLink(amount, currency, payment.id);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: `tg_wallet_${payment.id}` },
+    });
+    return { paymentId: payment.id, paymentUrl: url, amount, currency, telegramId };
+  }
+
   async refund(paymentId: string, amount?: number) {
     const payment = await this.findById(paymentId);
 

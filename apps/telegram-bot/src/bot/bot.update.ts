@@ -54,6 +54,18 @@ export class BotUpdate implements OnModuleInit {
 
   private registerHandlers() {
     const bot = this.botService.getBot();
+    // Глушим протухшие callback'и (query is too old), чтобы не падали хендлеры
+    bot.use(async (ctx, next) => {
+      const orig = ctx.answerCbQuery.bind(ctx);
+      (ctx as any).answerCbQuery = async (...args: any[]) => {
+        try {
+          return await (orig as any)(...args);
+        } catch {
+          return true as any;
+        }
+      };
+      await next();
+    });
     bot.start((ctx) => this.handleStart(ctx));
     bot.help((ctx) => this.handleHelp(ctx));
     bot.action('menu:main', (ctx) => this.handleMainMenu(ctx));

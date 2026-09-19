@@ -16,22 +16,8 @@ export class BotService implements OnModuleDestroy {
       return;
     }
 
-    // Обход блокировки api.telegram.org через прямой IP 149.154.167.220 (проверено curl -k)
-    const agent = new https.Agent({
-      rejectUnauthorized: false,
-      // @ts-ignore — кастомный lookup, чтобы api.telegram.org резолвился в 149.154.167.220
-      lookup: (hostname: string, opts: any, cb: any) => {
-        if (typeof opts === 'function') {
-          cb = opts;
-          opts = {};
-        }
-        if (hostname === 'api.telegram.org') {
-          if (opts?.all) return cb(null, [{ address: '149.154.167.220', family: 4 }]);
-          return cb(null, '149.154.167.220', 4);
-        }
-        return (require('dns') as any).lookup(hostname, opts, cb);
-      },
-    } as any);
+    // api.telegram.org прописан в hosts -> 149.154.167.220, rejectUnauthorized снимает mismatch серта
+    const agent = new https.Agent({ rejectUnauthorized: false });
     this.bot = new Telegraf(token, {
       telegram: {
         apiRoot: 'https://api.telegram.org',
@@ -43,7 +29,7 @@ export class BotService implements OnModuleDestroy {
       this.logger.error(`Bot error for ${ctx.updateType}:`, err);
     });
 
-    this.logger.log('Bot initialized (direct IP)');
+    this.logger.log('Bot initialized (hosts)');
   }
 
   async onModuleDestroy() {

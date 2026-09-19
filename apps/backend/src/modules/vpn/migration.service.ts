@@ -43,6 +43,36 @@ export class MigrationService implements OnModuleInit {
   }
 
   private async runMigrations(client: PrismaClient) {
+    // Growth-таблицы (рефералка + premium) — всегда, через IF NOT EXISTS
+    const growthStatements = [
+      `CREATE TABLE IF NOT EXISTS tg_referrals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        inviter_id TEXT NOT NULL,
+        invited_id TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_tg_referrals_inviter ON tg_referrals(inviter_id)`,
+      `CREATE TABLE IF NOT EXISTS tg_premium (
+        telegram_id TEXT PRIMARY KEY,
+        until TIMESTAMPTZ NOT NULL,
+        total_stars INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`,
+    ];
+    for (const sql of growthStatements) {
+      try {
+        await Promise.race([
+          client.$executeRawUnsafe(sql),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('statement timeout')), 20000),
+          ),
+        ]);
+      } catch (error: any) {
+        this.logger.warn(`Growth migration: ${error.message}`);
+      }
+    }
+    this.logger.log('Migration: tg_referrals + tg_premium ensured');
+
     try {
       const exists = await client.$queryRawUnsafe(
         `SELECT to_regclass('public.free_vpn_configs') IS NOT NULL AS exists`,

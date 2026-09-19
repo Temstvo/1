@@ -76,12 +76,34 @@ export class BotUpdate implements OnModuleInit {
     bot.action('menu:status', (ctx) => this.handleStatus(ctx));
     bot.action('menu:help', (ctx) => this.handleHelpAction(ctx));
     bot.action('menu:info', (ctx) => this.handleInfo(ctx));
+    bot.action('menu:referral', (ctx) => this.handleReferral(ctx));
+    bot.action('menu:premium', (ctx) => this.handlePremium(ctx));
+    bot.action('menu:extend', (ctx) => this.handleExtend(ctx));
+    bot.action(/^stars:(.+)$/, (ctx) => this.handleStarsBuy(ctx));
     bot.action(/^getconfig:(.+)$/, (ctx) => this.handleGetConfig(ctx));
     bot.action(/^configlist:(.+)$/, (ctx) => this.handleConfigList(ctx));
     bot.action('menu:mtproto', (ctx) => this.handleMtproto(ctx));
+    bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
+    bot.on('successful_payment', (ctx) => this.handleSuccessPayment(ctx));
   }
 
   private async handleStart(ctx: Context) {
+    // Реферальный deep-link: /start ref_<tgId>
+    try {
+      const payload = String((ctx as any).startPayload || '');
+      const me = String((ctx.from as any)?.id || '0');
+      if (payload.startsWith('ref_')) {
+        const res: any = await this.api('/growth/referral', {
+          method: 'POST',
+          body: { telegramId: me, refCode: payload },
+        }).catch(() => null);
+        if (res?.isNew) {
+          await ctx.reply(
+            '🎁 Ты пришёл по приглашению — тебе начислено +5 дней подписки!\nПригласившему тоже +7 дней.',
+          );
+        }
+      }
+    } catch {}
     const infoText =
       'Сотни рабочих серверов. Без оплат и лимитов — список обновляется сам.\n\n' +
       'Как подключиться\n\n' +
@@ -220,9 +242,14 @@ export class BotUpdate implements OnModuleInit {
       const exp = new Date(data.expiresAt);
       const daysLeft = Math.max(0, Math.ceil((exp.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
       const traffic = (Number(data.trafficUsed) / 1024 / 1024 / 1024).toFixed(2);
+      const stats = await this.growthStats(tgId);
+      const premLine = stats?.isPremium
+        ? `⭐ Premium до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n`
+        : '';
       await this.editOrReply(
         ctx,
         `🔗 Моя подписка\n\n` +
+          premLine +
           `ID: ${data.label}\n` +
           `Статус: Активна\n` +
           `Истекает: ${exp.toLocaleDateString('ru-RU')} (через ${daysLeft} дн.)\n` +
@@ -234,6 +261,10 @@ export class BotUpdate implements OnModuleInit {
             inline_keyboard: [
               [{ text: '🚀 Импорт в Happ', callback_data: 'menu:subscription' }],
               [{ text: '🌐 Открыть в браузере', url: data.url }],
+              [
+                { text: '🔄 Продлить +2 дня', callback_data: 'menu:extend' },
+                { text: '⭐ Premium', callback_data: 'menu:premium' },
+              ],
               [backButton],
             ],
           },
@@ -256,18 +287,25 @@ export class BotUpdate implements OnModuleInit {
         body: { telegramId: tgId },
       });
       const exp = new Date(data.expiresAt).toLocaleDateString('ru-RU');
+      const stats = await this.growthStats(tgId);
+      const premLine = stats?.isPremium
+        ? `⭐ Premium до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n`
+        : `Premium: нет (кнопка ⭐ в меню)\n`;
       await this.editOrReply(
         ctx,
         `👤 Профиль\n\n` +
           `Telegram ID: ${tgId}\n` +
           `Username: ${username}\n` +
+          premLine +
           `Подписка: ${data.label}\n` +
-          `Истекает: ${exp}\n\n` +
+          `Истекает: ${exp}\n` +
+          `Приглашено друзей: ${stats?.referrals ?? 0}\n\n` +
           `Бесплатный VPN без регистрации.`,
         {
           reply_markup: {
             inline_keyboard: [
               [{ text: '🔗 Моя подписка', callback_data: 'menu:mysubscription' }],
+              [{ text: '🎁 Пригласи друга', callback_data: 'menu:referral' }],
               [backButton],
             ],
           },
@@ -411,6 +449,169 @@ export class BotUpdate implements OnModuleInit {
           },
         },
       );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async growthStats(tgId: string): Promise<any> {
+    return this.api(`/growth/stats/${tgId}`).catch(() => null);
+  }
+
+  private async handleReferral(ctx: Context) {
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    const stats = await this.growthStats(tgId);
+    const count = stats?.referrals ?? 0;
+    const link = `https://t.me/AppiVPNBot?start=ref_${tgId}`;
+    await this.editOrReply(
+      ctx,
+      `🎁 Пригласи друга\n\n` +
+        `Твоя ссылка:\n${link}\n\n` +
+        `Приглашено: ${count}\n\n` +
+        `За каждого друга:\n` +
+        `• тебе +7 дней подписки\n` +
+        `• другу +5 дней подписки\n\n` +
+        `Поделись ссылкой — бонусы начисляются автоматически.`,
+      { reply_markup: { inline_keyboard: [[backButton]] } },
+    );
+  }
+
+  private async handlePremium(ctx: Context) {
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    const stats = await this.growthStats(tgId);
+    const premLine = stats?.isPremium
+      ? `⭐ Premium активен до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n\n`
+      : '';
+    await this.editOrReply(
+      ctx,
+      `⭐ Premium\n\n` +
+        premLine +
+        `Что даёт:\n` +
+        `• подписка 30 дней вместо 2\n` +
+        `• приоритетные серверы\n` +
+        `• поддержка проекта\n\n` +
+        `Оплата — Telegram Stars (встроенная валюта Telegram):`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '⭐ Premium 30 дней — 149 ⭐', callback_data: 'stars:premium_30' }],
+            [
+              { text: '💛 Донат 15 ⭐', callback_data: 'stars:donate_15' },
+              { text: '💛 Донат 50 ⭐', callback_data: 'stars:donate_50' },
+            ],
+            [{ text: '💛 Донат 150 ⭐', callback_data: 'stars:donate_150' }],
+            [backButton],
+          ],
+        },
+      },
+    );
+  }
+
+  private async handleStarsBuy(ctx: any) {
+    const kind = String(ctx.match?.[1] || '');
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    const offers: Record<string, { title: string; desc: string; amount: number; payload: string }> =
+      {
+        premium_30: {
+          title: 'APPI VPN Premium — 30 дней',
+          desc: 'Подписка 30 дней + приоритетные серверы',
+          amount: 149,
+          payload: `premium_30_${tgId}`,
+        },
+        donate_15: {
+          title: 'Донат APPI VPN',
+          desc: 'Поддержка проекта +1 день подписки',
+          amount: 15,
+          payload: `donate_15_${tgId}`,
+        },
+        donate_50: {
+          title: 'Донат APPI VPN',
+          desc: 'Поддержка проекта +1 день подписки',
+          amount: 50,
+          payload: `donate_50_${tgId}`,
+        },
+        donate_150: {
+          title: 'Донат APPI VPN',
+          desc: 'Поддержка проекта +1 день подписки',
+          amount: 150,
+          payload: `donate_150_${tgId}`,
+        },
+      };
+    const offer = offers[kind];
+    if (!offer) return;
+    try {
+      await ctx.replyWithInvoice({
+        title: offer.title,
+        description: offer.desc,
+        payload: offer.payload,
+        provider_token: '',
+        currency: 'XTR',
+        prices: [{ label: offer.title, amount: offer.amount }],
+      });
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Не удалось создать счёт: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleSuccessPayment(ctx: any) {
+    try {
+      const pay = ctx.message?.successful_payment as any;
+      if (!pay) return;
+      const payload = String(pay.payload || '');
+      const tgId = String((ctx.from as any)?.id || '0');
+      const stars = Number(pay.total_amount || 0);
+      if (payload.startsWith('premium_30_')) {
+        await this.api('/growth/premium/grant', {
+          method: 'POST',
+          body: { telegramId: tgId, days: 30, stars, source: 'stars' },
+        }).catch(() => null);
+        await ctx.reply(
+          '⭐ Premium активирован на 30 дней! Спасибо за поддержку.\nПроверь «🔗 Моя подписка» — срок продлён.',
+        );
+      } else if (payload.startsWith('donate_')) {
+        await this.api('/growth/premium/grant', {
+          method: 'POST',
+          body: { telegramId: tgId, days: 1, stars, source: 'donate' },
+        }).catch(() => null);
+        await ctx.reply('💛 Спасибо за донат! Тебе начислен +1 день подписки.');
+      }
+    } catch (e: any) {
+      this.logger.error(`successPayment: ${e.message}`);
+    }
+  }
+
+  private async handleExtend(ctx: Context) {
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    try {
+      const link: any = await this.api('/sub-links', {
+        method: 'POST',
+        body: { telegramId: tgId },
+      });
+      const daysLeft = Math.ceil((new Date(link.expiresAt).getTime() - Date.now()) / 86400000);
+      if (daysLeft > 7) {
+        await this.editOrReply(
+          ctx,
+          `🔄 Продление не нужно — подписка активна ещё ${daysLeft} дн.\nВозвращайся, когда останется меньше 7 дней.`,
+          { reply_markup: { inline_keyboard: [[backButton]] } },
+        );
+        return;
+      }
+      const res: any = await this.api('/growth/extend', {
+        method: 'POST',
+        body: { telegramId: tgId, days: 2 },
+      });
+      const exp = res?.expiresAt ? new Date(res.expiresAt).toLocaleDateString('ru-RU') : '';
+      await this.editOrReply(ctx, `🔄 Подписка продлена на 2 дня — до ${exp}.`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
     } catch (e: any) {
       await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
         reply_markup: { inline_keyboard: [[backButton]] },

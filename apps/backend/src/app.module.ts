@@ -22,6 +22,7 @@ import { ReferralsModule } from './modules/referrals/referrals.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
+import { GrowthModule } from './modules/growth/growth.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { EmailModule } from './modules/email/email.module';
     CouponsModule,
     HealthModule,
     EmailModule,
+    GrowthModule,
   ],
 })
 export class AppModule {}

@@ -159,7 +159,7 @@ export class VpnConfigSyncService {
         try {
           await holder.client.end();
         } catch {}
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, 1000));
         const fresh = this.createDbClient();
         await fresh.connect();
         holder.client = fresh;

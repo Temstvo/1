@@ -476,7 +476,7 @@ class RobustPgQueryable {
       } catch (error: any) {
         if (this.canRecreatePool && isConnectionError(error) && attempt < 10) {
           await this.recreatePool();
-          await new Promise((r) => setTimeout(r, 3000));
+          await new Promise((r) => setTimeout(r, 1000));
           continue;
         }
         throw error;

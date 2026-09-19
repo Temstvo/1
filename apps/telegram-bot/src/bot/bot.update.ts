@@ -235,14 +235,14 @@ export class BotUpdate implements OnModuleInit {
     await ctx.answerCbQuery();
     try {
       const tgId = String((ctx.from as any)?.id || '0');
-      const data: any = await this.api('/sub-links', {
-        method: 'POST',
-        body: { telegramId: tgId },
-      });
+      // Параллельно: ссылка + статистика (было последовательно — тормозило)
+      const [data, stats]: any[] = await Promise.all([
+        this.api('/sub-links', { method: 'POST', body: { telegramId: tgId } }),
+        this.growthStats(tgId),
+      ]);
       const exp = new Date(data.expiresAt);
       const daysLeft = Math.max(0, Math.ceil((exp.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
       const traffic = (Number(data.trafficUsed) / 1024 / 1024 / 1024).toFixed(2);
-      const stats = await this.growthStats(tgId);
       const premLine = stats?.isPremium
         ? `⭐ Premium до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n`
         : '';
@@ -282,12 +282,12 @@ export class BotUpdate implements OnModuleInit {
     try {
       const tgId = String((ctx.from as any)?.id || '0');
       const username = (ctx.from as any)?.username ? `@${(ctx.from as any).username}` : '—';
-      const data: any = await this.api('/sub-links', {
-        method: 'POST',
-        body: { telegramId: tgId },
-      });
+      // Параллельно: ссылка + статистика (было последовательно — тормозило)
+      const [data, stats]: any[] = await Promise.all([
+        this.api('/sub-links', { method: 'POST', body: { telegramId: tgId } }),
+        this.growthStats(tgId),
+      ]);
       const exp = new Date(data.expiresAt).toLocaleDateString('ru-RU');
-      const stats = await this.growthStats(tgId);
       const premLine = stats?.isPremium
         ? `⭐ Premium до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n`
         : `Premium: нет (кнопка ⭐ в меню)\n`;

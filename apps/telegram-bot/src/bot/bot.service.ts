@@ -16,9 +16,7 @@ export class BotService implements OnModuleDestroy {
       return;
     }
 
-    // api.telegram.org прописан в hosts -> 149.154.167.220, rejectUnauthorized снимает mismatch серта
-    // keepAlive: переиспользование TLS-соединений, иначе каждый вызов = новый handshake (~0.5с)
-    const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true, timeout: 15000 });
+    const agent = new https.Agent({ keepAlive: true, timeout: 15000 });
     this.bot = new Telegraf(token, {
       telegram: {
         apiRoot: 'https://api.telegram.org',

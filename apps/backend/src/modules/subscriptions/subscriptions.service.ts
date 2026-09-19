@@ -1,177 +1,78 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../database/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import { lockUser } from '../../database/lock-user';
 
 @Injectable()
 export class SubscriptionsService {
-  private readonly logger = new Logger(SubscriptionsService.name);
-
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly paymentsService: PaymentsService,
+    private prisma: PrismaService,
+    private payments: PaymentsService,
   ) {}
-
   async getCurrentUserSubscription(userId: string) {
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
+    const current = await this.prisma.subscription.findFirst({
+      where: { userId },
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
-
-    return subscription || null;
+    if (current?.status === 'ACTIVE' && current.expiresAt <= new Date())
+      return { ...current, status: 'EXPIRED' };
+    return current;
   }
-
-  async create(userId: string, dto: { planId: string; couponCode?: string; paymentMethod?: string; provider?: string }) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
-    if (!plan || !plan.isActive) {
-      throw new NotFoundException('Тариф не найден или неактивен');
-    }
-
-    const activeSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD', 'PENDING'] } },
-    });
-
-    if (activeSubscription && activeSubscription.status !== 'PENDING') {
-      throw new ConflictException('У вас уже есть активная подписка');
-    }
-
-    const checkout = await this.paymentsService.createYooKassaPayment(userId, dto.planId, dto.couponCode);
-
-    return {
-      subscription: { id: checkout.subscription.id, status: 'PENDING' },
-      payment: { id: checkout.paymentId, amount: checkout.amount, currency: checkout.currency },
-      confirmationUrl: checkout.confirmationUrl,
-    };
+  create(userId: string, dto: { planId: string; couponCode?: string }) {
+    return this.payments.createCheckoutSession(userId, dto.planId, dto.couponCode);
   }
-
   async cancel(userId: string, reason?: string) {
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
-    });
-
-    if (!subscription) {
-      throw new NotFoundException('Нет активной подписки');
-    }
-
-    return this.prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        status: 'CANCELLED',
-        cancelledAt: new Date(),
-        cancelReason: reason,
-        autoRenew: false,
-      },
-      include: { plan: true },
+    return this.prisma.$transaction(async (tx) => {
+      await lockUser(tx, userId);
+      const sub = await tx.subscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+      if (!sub) throw new NotFoundException('Нет активной подписки');
+      await tx.vpnAccess.updateMany({
+        where: { userId },
+        data: {
+          enabled: false,
+          status: 'PENDING',
+          revision: { increment: 1 },
+          nextAttemptAt: new Date(),
+        },
+      });
+      return tx.subscription.update({
+        where: { id: sub.id },
+        data: {
+          status: 'CANCELLED',
+          autoRenew: false,
+          cancelledAt: new Date(),
+          cancelReason: reason,
+        },
+        include: { plan: true },
+      });
     });
   }
-
-  async changePlan(userId: string, newPlanId: string, couponCode?: string) {
-    const currentSubscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'GRACE_PERIOD'] } },
-    });
-
-    if (!currentSubscription) {
-      throw new NotFoundException('Нет активной подписки');
-    }
-
-    const newPlan = await this.prisma.plan.findUnique({ where: { id: newPlanId } });
-    if (!newPlan || !newPlan.isActive) {
-      throw new NotFoundException('Новый тариф не найден или неактивен');
-    }
-
-    if (currentSubscription.planId === newPlanId) {
-      throw new BadRequestException('Нельзя сменить на тот же тариф');
-    }
-
-    const checkout = await this.paymentsService.createYooKassaPayment(userId, newPlanId, couponCode);
-
-    return {
-      subscription: { id: checkout.subscription.id, status: 'PENDING' },
-      payment: { id: checkout.paymentId, amount: checkout.amount, currency: checkout.currency },
-      confirmationUrl: checkout.confirmationUrl,
-    };
+  changePlan(userId: string, planId: string, couponCode?: string) {
+    return this.payments.createCheckoutSession(userId, planId, couponCode);
   }
-
   async renew(userId: string) {
-    const subscription = await this.prisma.subscription.findFirst({
-      where: { userId, status: { in: ['ACTIVE', 'EXPIRED'] } },
-      include: { plan: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!subscription) {
-      throw new NotFoundException('Подписка не найдена');
-    }
-
-    const checkout = await this.paymentsService.createYooKassaPayment(userId, subscription.planId);
-
-    return {
-      subscription: { id: checkout.subscription.id, status: 'PENDING' },
-      payment: { id: checkout.paymentId, amount: checkout.amount, currency: checkout.currency },
-      confirmationUrl: checkout.confirmationUrl,
-    };
+    const sub = await this.getCurrentUserSubscription(userId);
+    if (!sub) throw new NotFoundException('Подписка не найдена');
+    return this.payments.createCheckoutSession(userId, sub.planId);
   }
-
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron('0 * * * * *')
   async checkExpiration() {
-    try {
-      const expiredSubscriptions = await this.prisma.subscription.findMany({
-        where: {
-          status: 'ACTIVE',
-          expiresAt: { lt: new Date() },
-        },
-      });
-
-      for (const subscription of expiredSubscriptions) {
-        const graceEnd = new Date(subscription.expiresAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-        if (new Date() < graceEnd) {
-          await this.prisma.subscription.update({
-            where: { id: subscription.id },
-            data: { status: 'GRACE_PERIOD' },
-          });
-          this.logger.log(`Subscription ${subscription.id} moved to GRACE_PERIOD`);
-        } else {
-          await this.prisma.subscription.update({
-            where: { id: subscription.id },
-            data: { status: 'EXPIRED' },
-          });
-          this.logger.log(`Subscription ${subscription.id} expired`);
-        }
-      }
-
-      const gracePeriodExpired = await this.prisma.subscription.findMany({
-        where: {
-          status: 'GRACE_PERIOD',
-        },
-      });
-
-      for (const subscription of gracePeriodExpired) {
-        const graceEnd = new Date(subscription.expiresAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-        if (new Date() >= graceEnd) {
-          await this.prisma.subscription.update({
-            where: { id: subscription.id },
-            data: { status: 'EXPIRED' },
-          });
-          this.logger.log(`Grace period ended for subscription ${subscription.id}`);
-        }
-      }
-
-      return { expired: expiredSubscriptions.length, graceExpired: gracePeriodExpired.length };
-    } catch (error: any) {
-      this.logger.error(`checkExpiration failed: ${error?.message || error}`);
-      return { expired: 0, graceExpired: 0, error: error?.message || 'unknown error' };
-    }
+    return this.prisma.subscription.updateMany({
+      where: {
+        status: { in: ['ACTIVE', 'TRIAL', 'GRACE_PERIOD'] },
+        expiresAt: { lte: new Date() },
+      },
+      data: { status: 'EXPIRED' },
+    });
   }
-
-  async getAll(userId?: string) {
-    const where = userId ? { userId } : {};
+  getAll(userId?: string) {
     return this.prisma.subscription.findMany({
-      where,
+      where: userId ? { userId } : {},
       include: { plan: true, user: { select: { id: true, email: true } } },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
-
 }

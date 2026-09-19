@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -22,7 +22,8 @@ export class HealthService {
     } catch (error) {
       checks.database = 'disconnected';
       checks.status = 'degraded';
-      this.logger.error('Database health check failed', error);
+      this.logger.error('Database health check failed');
+      throw new ServiceUnavailableException(checks);
     }
 
     return checks;

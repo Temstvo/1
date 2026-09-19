@@ -1,709 +1,328 @@
 import {
   Injectable,
-  Logger,
-  NotFoundException,
   BadRequestException,
+  NotFoundException,
+  ConflictException,
   ServiceUnavailableException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import { Cron } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
-import { PaymentStatus, PaymentProvider } from '@prisma/client';
+import { lockUser } from '../../database/lock-user';
 import { YooKassaService } from './providers/yookassa.service';
-import { CryptomusService } from './providers/cryptomus.service';
-import { TelegramWalletService } from './providers/telegram-wallet.service';
-import { InvoicesService } from '../invoices/invoices.service';
-import { EmailService } from '../email/email.service';
+import { queueAccess } from '../vpn/access-state';
 
 @Injectable()
 export class PaymentsService {
-  private readonly logger = new Logger(PaymentsService.name);
-  private readonly frontendUrl: string;
-  private readonly backendUrl: string;
-
+  private logger = new Logger(PaymentsService.name);
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly yookassaService: YooKassaService,
-    private readonly cryptomusService: CryptomusService,
-    private readonly telegramWalletService: TelegramWalletService,
-    private readonly invoicesService: InvoicesService,
-    private readonly emailService: EmailService,
-  ) {
-    this.frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'https://appi-frontend.vercel.app',
-    );
-    this.backendUrl = this.configService.get<string>(
-      'BACKEND_URL',
-      'https://appibackend-production.up.railway.app',
-    );
-  }
-
-  async createPayment(data: {
-    userId: string;
-    subscriptionId?: string;
-    amount: number;
-    currency?: string;
-    provider: PaymentProvider;
-    description?: string;
-    metadata?: Record<string, any>;
-  }) {
-    return this.prisma.payment.create({
-      data: {
-        userId: data.userId,
-        subscriptionId: data.subscriptionId,
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        provider: data.provider,
-        description: data.description,
-        metadata: data.metadata,
-      },
-    });
-  }
-
-  private async activateSubscription(subscriptionId: string) {
-    const sub = await this.prisma.subscription.findUnique({
-      where: { id: subscriptionId },
-      include: { plan: true },
-    });
-    if (!sub) return;
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + sub.plan.duration);
-
-    await this.prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: {
-        status: 'ACTIVE',
-        startedAt: new Date(),
-        expiresAt,
-        autoRenew: true,
-      },
-    });
-
-    await this.prisma.subscription.updateMany({
-      where: {
-        userId: sub.userId,
-        id: { not: subscriptionId },
-        status: { in: ['ACTIVE', 'GRACE_PERIOD'] },
-      },
-      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'Plan changed' },
-    });
-
-    this.logger.log(`Subscription activated: ${subscriptionId}`);
-  }
-
-  private async preparePendingSubscription(userId: string, planId: string): Promise<string> {
-    await this.prisma.subscription.updateMany({
-      where: { userId, status: 'PENDING' },
-      data: {
-        status: 'CANCELLED',
-        cancelledAt: new Date(),
-        cancelReason: 'Replaced by new checkout',
-      },
-    });
-
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + (plan?.duration || 30));
-
-    const subscription = await this.prisma.subscription.create({
-      data: {
-        userId,
-        planId,
-        status: 'PENDING',
-        paymentMethod: 'card',
-        expiresAt,
-      },
-    });
-
-    return subscription.id;
-  }
-
-  async findByUserId(userId: string) {
-    return this.prisma.payment.findMany({
-      where: { userId },
-      include: {
-        subscription: { include: { plan: true } },
-        invoice: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async findById(id: string) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { id },
-      include: {
-        subscription: { include: { plan: true } },
-        invoice: true,
-        user: { select: { id: true, email: true } },
-      },
-    });
-
-    if (!payment) {
-      throw new NotFoundException('Платёж не найден');
-    }
-
-    return payment;
-  }
-
-  async findByTransactionId(transactionId: string) {
-    return this.prisma.payment.findUnique({
-      where: { transactionId },
-      include: { subscription: true, user: true },
-    });
-  }
-
-  async updateStatus(id: string, status: PaymentStatus, webhookVerified = false) {
-    return this.prisma.payment.update({
-      where: { id },
-      data: {
-        status,
-        webhookVerified,
-        ...(status === 'REFUNDED' ? { refundedAt: new Date() } : {}),
-      },
-    });
-  }
-
-  private async onPaymentCompleted(payment: any) {
-    try {
-      await this.invoicesService.create({
-        userId: payment.userId,
-        paymentId: payment.id,
-        subtotal: Number(payment.amount),
-        total: Number(payment.amount),
-        currency: payment.currency,
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payment.userId },
-        select: { email: true },
-      });
-
-      const planName = payment.metadata?.planId
-        ? (await this.prisma.plan.findUnique({ where: { id: payment.metadata.planId } }))?.name ||
-          'Pro'
-        : 'Pro';
-
-      if (user) {
-        await this.emailService.sendPaymentConfirmationEmail(
-          user.email,
-          planName,
-          Number(payment.amount),
-          payment.currency,
-        );
-      }
-    } catch (error: any) {
-      this.logger.error(`Failed to create invoice/send email: ${error.message || error}`);
-    }
-  }
-
-  private verifyStripeSignature(
-    rawBody: Buffer | undefined,
-    signature: string | undefined,
-  ): boolean {
-    const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET', '');
-    if (!secret || !rawBody || !signature) return false;
-    try {
-      const parts = signature.split(',');
-      const timestamp = parts.find((p) => p.startsWith('t='))?.slice(2);
-      const sig = parts.find((p) => p.startsWith('v1='))?.slice(3);
-      if (!timestamp || !sig) return false;
-      const expected = crypto
-        .createHmac('sha256', secret)
-        .update(`${timestamp}.${rawBody.toString('utf8')}`)
-        .digest('hex');
-      return sig === expected;
-    } catch {
-      return false;
-    }
-  }
-
-  async handleStripeWebhook(event: any, signature?: string, rawBody?: Buffer) {
-    if (!this.verifyStripeSignature(rawBody, signature)) {
-      this.logger.warn('Stripe webhook: invalid signature — rejecting');
-      throw new BadRequestException('Invalid webhook signature');
-    }
-
-    if (!event?.type) {
-      this.logger.warn('Stripe webhook: missing event type');
-      return;
-    }
-
-    const { type, data } = event;
-    const eventType = type as string;
-
-    switch (eventType) {
-      case 'checkout.session.completed': {
-        const session = data.object;
-        const payment = await this.findByTransactionId(session.payment_intent || session.id);
-
-        if (payment && payment.status !== 'COMPLETED') {
-          await this.updateStatus(payment.id, 'COMPLETED', true);
-          if (payment.subscriptionId) {
-            await this.activateSubscription(payment.subscriptionId);
-          }
-          await this.onPaymentCompleted(payment);
-          this.logger.log(`Stripe payment completed: ${payment.id}`);
-        }
-        break;
-      }
-
-      case 'invoice.payment_succeeded': {
-        const invoice = data.object;
-        const payment = await this.findByTransactionId(invoice.payment_intent);
-
-        if (payment && payment.status !== 'COMPLETED') {
-          await this.updateStatus(payment.id, 'COMPLETED', true);
-          if (payment.subscriptionId) {
-            await this.activateSubscription(payment.subscriptionId);
-          }
-          this.logger.log(`Stripe subscription payment succeeded: ${payment.id}`);
-        }
-        break;
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = data.object;
-        const payment = await this.findByTransactionId(invoice.payment_intent);
-
-        if (payment) {
-          await this.updateStatus(payment.id, 'FAILED', true);
-          if (payment.subscriptionId) {
-            await this.prisma.subscription.update({
-              where: { id: payment.subscriptionId },
-              data: { status: 'PAST_DUE' },
-            });
-          }
-          this.logger.log(`Stripe subscription payment failed: ${payment.id}`);
-        }
-        break;
-      }
-
-      case 'charge.refunded': {
-        const charge = data.object;
-        const payment = await this.findByTransactionId(charge.payment_intent);
-
-        if (payment) {
-          await this.prisma.payment.update({
-            where: { id: payment.id },
-            data: {
-              status: 'REFUNDED',
-              refundedAt: new Date(),
-              refundAmount: charge.amount_refunded / 100,
-              webhookVerified: true,
-            },
-          });
-          this.logger.log(`Stripe payment refunded: ${payment.id}`);
-        }
-        break;
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = data.object;
-        await this.prisma.subscription.updateMany({
-          where: { externalId: subscription.id },
-          data: { status: 'CANCELLED', cancelledAt: new Date() },
-        });
-        break;
-      }
-
-      default:
-        this.logger.warn(`Unhandled Stripe event: ${eventType}`);
-    }
-  }
+    private prisma: PrismaService,
+    private config: ConfigService,
+    private yookassa: YooKassaService,
+  ) {}
 
   async createCheckoutSession(
     userId: string,
     planId: string,
     couponCode?: string,
-    provider: string = 'YOOKASSA',
+    provider = 'YOOKASSA',
+    key: string = randomUUID(),
   ) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan || !plan.isActive) {
-      throw new NotFoundException('Тариф не найден или неактивен');
-    }
-
-    let discount = 0;
-    if (couponCode) {
-      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive) {
-        if (coupon.type === 'PERCENTAGE') {
-          discount = Number(plan.price) * (Number(coupon.value) / 100);
-        } else if (coupon.type === 'FIXED') {
-          discount = Number(coupon.value);
-        }
+    if (provider !== 'YOOKASSA') throw new BadRequestException('Поддерживается только ЮKassa');
+    if (!this.yookassa.isConfigured())
+      throw new ServiceUnavailableException('Оплата пока не настроена');
+    if (!this.config.get('MARZBAN_URL'))
+      throw new ServiceUnavailableException('VPN-инфраструктура пока не настроена');
+    const payment = await this.prisma.$transaction(async (tx) => {
+      await lockUser(tx, userId);
+      const existing = await tx.payment.findUnique({
+        where: { userId_idempotencyKey: { userId, idempotencyKey: key } },
+      });
+      if (existing) {
+        const meta = existing.metadata as any;
+        if (
+          meta?.planId !== planId ||
+          (meta?.couponCode || '') !== (couponCode || '').toUpperCase()
+        )
+          throw new ConflictException('Ключ уже использован для другого заказа');
+        return existing;
       }
-    }
-
-    const finalAmount = Math.max(0, Number(plan.price) - discount);
-    const paymentProvider = provider.toUpperCase() as any;
-
-    if (paymentProvider === 'CRYPTOMUS') {
-      return this.createCryptomusPayment(userId, planId, couponCode);
-    }
-    if (paymentProvider === 'TELEGRAM_WALLET') {
-      return this.createTelegramWalletPayment(userId, planId, couponCode);
-    }
-
-    return this.createYooKassaPayment(userId, planId, couponCode);
-  }
-
-  async createTelegramWalletPayment(userId: string, planId: string, couponCode?: string) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan || !plan.isActive) throw new NotFoundException('Тариф не найден');
-    let discount = 0;
-    if (couponCode) {
-      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive) {
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user || user.status !== 'ACTIVE') throw new BadRequestException('Аккаунт недоступен');
+      const plan = await tx.plan.findUnique({ where: { id: planId } });
+      if (!plan?.isActive) throw new NotFoundException('Тариф недоступен');
+      if (plan.currency !== 'RUB' || plan.price.lte(0))
+        throw new BadRequestException('Для ЮKassa требуется тариф с положительной ценой в RUB');
+      let amount = plan.price;
+      if (couponCode) {
+        const code = couponCode.toUpperCase();
+        await tx.$queryRaw`SELECT id FROM coupons WHERE code = ${code} FOR UPDATE`;
+        const coupon = await tx.coupon.findUnique({ where: { code } });
+        if (
+          !coupon?.isActive ||
+          (coupon.expiresAt && coupon.expiresAt <= new Date()) ||
+          (coupon.maxUses !== null && coupon.currentUses >= coupon.maxUses) ||
+          (coupon.planIds.length > 0 && !coupon.planIds.includes(planId)) ||
+          (coupon.minAmount && amount.lt(coupon.minAmount))
+        )
+          throw new BadRequestException('Промокод недоступен');
         if (coupon.type === 'PERCENTAGE')
-          discount = Number(plan.price) * (Number(coupon.value) / 100);
-        else if (coupon.type === 'FIXED') discount = Number(coupon.value);
+          amount = amount.mul(new Prisma.Decimal(100).minus(coupon.value)).div(100);
+        else if (coupon.type === 'FIXED') amount = amount.minus(coupon.value);
+        else throw new BadRequestException('Этот тип промокода не поддерживается в оплате');
+        amount = amount.toDecimalPlaces(2);
+        if (amount.lte(0)) throw new BadRequestException('Сумма платежа должна быть больше нуля');
+        // Reserve at order creation, not callback, to avoid concurrent overuse.
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { currentUses: { increment: 1 } },
+        });
       }
-    }
-    const finalAmount = Math.max(0, Number(plan.price) - discount);
-    const subscriptionId = await this.preparePendingSubscription(userId, planId);
-    const payment = await this.createPayment({
-      userId,
-      subscriptionId,
-      amount: finalAmount,
-      currency: plan.currency || 'RUB',
-      provider: 'TELEGRAM' as any,
-      description: `APPI VPN — ${plan.name} (Telegram-кошелёк)`,
-      metadata: { planId, couponCode: couponCode || null, provider: 'TELEGRAM_WALLET' },
-    });
-    if (!this.telegramWalletService.isConfigured()) {
-      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
-      throw new ServiceUnavailableException(
-        'Telegram-кошелёк не настроен. Укажи TELEGRAM_WALLET_USERNAME в .env',
-      );
-    }
-    const { url } = this.telegramWalletService.createInvoiceLink(
-      finalAmount,
-      plan.currency || 'RUB',
-      payment.id,
-    );
-    await this.prisma.payment.update({
-      where: { id: payment.id },
-      data: { transactionId: `tg_wallet_${payment.id}` },
-    });
-    return {
-      paymentId: payment.id,
-      paymentUrl: url,
-      confirmationUrl: url,
-      amount: finalAmount,
-      currency: plan.currency || 'RUB',
-      provider: 'TELEGRAM_WALLET',
-      subscription: { id: subscriptionId, status: 'PENDING' },
-    };
-  }
-
-  async createTelegramWalletForTelegramId(telegramId: string, amount = 100, currency = 'RUB') {
-    let user = await this.prisma.user.findFirst({
-      where: { email: `tg_${telegramId}@telegram.local` },
-    });
-    if (!user) {
-      user = await this.prisma.user.create({
+      return tx.payment.create({
         data: {
-          email: `tg_${telegramId}@telegram.local`,
-          passwordHash: crypto.randomBytes(16).toString('hex'),
-          referralCode: `tg_${telegramId}_${Date.now()}`,
+          userId,
+          provider: 'YOOKASSA',
+          amount,
+          currency: plan.currency,
+          idempotencyKey: key,
+          description: 'APPI VPN — ' + plan.name,
+          expiresAt: new Date(Date.now() + 24 * 3600000),
+          metadata: {
+            planId,
+            duration: plan.duration,
+            trafficLimit: plan.trafficLimit.toString(),
+            couponCode: (couponCode || '').toUpperCase(),
+            email: user.email,
+          },
         },
       });
-    }
-    const payment = await this.createPayment({
-      userId: user.id,
-      amount,
-      currency,
-      provider: 'TELEGRAM' as any,
-      description: `APPI VPN — донат ${amount} ${currency} от tg:${telegramId}`,
-      metadata: { telegramId, provider: 'TELEGRAM_WALLET', kind: 'donate' },
     });
-    if (!this.telegramWalletService.isConfigured()) {
-      await this.prisma.payment.update({ where: { id: payment.id }, data: { status: 'FAILED' } });
-      throw new ServiceUnavailableException('Telegram-кошелёк не настроен');
-    }
-    const { url } = this.telegramWalletService.createInvoiceLink(amount, currency, payment.id);
-    await this.prisma.payment.update({
+    if (payment.status !== 'PENDING')
+      throw new ConflictException('Заказ уже завершён. Создайте новый');
+    if (payment.checkoutUrl) return this.checkoutResult(payment);
+    if (payment.expiresAt && payment.expiresAt <= new Date())
+      throw new ConflictException('Заказ истёк. Создайте новый');
+    const meta = payment.metadata as any;
+    // Timeouts are ambiguous: keep PENDING and reuse the same provider key on retry.
+    // YooKassa retains idempotency keys for 24 hours; never re-submit after this window.
+    const remote = await this.yookassa.createPayment({
+      id: payment.id,
+      amount: payment.amount.toFixed(2),
+      currency: payment.currency,
+      description: payment.description!,
+      userId,
+      planId,
+      email: meta.email,
+    });
+    this.verifyOrder(payment, remote);
+    const checkoutUrl = remote.confirmation?.confirmation_url;
+    if (!checkoutUrl || new URL(checkoutUrl).protocol !== 'https:')
+      throw new ServiceUnavailableException('Провайдер не вернул ссылку оплаты');
+    const updated = await this.prisma.payment.update({
       where: { id: payment.id },
-      data: { transactionId: `tg_wallet_${payment.id}` },
+      data: { transactionId: remote.id, checkoutUrl },
     });
-    return { paymentId: payment.id, paymentUrl: url, amount, currency, telegramId };
+    return this.checkoutResult(updated);
   }
 
-  async refund(paymentId: string, amount?: number) {
-    const payment = await this.findById(paymentId);
+  createYooKassaPayment(userId: string, planId: string, couponCode?: string) {
+    return this.createCheckoutSession(userId, planId, couponCode);
+  }
 
-    if (payment.status !== 'COMPLETED') {
-      throw new BadRequestException('Возврат возможен только для завершённых платежей');
+  private checkoutResult(p: any) {
+    return {
+      paymentId: p.id,
+      confirmationUrl: p.checkoutUrl,
+      amount: p.amount.toString(),
+      currency: p.currency,
+      status: p.status,
+    };
+  }
+
+  private verifyOrder(payment: any, remote: any) {
+    const meta = payment.metadata as any;
+    let matches = false;
+    try {
+      matches =
+        new Prisma.Decimal(remote.amount.value).eq(payment.amount) &&
+        remote.amount.currency === payment.currency &&
+        remote.metadata.paymentId === payment.id &&
+        remote.metadata.userId === payment.userId &&
+        remote.metadata.planId === meta.planId &&
+        (!payment.transactionId || payment.transactionId === remote.id) &&
+        remote.recipient?.account_id === this.config.get('YOOKASSA_SHOP_ID') &&
+        remote.test === (this.config.get('YOOKASSA_TEST_MODE', 'true') === 'true');
+    } catch {
+      matches = false;
     }
+    if (!matches) throw new BadRequestException('Данные платежа не соответствуют заказу');
+  }
 
-    const refundAmount = amount || Number(payment.amount);
+  async handleYooKassaWebhook(body: any) {
+    if (
+      body?.type !== 'notification' ||
+      !['payment.succeeded', 'payment.canceled', 'payment.waiting_for_capture'].includes(
+        body.event,
+      ) ||
+      typeof body.object?.id !== 'string' ||
+      !/^[a-zA-Z0-9-]{1,64}$/.test(body.object.id)
+    )
+      throw new BadRequestException('Некорректное уведомление');
+    // YooKassa does not sign webhooks with x-signature. Authenticate by retrieving
+    // the payment from its fixed HTTPS API; the untrusted body is never the source of amount/status.
+    const remote = await this.yookassa.getPayment(body.object.id);
+    if (remote.id !== body.object.id || body.event !== 'payment.' + remote.status)
+      throw new BadRequestException('Статус не подтверждён провайдером');
+    const candidate = await this.prisma.payment.findUnique({
+      where: { id: remote.metadata?.paymentId || '00000000-0000-0000-0000-000000000000' },
+    });
+    if (!candidate || candidate.provider !== 'YOOKASSA')
+      throw new NotFoundException('Заказ не найден');
+    this.verifyOrder(candidate, remote);
+    return this.prisma.$transaction(
+      async (tx) => {
+        await lockUser(tx, candidate.userId);
+        const payment = await tx.payment.findUniqueOrThrow({ where: { id: candidate.id } });
+        this.verifyOrder(payment, remote);
+        if (['COMPLETED', 'REFUNDED'].includes(payment.status))
+          return { received: true, duplicate: true };
+        if (remote.status === 'waiting_for_capture') return { received: true };
+        if (remote.status === 'canceled') {
+          const reason = remote.cancellation_details?.reason;
+          const status =
+            reason === 'expired_on_capture' || reason === 'expired_on_confirmation'
+              ? 'EXPIRED'
+              : reason === 'canceled_by_merchant' || reason === 'canceled_by_user'
+                ? 'CANCELLED'
+                : 'FAILED';
+          if (payment.status === 'PENDING') {
+            await tx.payment.update({
+              where: { id: payment.id },
+              data: { status, webhookVerified: true, transactionId: remote.id },
+            });
+            const couponCode = (payment.metadata as any)?.couponCode;
+            if (couponCode)
+              await tx.coupon.updateMany({
+                where: { code: couponCode, currentUses: { gt: 0 } },
+                data: { currentUses: { decrement: 1 } },
+              });
+          }
+          return { received: true };
+        }
+        if (remote.status !== 'succeeded' || remote.paid !== true)
+          throw new BadRequestException('Оплата не подтверждена');
+        const meta = payment.metadata as any;
+        if (!Number.isInteger(meta.duration) || meta.duration < 1)
+          throw new BadRequestException('В заказе отсутствует срок тарифа');
+        const plan = await tx.plan.findUnique({ where: { id: meta.planId } });
+        if (!plan) throw new BadRequestException('Тариф заказа не найден');
+        const now = new Date();
+        const current = await tx.subscription.findFirst({
+          where: { userId: payment.userId, status: 'ACTIVE', expiresAt: { gt: now } },
+          orderBy: { expiresAt: 'desc' },
+        });
+        const expiresAt = new Date(
+          Math.max(now.getTime(), current?.expiresAt.getTime() || 0) + meta.duration * 86400000,
+        );
+        const subscription = await tx.subscription.create({
+          data: {
+            userId: payment.userId,
+            planId: meta.planId,
+            status: 'ACTIVE',
+            expiresAt,
+            autoRenew: false,
+            paymentMethod: 'YOOKASSA',
+          },
+        });
+        await tx.subscription.updateMany({
+          where: {
+            userId: payment.userId,
+            id: { not: subscription.id },
+            status: { in: ['ACTIVE', 'GRACE_PERIOD', 'TRIAL'] },
+          },
+          data: { status: 'CANCELLED', cancelReason: 'Superseded by paid renewal' },
+        });
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: 'COMPLETED',
+            webhookVerified: true,
+            transactionId: remote.id,
+            subscriptionId: subscription.id,
+          },
+        });
+        await tx.invoice.create({
+          data: {
+            userId: payment.userId,
+            paymentId: payment.id,
+            number: 'APPI-' + payment.id,
+            subtotal: payment.amount,
+            total: payment.amount,
+            currency: payment.currency,
+            dueDate: now,
+            paidAt: now,
+          },
+        });
+        await queueAccess(tx, payment.userId, expiresAt, BigInt(meta.trafficLimit || '0'));
+        await tx.auditLog.create({
+          data: {
+            actorId: payment.userId,
+            action: 'PAYMENT_CONFIRMED',
+            resource: 'PAYMENT',
+            resourceId: payment.id,
+            result: 'success',
+          },
+        });
+        return { received: true };
+      },
+      { timeout: 20000 },
+    );
+  }
 
-    return this.prisma.payment.update({
-      where: { id: paymentId },
-      data: {
-        status: 'REFUNDED',
-        refundedAt: new Date(),
-        refundAmount,
+  findByUserId(userId: string) {
+    return this.prisma.payment.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        status: true,
+        description: true,
+        createdAt: true,
+        checkoutUrl: true,
+        webhookVerified: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+  async findById(id: string, userId?: string) {
+    const p = await this.prisma.payment.findFirst({
+      where: { id, ...(userId ? { userId } : {}) },
+      select: {
+        id: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        status: true,
+        createdAt: true,
+        checkoutUrl: true,
+        webhookVerified: true,
       },
     });
+    if (!p) throw new NotFoundException('Платёж не найден');
+    return p;
   }
 
-  async getPaymentStats() {
-    const [totalRevenue, completedPayments, failedPayments, refundedPayments] = await Promise.all([
-      this.prisma.payment.aggregate({
-        where: { status: 'COMPLETED' },
-        _sum: { amount: true },
-      }),
-      this.prisma.payment.count({ where: { status: 'COMPLETED' } }),
-      this.prisma.payment.count({ where: { status: 'FAILED' } }),
-      this.prisma.payment.count({ where: { status: 'REFUNDED' } }),
-    ]);
-
-    return {
-      totalRevenue: totalRevenue._sum.amount || 0,
-      completedPayments,
-      failedPayments,
-      refundedPayments,
-    };
-  }
-
-  async createYooKassaPayment(userId: string, planId: string, couponCode?: string) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan || !plan.isActive) {
-      throw new NotFoundException('Тариф не найден или неактивен');
-    }
-
-    let discount = 0;
-    if (couponCode) {
-      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive) {
-        if (coupon.type === 'PERCENTAGE') {
-          discount = Number(plan.price) * (Number(coupon.value) / 100);
-        } else if (coupon.type === 'FIXED') {
-          discount = Number(coupon.value);
-        }
-      }
-    }
-
-    const finalAmount = Math.max(0, Number(plan.price) - discount);
-
-    const subscriptionId = await this.preparePendingSubscription(userId, planId);
-
-    const payment = await this.createPayment({
-      userId,
-      subscriptionId,
-      amount: finalAmount,
-      currency: plan.currency || 'RUB',
-      provider: 'YOOKASSA',
-      description: `APPI VPN — ${plan.name}`,
-      metadata: { planId, couponCode: couponCode || null },
+  @Cron('0 */5 * * * *')
+  async expirePending() {
+    await this.prisma.payment.updateMany({
+      where: { status: 'PENDING', expiresAt: { lte: new Date() } },
+      data: { status: 'EXPIRED' },
     });
-
-    if (!this.yookassaService.isConfigured()) {
-      await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { status: 'FAILED' },
-      });
-      throw new ServiceUnavailableException(
-        'Платёжная система временно недоступна. Попробуйте позже или выберите другой способ оплаты',
-      );
-    }
-
-    const yukResult = await this.yookassaService.createPayment({
-      amount: finalAmount,
-      currency: plan.currency || 'RUB',
-      description: `APPI VPN — ${plan.name}`,
-      metadata: { paymentId: payment.id, planId },
-      returnReturnUrl: `${this.frontendUrl}/checkout/success`,
-    });
-
-    await this.prisma.payment.update({
-      where: { id: payment.id },
-      data: { transactionId: yukResult.id },
-    });
-
-    return {
-      paymentId: payment.id,
-      confirmationUrl: yukResult.confirmationUrl,
-      amount: finalAmount,
-      currency: plan.currency || 'RUB',
-      subscription: { id: subscriptionId, status: 'PENDING' },
-    };
-  }
-
-  async handleYooKassaWebhook(body: any, signature?: string, rawBody?: string) {
-    if (!this.yookassaService.verifyWebhook(rawBody || '', signature || '')) {
-      this.logger.warn('YooKassa webhook: invalid signature — rejecting');
-      throw new BadRequestException('Invalid webhook signature');
-    }
-
-    const event = body.event;
-    const paymentData = body.object;
-
-    if (!paymentData?.id) {
-      this.logger.warn('YooKassa webhook: missing payment id');
-      return { event: 'invalid' };
-    }
-
-    const payment = await this.findByTransactionId(paymentData.id);
-    if (!payment) {
-      this.logger.warn(`YooKassa webhook: payment not found for ${paymentData.id}`);
-      return { event: 'not_found' };
-    }
-
-    if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
-      this.logger.log(
-        `YooKassa webhook: payment ${payment.id} already ${payment.status}, skipping`,
-      );
-      return { event: 'duplicate' };
-    }
-
-    switch (event) {
-      case 'payment.succeeded': {
-        await this.updateStatus(payment.id, 'COMPLETED', true);
-        if (payment.subscriptionId) {
-          await this.activateSubscription(payment.subscriptionId);
-        }
-        await this.onPaymentCompleted(payment);
-        this.logger.log(`YooKassa payment succeeded: ${payment.id}`);
-        break;
-      }
-      case 'payment.canceled': {
-        await this.updateStatus(payment.id, 'FAILED', true);
-        if (payment.subscriptionId) {
-          await this.prisma.subscription.update({
-            where: { id: payment.subscriptionId },
-            data: { status: 'CANCELLED' },
-          });
-        }
-        this.logger.log(`YooKassa payment canceled: ${payment.id}`);
-        break;
-      }
-      case 'payment.waiting_for_capture': {
-        this.logger.log(`YooKassa payment waiting for capture: ${payment.id}`);
-        break;
-      }
-      default:
-        this.logger.warn(`YooKassa unhandled event: ${event}`);
-    }
-
-    return { event };
-  }
-
-  async createCryptomusPayment(userId: string, planId: string, couponCode?: string) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan || !plan.isActive) {
-      throw new NotFoundException('Тариф не найден или неактивен');
-    }
-
-    let discount = 0;
-    if (couponCode) {
-      const coupon = await this.prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive) {
-        if (coupon.type === 'PERCENTAGE') {
-          discount = Number(plan.price) * (Number(coupon.value) / 100);
-        } else if (coupon.type === 'FIXED') {
-          discount = Number(coupon.value);
-        }
-      }
-    }
-
-    const finalAmount = Math.max(0, Number(plan.price) - discount);
-
-    const subscriptionId = await this.preparePendingSubscription(userId, planId);
-
-    const payment = await this.createPayment({
-      userId,
-      subscriptionId,
-      amount: finalAmount,
-      currency: 'USDT',
-      provider: 'CRYPTOMUS',
-      description: `APPI VPN — ${plan.name}`,
-      metadata: { planId, couponCode: couponCode || null },
-    });
-
-    if (!this.cryptomusService.isConfigured()) {
-      await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { status: 'FAILED' },
-      });
-      throw new ServiceUnavailableException(
-        'Платёжная система временно недоступна. Попробуйте позже или выберите другой способ оплаты',
-      );
-    }
-
-    const cryptoResult = await this.cryptomusService.createPayment({
-      amount: finalAmount.toString(),
-      currency: 'USDT',
-      order_id: payment.id,
-      url_success: `${this.frontendUrl}/checkout/success`,
-      url_callback: `${this.backendUrl}/api/payments/webhook/cryptomus`,
-      currencies: ['USDT'],
-    });
-
-    await this.prisma.payment.update({
-      where: { id: payment.id },
-      data: { transactionId: cryptoResult.uuid },
-    });
-
-    return {
-      paymentId: payment.id,
-      paymentUrl: cryptoResult.payment_url,
-      amount: finalAmount,
-      currency: 'USDT',
-      subscription: { id: subscriptionId, status: 'PENDING' },
-    };
-  }
-
-  async handleCryptomusWebhook(body: any, signature: string) {
-    if (!this.cryptomusService.verifyWebhook(body, signature)) {
-      this.logger.warn('Cryptomus webhook: invalid signature');
-      return;
-    }
-
-    const { status, order_id } = body;
-
-    const payment = await this.prisma.payment.findUnique({
-      where: { id: order_id },
-    });
-    if (!payment) {
-      this.logger.warn(`Cryptomus webhook: payment not found for ${order_id}`);
-      return { status: 'not_found' };
-    }
-
-    if (payment.status === 'COMPLETED' || payment.status === 'REFUNDED') {
-      this.logger.log(
-        `Cryptomus webhook: payment ${payment.id} already ${payment.status}, skipping`,
-      );
-      return { status: 'duplicate' };
-    }
-
-    switch (status) {
-      case 'paid': {
-        await this.updateStatus(payment.id, 'COMPLETED', true);
-        if (payment.subscriptionId) {
-          await this.activateSubscription(payment.subscriptionId);
-        }
-        await this.onPaymentCompleted(payment);
-        this.logger.log(`Cryptomus payment completed: ${payment.id}`);
-        break;
-      }
-      case 'cancelled': {
-        await this.updateStatus(payment.id, 'FAILED', true);
-        break;
-      }
-      case 'expired': {
-        await this.updateStatus(payment.id, 'FAILED', true);
-        break;
-      }
-      default:
-        this.logger.log(`Cryptomus payment status: ${status} for ${payment.id}`);
-    }
-
-    return { status };
+    // A delayed verified success may still settle an expired local order.
   }
 }

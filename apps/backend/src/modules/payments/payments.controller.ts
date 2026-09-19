@@ -4,176 +4,56 @@ import {
   Post,
   Body,
   Param,
-  Req,
+  Headers,
   UseGuards,
   HttpCode,
-  HttpStatus,
-  Headers,
-  ForbiddenException,
+  ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { IsUUID, IsOptional, IsString, MaxLength, IsIn } from 'class-validator';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { IsString, IsNumber, IsOptional, Min } from 'class-validator';
 
-class CreateCheckoutDto {
-  @IsString()
-  planId: string;
-
-  @IsOptional()
-  @IsString()
-  couponCode?: string;
-
-  @IsOptional()
-  @IsString()
-  provider?: string;
+class CheckoutDto {
+  @IsUUID() planId: string;
+  @IsOptional() @IsString() @MaxLength(50) couponCode?: string;
+  @IsOptional() @IsIn(['YOOKASSA']) provider?: string;
 }
-
-class RefundDto {
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  amount?: number;
-}
-
-@ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
-
-  @Post('checkout')
+  constructor(private payments: PaymentsService) {}
+  @Post(['checkout', 'checkout/yookassa'])
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create checkout session' })
-  @ApiResponse({ status: 200, description: 'Checkout session created' })
-  async createCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
-    return this.paymentsService.createCheckoutSession(
+  @HttpCode(200)
+  checkout(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CheckoutDto,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    if (!key || !/^[a-zA-Z0-9_-]{16,64}$/.test(key))
+      throw new BadRequestException('Нужен Idempotency-Key (16–64 символа)');
+    return this.payments.createCheckoutSession(
       userId,
       dto.planId,
       dto.couponCode,
       dto.provider,
+      key,
     );
   }
-
-  @Post('checkout/yookassa')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create YooKassa checkout' })
-  @ApiResponse({ status: 200, description: 'YooKassa checkout created' })
-  async createYooKassaCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
-    return this.paymentsService.createYooKassaPayment(userId, dto.planId, dto.couponCode);
-  }
-
-  @Post('checkout/cryptomus')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create Cryptomus checkout' })
-  @ApiResponse({ status: 200, description: 'Cryptomus checkout created' })
-  async createCryptomusCheckout(@CurrentUser('id') userId: string, @Body() dto: CreateCheckoutDto) {
-    return this.paymentsService.createCryptomusPayment(userId, dto.planId, dto.couponCode);
-  }
-
-  @Post('checkout/telegram-wallet')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create Telegram wallet checkout (best for donations)' })
-  @ApiResponse({ status: 200, description: 'Telegram wallet link' })
-  async createTelegramWalletCheckout(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CreateCheckoutDto,
-  ) {
-    return this.paymentsService.createTelegramWalletPayment(userId, dto.planId, dto.couponCode);
-  }
-
-  @Get('telegram-wallet/info')
-  @ApiOperation({ summary: 'Get Telegram wallet config' })
-  @ApiResponse({ status: 200, description: 'Wallet info' })
-  async getTelegramWalletInfo() {
-    // публичный, без guard — чтобы бот мог показать куда платить
-    const svc: any = (this.paymentsService as any).telegramWalletService;
-    return svc.getWalletInfo();
-  }
-
   @Get()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user payment history' })
-  @ApiResponse({ status: 200, description: 'Payment history' })
-  async getPayments(@CurrentUser('id') userId: string) {
-    return this.paymentsService.findByUserId(userId);
+  history(@CurrentUser('id') userId: string) {
+    return this.payments.findByUserId(userId);
   }
-
-  @Get('admin/stats')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get payment stats (admin)' })
-  @ApiResponse({ status: 200, description: 'Payment statistics' })
-  async getStats() {
-    return this.paymentsService.getPaymentStats();
-  }
-
-  @Post('telegram-wallet/bot-create')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Create Telegram wallet payment for bot user (no JWT)' })
-  async createTelegramWalletForBot(
-    @Body() dto: { telegramId: string; amount?: number; currency?: string },
-  ) {
-    if (!dto.telegramId) throw new ForbiddenException('telegramId required');
-    return this.paymentsService.createTelegramWalletForTelegramId(
-      String(dto.telegramId),
-      dto.amount || 100,
-      dto.currency || 'RUB',
-    );
-  }
-
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get payment by ID' })
-  @ApiResponse({ status: 200, description: 'Payment details' })
-  async getPayment(@CurrentUser('id') userId: string, @Param('id') id: string) {
-    const payment = await this.paymentsService.findById(id);
-    if (payment.userId !== userId) {
-      throw new ForbiddenException('Доступ запрещён');
-    }
-    return payment;
+  one(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
+    return this.payments.findById(id, userId);
   }
-
-  @Post('webhook/stripe')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Stripe webhook handler' })
-  async stripeWebhook(
-    @Headers('stripe-signature') signature: string,
-    @Req() req: any,
-    @Body() body: any,
-  ) {
-    await this.paymentsService.handleStripeWebhook(body, signature, req.rawBody);
-    return { received: true };
-  }
-
   @Post('webhook/yookassa')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'YooKassa webhook handler' })
-  async yookassaWebhook(
-    @Headers('x-signature') signature: string,
-    @Req() req: any,
-    @Body() body: any,
-  ) {
-    return this.paymentsService.handleYooKassaWebhook(body, signature, req.rawBody);
-  }
-
-  @Post('webhook/cryptomus')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Cryptomus webhook handler' })
-  async cryptomusWebhook(@Headers('sign') signature: string, @Body() body: any) {
-    return this.paymentsService.handleCryptomusWebhook(body, signature);
+  @HttpCode(200)
+  webhook(@Body() body: unknown) {
+    return this.payments.handleYooKassaWebhook(body);
   }
 }

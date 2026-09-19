@@ -1,40 +1,10 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { VpnService } from './vpn.service';
-import { VpnConfigService } from './vpn-config.service';
-import { VpnConfigSyncService } from './vpn-config-sync.service';
-import { VpnConfigScheduler } from './vpn-config-scheduler';
-import { HealthCheckService } from './health-check.service';
-import { PrivacyCheckService } from './privacy-check.service';
-import { MigrationService } from './migration.service';
-import { NodeRegistryService } from './node-registry.service';
 import { VpnController } from './vpn.controller';
-import { ConnectionsService } from './connections.service';
-import { ConnectionsController } from './connections.controller';
-import { ServersModule } from '../servers/servers.module';
-import { PrismaModule } from '../../database/prisma.module';
-
+import { MarzbanService } from './marzban.service';
 @Module({
-  imports: [forwardRef(() => ServersModule), PrismaModule],
-  controllers: [VpnController, ConnectionsController],
-  providers: [
-    VpnService,
-    VpnConfigService,
-    VpnConfigSyncService,
-    VpnConfigScheduler,
-    HealthCheckService,
-    PrivacyCheckService,
-    MigrationService,
-    ConnectionsService,
-    NodeRegistryService,
-  ],
-  exports: [
-    VpnService,
-    VpnConfigService,
-    VpnConfigSyncService,
-    HealthCheckService,
-    PrivacyCheckService,
-    ConnectionsService,
-    NodeRegistryService,
-  ],
+  controllers: [VpnController],
+  providers: [VpnService, MarzbanService],
+  exports: [VpnService],
 })
 export class VpnModule {}

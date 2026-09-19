@@ -7,7 +7,7 @@ import { TelegramNotifyService } from '../telegram/telegram-notify.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '@prisma/client';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -92,7 +92,7 @@ export class AuthService {
       }),
     ).catch((e) => this.logger.warn(`auditLog failed: ${e?.message?.split('\n')[0]}`));
 
-    const tokens = await this.tokenService.generateTokenPair(user);
+    const tokens = await this.issueSession(user, ip, userAgent);
 
     await this.emailService.sendVerificationEmail(user.email, emailVerificationToken);
 
@@ -124,11 +124,7 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    if (
-      user.status === 'BANNED' ||
-      user.status === 'SUSPENDED' ||
-      (user.lockedUntil && user.lockedUntil > new Date())
-    ) {
+    if (user.status !== 'ACTIVE' || (user.lockedUntil && user.lockedUntil > new Date())) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
@@ -163,7 +159,7 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    const tokens = await this.tokenService.generateTokenPair(user);
+    const tokens = await this.issueSession(user, ip, userAgent);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -172,16 +168,6 @@ export class AuthService {
         lastLoginIp: ip,
         loginAttempts: 0,
         lockedUntil: null,
-      },
-    });
-
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        tokenHash: this.tokenService.hashToken(tokens.accessToken),
-        ip: ip || 'unknown',
-        userAgent,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 
@@ -239,61 +225,56 @@ export class AuthService {
     this.logger.log(`User logged out: ${userId}`);
   }
 
-  async refresh(refreshToken: string) {
-    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-
-    const session = await this.prisma.session.findFirst({
-      where: {
-        userId: payload.sub,
-        isActive: true,
-      },
-    });
-
-    if (!session) {
-      throw new UnauthorizedException('Сессия истекла');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
-    }
-
-    if (user.status === 'BANNED' || user.status === 'SUSPENDED') {
-      throw new UnauthorizedException('Аккаунт недоступен');
-    }
-
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { isActive: false },
-    });
-
-    const tokens = await this.tokenService.generateTokenPair(user);
-
-    await this.prisma.session.create({
+  private async issueSession(
+    user: User,
+    ip = 'unknown',
+    userAgent?: string,
+    db: any = this.prisma,
+  ) {
+    const id = randomUUID();
+    const tokens = await this.tokenService.generateTokenPair(user, id);
+    const payload = await this.tokenService.verifyRefreshToken(tokens.refreshToken);
+    await db.session.create({
       data: {
+        id,
         userId: user.id,
         tokenHash: this.tokenService.hashToken(tokens.accessToken),
-        ip: session.ip,
-        userAgent: session.userAgent,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        refreshTokenHash: this.tokenService.hashToken(tokens.refreshToken),
+        ip,
+        userAgent,
+        expiresAt: new Date((payload as any).exp * 1000),
       },
     });
+    return tokens;
+  }
 
-    await this.prisma.securityEvent.create({
-      data: {
-        userId: user.id,
-        type: 'TOKEN_REFRESH',
-      },
+  async refresh(refreshToken: string) {
+    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+    if (!payload.sid) throw new UnauthorizedException('Недействительная сессия');
+    return this.prisma.$transaction(async (tx) => {
+      const session = await tx.session.findFirst({
+        where: {
+          id: payload.sid,
+          userId: payload.sub,
+          refreshTokenHash: this.tokenService.hashToken(refreshToken),
+          isActive: true,
+          expiresAt: { gt: new Date() },
+        },
+      });
+      if (!session) throw new UnauthorizedException('Сессия истекла');
+      const user = await tx.user.findUnique({
+        where: { id: payload.sub },
+        include: { profile: true },
+      });
+      if (!user || user.status !== 'ACTIVE') throw new UnauthorizedException('Аккаунт недоступен');
+      const consumed = await tx.session.updateMany({
+        where: { id: session.id, isActive: true },
+        data: { isActive: false },
+      });
+      if (consumed.count !== 1) throw new UnauthorizedException('Токен уже использован');
+      const tokens = await this.issueSession(user, session.ip, session.userAgent || undefined, tx);
+      return { user: this.sanitizeUser(user), ...tokens };
     });
-
-    return {
-      user: this.sanitizeUser(user),
-      ...tokens,
-    };
   }
 
   async verifyEmail(token: string) {

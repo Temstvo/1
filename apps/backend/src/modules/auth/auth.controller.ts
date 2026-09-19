@@ -8,12 +8,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import {
   RegisterDto,
@@ -29,6 +25,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
+@Throttle({ default: { limit: 20, ttl: 60000 } })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -36,15 +33,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
-  async register(
-    @Body() dto: RegisterDto,
-    @Request() req: any,
-  ) {
-    return this.authService.register(
-      dto,
-      req.ip,
-      req.headers['user-agent'],
-    );
+  async register(@Body() dto: RegisterDto, @Request() req: any) {
+    return this.authService.register(dto, req.ip, req.headers['user-agent']);
   }
 
   @Post('login')
@@ -52,15 +42,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(
-    @Body() dto: LoginDto,
-    @Request() req: any,
-  ) {
-    return this.authService.login(
-      dto,
-      req.ip,
-      req.headers['user-agent'],
-    );
+  async login(@Body() dto: LoginDto, @Request() req: any) {
+    return this.authService.login(dto, req.ip, req.headers['user-agent']);
   }
 
   @Post('logout')
@@ -69,10 +52,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout current session' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(
-    @CurrentUser('id') userId: string,
-    @Request() req: any,
-  ) {
+  async logout(@CurrentUser('id') userId: string, @Request() req: any) {
     const tokenHash = require('crypto')
       .createHash('sha256')
       .update(req.headers.authorization?.replace('Bearer ', '') || '')
@@ -123,39 +103,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Change password' })
   @ApiResponse({ status: 200, description: 'Password changed' })
-  async changePassword(
-    @CurrentUser('id') userId: string,
-    @Body() dto: ChangePasswordDto,
-  ) {
-    await this.authService.changePassword(
-      userId,
-      dto.currentPassword,
-      dto.newPassword,
-    );
+  async changePassword(@CurrentUser('id') userId: string, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
     return { message: 'Password changed successfully' };
-  }
-
-  @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Google OAuth login' })
-  async googleAuth() {}
-
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Google OAuth callback' })
-  async googleCallback(@Request() req: any) {
-    return req.user;
-  }
-
-  @Get('github')
-  @UseGuards(GitHubAuthGuard)
-  @ApiOperation({ summary: 'GitHub OAuth login' })
-  async githubAuth() {}
-
-  @Get('github/callback')
-  @UseGuards(GitHubAuthGuard)
-  @ApiOperation({ summary: 'GitHub OAuth callback' })
-  async githubCallback(@Request() req: any) {
-    return req.user;
   }
 }

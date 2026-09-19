@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { validateEnvironment } from './config/validate';
+import { AdminModule } from './modules/admin/admin.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -13,21 +17,19 @@ import { PlansModule } from './modules/plans/plans.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { VpnModule } from './modules/vpn/vpn.module';
-import { VpnConfigsModule } from './modules/vpn/vpn-configs.module';
 import { ServersModule } from './modules/servers/servers.module';
-import { SubModule } from './modules/sub/sub.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
-import { GrowthModule } from './modules/growth/growth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnvironment,
       envFilePath: require('path').resolve(__dirname, '..', '.env'),
     }),
     ThrottlerModule.forRoot([
@@ -48,16 +50,15 @@ import { GrowthModule } from './modules/growth/growth.module';
     PaymentsModule,
     InvoicesModule,
     VpnModule,
-    VpnConfigsModule,
     ServersModule,
-    SubModule,
     TrafficModule,
     NotificationsModule,
     ReferralsModule,
     CouponsModule,
     HealthModule,
     EmailModule,
-    GrowthModule,
+    AdminModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

@@ -9,6 +9,7 @@ export class PlansService {
 
   async findAll() {
     return this.prisma.plan.findMany({
+      where: { isActive: true },
       orderBy: { price: 'asc' },
     });
   }
@@ -75,9 +76,9 @@ export class PlansService {
       throw new ConflictException('Нельзя удалить тариф с активными подписками');
     }
 
-    return this.prisma.plan.delete({
+    return this.prisma.plan.update({
       where: { id },
+      data: { isActive: false },
     });
   }
-
 }

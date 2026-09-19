@@ -19,6 +19,9 @@ async function bootstrap() {
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');
 
   app.use(helmet());
+  app.enableShutdownHooks();
+  // Only trust the explicitly configured proxy hop; do not trust arbitrary X-Forwarded-For.
+  if (configService.get('TRUST_PROXY') === '1') app.set('trust proxy', 1);
   const loggerMiddleware = new RequestLoggerMiddleware();
   app.use(loggerMiddleware.use.bind(loggerMiddleware));
   app.setGlobalPrefix(apiPrefix, {

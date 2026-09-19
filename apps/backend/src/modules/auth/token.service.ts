@@ -2,9 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, randomUUID } from 'crypto';
 
 export interface JwtPayload {
+  sid: string;
   sub: string;
   email: string;
   role: string;
@@ -36,7 +37,10 @@ export class TokenService {
     return argon2.verify(hash, password);
   }
 
-  async generateTokenPair(user: { id: string; email: string; role: string }): Promise<TokenPair> {
+  async generateTokenPair(
+    user: { id: string; email: string; role: string },
+    sid = randomUUID(),
+  ): Promise<TokenPair> {
     const expiresIn = this.configService.get<string>('JWT_EXPIRATION', '15m');
     const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d');
     const [accessToken, refreshToken] = await Promise.all([
@@ -46,6 +50,8 @@ export class TokenService {
           email: user.email,
           role: user.role,
           type: 'access',
+          sid,
+          jti: randomUUID(),
         },
         {
           secret: this.configService.get<string>('JWT_SECRET'),
@@ -58,6 +64,8 @@ export class TokenService {
           email: user.email,
           role: user.role,
           type: 'refresh',
+          sid,
+          jti: randomUUID(),
         },
         {
           secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -73,6 +81,7 @@ export class TokenService {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
+        algorithms: ['HS256'],
       });
 
       if (payload.type !== 'access') {
@@ -89,6 +98,7 @@ export class TokenService {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        algorithms: ['HS256'],
       });
 
       if (payload.type !== 'refresh') {

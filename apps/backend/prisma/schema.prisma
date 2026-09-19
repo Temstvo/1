@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
+  engineType      = "client"
 }
 
 datasource db {
@@ -67,6 +67,7 @@ model User {
   referredBy        Referral?          @relation("ReferredUser")
   ownedReferrals    Referral[]         @relation("ReferralOwner")
   coupons           Coupon[]           @relation("CouponCreator")
+  vpnAccess         VpnAccess?
 
   @@index([email])
   @@index([role])
@@ -99,6 +100,7 @@ model Session {
   id           String   @id @default(uuid()) @db.Uuid
   userId       String   @map("user_id") @db.Uuid
   tokenHash    String   @map("token_hash")
+  refreshTokenHash String? @unique @map("refresh_token_hash")
   ip           String
   userAgent    String?  @map("user_agent")
   deviceName   String?  @map("device_name")
@@ -214,6 +216,7 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentProvider {
@@ -236,6 +239,9 @@ model Payment {
   description   String?
   metadata      Json?
   webhookVerified Boolean       @default(false) @map("webhook_verified")
+  idempotencyKey String? @map("idempotency_key")
+  checkoutUrl String? @map("checkout_url")
+  expiresAt DateTime? @map("expires_at")
   refundedAt    DateTime?       @map("refunded_at")
   refundAmount  Decimal?        @db.Decimal(10, 2) @map("refund_amount")
   createdAt     DateTime        @default(now()) @map("created_at")
@@ -248,7 +254,29 @@ model Payment {
   @@index([userId])
   @@index([transactionId])
   @@index([status])
+  @@unique([userId, idempotencyKey])
   @@map("payments")
+}
+
+// Durable desired state. Provisioning is retried independently of payment delivery.
+model VpnAccess {
+  userId String @id @db.Uuid @map("user_id")
+  username String @unique
+  enabled Boolean @default(false)
+  revoked Boolean @default(false)
+  expiresAt DateTime @map("expires_at")
+  trafficLimit BigInt @default(0) @map("traffic_limit")
+  revision Int @default(1)
+  syncedRevision Int @default(0) @map("synced_revision")
+  status String @default("PENDING")
+  encryptedConfig String? @map("encrypted_config")
+  lastError String? @map("last_error")
+  lastSyncedAt DateTime? @map("last_synced_at")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at")
+  attempts Int @default(0)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@index([status, nextAttemptAt])
+  @@map("vpn_access")
 }
 
 model Invoice {

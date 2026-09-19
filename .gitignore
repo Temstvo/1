@@ -10,6 +10,9 @@ out/
 
 # Environment files
 .env
+.env.*
+!.env.example
+!.env.*.example
 .env.local
 .env.development.local
 .env.test.local
@@ -50,7 +53,7 @@ docker/data/
 *.jks
 
 # Prisma
-prisma/migrations/
+# Database migrations are source code and must be committed.
 
 # Misc
 *.tsbuildinfo
@@ -61,4 +64,8 @@ apps/frontend/src-tauri/gen/
 *.zip
 fix-rls*.js
 supabase-fix-rls.sql
+.local/
+test-results/
+playwright-report/
+serv-configs/**/*.json
 

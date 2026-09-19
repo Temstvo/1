@@ -38,8 +38,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     this.logger.error(
-      `${request.method} ${request.url} ${status}`,
-      exception instanceof Error ? exception.stack : '',
+      `${request.method} ${request.path.replace(/(\/sub\/)[^/]+/, '$1[redacted]')} ${status}`,
+      exception instanceof Error ? exception.name : '',
     );
 
     response.status(status).json({

@@ -1,94 +1,81 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, BadGatewayException, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class YooKassaService {
-  private readonly logger = new Logger(YooKassaService.name);
-  private shopId: string;
-  private secretKey: string;
-  private baseUrl = 'https://api.yookassa.ru/v3';
-
-  constructor(private configService: ConfigService) {
-    this.shopId = this.configService.get<string>('YOOKASSA_SHOP_ID', '');
-    this.secretKey = this.configService.get<string>('YOOKASSA_SECRET_KEY', '');
+  constructor(private config: ConfigService) {}
+  isConfigured() {
+    return !!(this.config.get('YOOKASSA_SHOP_ID') && this.config.get('YOOKASSA_SECRET_KEY'));
   }
 
-  private getAuth(): string {
-    return 'Basic ' + Buffer.from(`${this.shopId}:${this.secretKey}`).toString('base64');
-  }
-
-  private async request(method: string, path: string, body?: any): Promise<any> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+  private async request(method: string, path: string, body?: unknown, idempotencyKey?: string) {
+    if (!this.isConfigured()) throw new ServiceUnavailableException('Оплата пока не настроена');
+    // Deliberately fixed origin: a webhook cannot turn a payment lookup into SSRF.
+    const response = await fetch('https://api.yookassa.ru/v3' + path, {
       method,
+      redirect: 'error',
+      signal: AbortSignal.timeout(15000),
       headers: {
-        'Authorization': this.getAuth(),
+        Authorization:
+          'Basic ' +
+          Buffer.from(
+            this.config.get('YOOKASSA_SHOP_ID') + ':' + this.config.get('YOOKASSA_SECRET_KEY'),
+          ).toString('base64'),
         'Content-Type': 'application/json',
-        'Idempotence-Key': crypto.randomUUID(),
+        ...(idempotencyKey ? { 'Idempotence-Key': idempotencyKey } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-
-    const data = await res.json();
-    if (!res.ok) {
-      this.logger.error(`YooKassa error: ${res.status} ${JSON.stringify(data)}`);
-      throw new Error(data.description || `YooKassa error ${res.status}`);
-    }
-    return data;
+    if (!response.ok) throw new BadGatewayException('Провайдер оплаты временно недоступен');
+    return response.json();
   }
 
-  async createPayment(data: {
-    amount: number;
+  createPayment(data: {
+    id: string;
+    amount: string;
     currency: string;
     description: string;
-    metadata?: Record<string, string>;
-    capture?: boolean;
-    returnReturnUrl?: string;
-  }): Promise<{
-    id: string;
-    status: string;
-    confirmationUrl: string;
-    paymentMethod: string;
-  }> {
-    const body: any = {
-      amount: {
-        value: data.amount.toFixed(2),
-        currency: data.currency,
-      },
+    userId: string;
+    planId: string;
+    email: string;
+  }) {
+    const vat = this.config.get<string>('YOOKASSA_VAT_CODE');
+    const body = {
+      amount: { value: data.amount, currency: data.currency },
+      capture: true,
       description: data.description,
-      metadata: data.metadata || {},
-      capture: data.capture !== false,
+      metadata: { paymentId: data.id, userId: data.userId, planId: data.planId },
       confirmation: {
         type: 'redirect',
-        return_url: data.returnReturnUrl || 'https://appi-frontend.vercel.app/checkout/success',
+        return_url:
+          this.config.get('FRONTEND_URL', 'http://localhost:3001') +
+          '/checkout/success?paymentId=' +
+          data.id,
       },
+      ...(vat
+        ? {
+            receipt: {
+              customer: { email: data.email },
+              items: [
+                {
+                  description: data.description,
+                  quantity: '1.00',
+                  amount: { value: data.amount, currency: data.currency },
+                  vat_code: Number(vat),
+                  payment_mode: 'full_payment',
+                  payment_subject: 'service',
+                },
+              ],
+            },
+          }
+        : {}),
     };
-
-    const result = await this.request('POST', '/payments', body);
-
-    return {
-      id: result.id,
-      status: result.status,
-      confirmationUrl: result.confirmation?.confirmation_url || '',
-      paymentMethod: result.payment_method?.type || '',
-    };
+    return this.request('POST', '/payments', body, data.id);
   }
 
-  async getPayment(paymentId: string): Promise<any> {
-    return this.request('GET', `/payments/${paymentId}`);
-  }
-
-  verifyWebhook(rawBody: string, signatureHeader: string): boolean {
-    if (!signatureHeader || !rawBody) return false;
-
-    const hmac = crypto.createHmac('sha256', this.secretKey);
-    hmac.update(rawBody, 'utf8');
-    const expectedSignature = hmac.digest('base64');
-
-    return signatureHeader === expectedSignature;
-  }
-
-  isConfigured(): boolean {
-    return !!(this.shopId && this.secretKey);
+  getPayment(id: string) {
+    if (!/^[a-zA-Z0-9-]{1,64}$/.test(id))
+      throw new BadGatewayException('Некорректный ID провайдера');
+    return this.request('GET', '/payments/' + encodeURIComponent(id));
   }
 }

@@ -8,17 +8,6 @@ import { TokenService } from './token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TelegramModule } from '../telegram/telegram.module';
 
-const authProviders: any[] = [];
-
-if (process.env.GOOGLE_CLIENT_ID) {
-  const { GoogleStrategy } = require('./strategies/google.strategy');
-  authProviders.push(GoogleStrategy);
-}
-if (process.env.GITHUB_CLIENT_ID) {
-  const { GitHubStrategy } = require('./strategies/github.strategy');
-  authProviders.push(GitHubStrategy);
-}
-
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -35,7 +24,7 @@ if (process.env.GITHUB_CLIENT_ID) {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenService, JwtStrategy, ...authProviders],
+  providers: [AuthService, TokenService, JwtStrategy],
   exports: [AuthService, TokenService, JwtModule],
 })
 export class AuthModule {}

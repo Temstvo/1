@@ -1,218 +1,167 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
-import { VpnConfigService } from './vpn-config.service';
-import { Protocol } from '@prisma/client';
+import { lockUser } from '../../database/lock-user';
+import { MarzbanService } from './marzban.service';
 
 @Injectable()
 export class VpnService {
-  private readonly logger = new Logger(VpnService.name);
-
+  private running = false;
+  private logger = new Logger(VpnService.name);
   constructor(
     private prisma: PrismaService,
-    private vpnConfigService: VpnConfigService,
+    private config: ConfigService,
+    private marzban: MarzbanService,
   ) {}
 
-  async generateConfig(userId: string, serverId: string, protocol: Protocol) {
-    const server = await this.prisma.server.findUnique({
-      where: { id: serverId },
-    });
-
-    if (!server) {
-      throw new NotFoundException('Сервер не найден');
-    }
-
-    if (server.status !== 'ONLINE') {
-      throw new NotFoundException('Сервер недоступен');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { subscriptions: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    const hasActiveSubscription = user.subscriptions.some(
-      (s) => s.status === 'ACTIVE' || s.status === 'GRACE_PERIOD',
+  private seal(value: unknown) {
+    const iv = randomBytes(12);
+    const cipher = createCipheriv(
+      'aes-256-gcm',
+      Buffer.from(this.config.get<string>('VPN_ENCRYPTION_KEY')!, 'base64'),
+      iv,
     );
-
-    if (!hasActiveSubscription) {
-      throw new NotFoundException('Требуется активная подписка');
-    }
-
-    const keyPair = this.vpnConfigService.generateKeyPair();
-    const clientId = this.vpnConfigService.generateClientId();
-    const clientAddress = this.vpnConfigService.generateClientAddress(clientId);
-
-    let configData: any;
-
-    switch (protocol) {
-      case 'WIREGUARD':
-        configData = await this.vpnConfigService.generateWireGuardConfig({
-          serverIp: server.ip,
-          serverPort: 51820,
-          serverPublicKey: keyPair.publicKey,
-          clientPrivateKey: keyPair.privateKey,
-          clientAddress,
-        });
-        break;
-
-      case 'OPENVPN':
-        configData = await this.vpnConfigService.generateOpenVPNConfig({
-          serverIp: server.ip,
-          serverPort: 1194,
-          serverCert: 'server-cert-placeholder',
-          serverKey: 'server-key-placeholder',
-          caCert: 'ca-cert-placeholder',
-          tlsAuthKey: 'tls-auth-placeholder',
-        });
-        break;
-
-      case 'XRAY_REALITY':
-        configData = await this.vpnConfigService.generateXrayRealityConfig({
-          serverIp: server.ip,
-          serverPort: 443,
-          serverName: 'www.google.com',
-          shortId: this.vpnConfigService.generateShortId(),
-          privateKey: keyPair.privateKey,
-          publicKey: keyPair.publicKey,
-          spiderX: '',
-        });
-        break;
-
-      case 'VLESS':
-        configData = await this.vpnConfigService.generateXrayVlessConfig({
-          serverIp: server.ip,
-          serverPort: 443,
-          userId: clientId,
-          flow: 'xtls-rprx-vision',
-        });
-        break;
-
-      default:
-        throw new NotFoundException('Неподдерживаемый протокол');
-    }
-
-    const vpnConfig = await this.prisma.vPNConfig.create({
-      data: {
-        userId,
-        serverId,
-        protocol,
-        config: configData,
-        publicKey: keyPair.publicKey,
-        privateKey: keyPair.privateKey,
-        ipAddress: clientAddress,
-        port: protocol === 'WIREGUARD' ? 51820 : protocol === 'OPENVPN' ? 1194 : 443,
-      },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        actorId: userId,
-        action: 'CONFIG_GENERATED',
-        resource: 'VPN_CONFIG',
-        resourceId: vpnConfig.id,
-        metadata: { protocol, serverId },
-        result: 'success',
-      },
-    });
-
-    this.logger.log(`VPN config generated: ${protocol} for user ${userId}`);
-
-    const uri =
-      typeof configData === 'string'
-        ? configData
-        : JSON.stringify(configData);
-
-    return {
-      id: vpnConfig.id,
-      userId: vpnConfig.userId,
-      serverId: vpnConfig.serverId,
-      protocol: vpnConfig.protocol,
-      config: vpnConfig.config,
-      uri,
-      publicKey: vpnConfig.publicKey,
-      ipAddress: vpnConfig.ipAddress,
-      port: vpnConfig.port,
-      isActive: vpnConfig.isActive,
-      createdAt: vpnConfig.createdAt,
-    };
+    const encrypted = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
+    return [iv, cipher.getAuthTag(), encrypted].map((v) => v.toString('base64')).join('.');
   }
-
-  async getUserConfigs(userId: string) {
-    const configs = await this.prisma.vPNConfig.findMany({
-      where: { userId, isActive: true },
-      include: { server: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return configs.map(({ privateKey, ...rest }) => rest);
+  private open(value: string) {
+    const [iv, tag, encrypted] = value.split('.').map((v) => Buffer.from(v, 'base64'));
+    const cipher = createDecipheriv(
+      'aes-256-gcm',
+      Buffer.from(this.config.get<string>('VPN_ENCRYPTION_KEY')!, 'base64'),
+      iv,
+    );
+    cipher.setAuthTag(tag);
+    return JSON.parse(Buffer.concat([cipher.update(encrypted), cipher.final()]).toString('utf8'));
   }
-
-  async deleteConfig(userId: string, configId: string) {
-    const config = await this.prisma.vPNConfig.findUnique({
-      where: { id: configId },
-    });
-
-    if (!config || config.userId !== userId) {
-      throw new NotFoundException('Конфиг не найден');
-    }
-
-    await this.prisma.vPNConfig.update({
-      where: { id: configId },
-      data: { isActive: false },
-    });
-  }
-
-  async getConfigQrCode(userId: string, configId: string) {
-    const config = await this.prisma.vPNConfig.findUnique({
-      where: { id: configId },
-    });
-
-    if (!config) {
-      throw new NotFoundException('Конфиг не найден');
-    }
-
-    if (config.userId !== userId) {
-      throw new NotFoundException('Конфиг не найден');
-    }
-
-    return {
-      configId: config.id,
-      protocol: config.protocol,
-      config: config.config,
-    };
-  }
-
-  async getStatus(userId: string) {
-    const activeConfigs = await this.prisma.vPNConfig.count({
-      where: { userId, isActive: true },
-    });
-
-    const activeConnections = await this.prisma.connection.count({
-      where: { userId, disconnectedAt: null },
-    });
-
-    const todayTraffic = await this.prisma.trafficUsage.aggregate({
+  async entitlement(userId: string) {
+    const subscription = await this.prisma.subscription.findFirst({
       where: {
         userId,
-        date: new Date(new Date().setHours(0, 0, 0, 0)),
+        user: { status: 'ACTIVE' },
+        status: 'ACTIVE',
+        expiresAt: { gt: new Date() },
       },
-      _sum: {
-        download: true,
-        upload: true,
-      },
+      include: { plan: true },
+      orderBy: { expiresAt: 'desc' },
     });
-
+    if (!subscription) throw new ForbiddenException('Нужна действующая подписка');
+    return subscription;
+  }
+  async getUserConfigs(userId: string) {
+    await this.entitlement(userId);
+    const access = await this.prisma.vpnAccess.findUnique({ where: { userId } });
+    if (access?.revoked || !access?.enabled) throw new ForbiddenException('VPN-доступ отозван');
+    if (
+      access.status !== 'ACTIVE' ||
+      access.syncedRevision !== access.revision ||
+      !access.encryptedConfig ||
+      access.expiresAt <= new Date()
+    ) {
+      throw new ServiceUnavailableException('VPN настраивается. Обновите статус через минуту');
+    }
     return {
-      activeConfigs,
-      activeConnections,
-      todayTraffic: {
-        download: todayTraffic._sum.download || 0,
-        upload: todayTraffic._sum.upload || 0,
-      },
+      ...this.open(access.encryptedConfig),
+      expiresAt: access.expiresAt,
+      protocol: 'VLESS Reality',
     };
+  }
+  async getStatus(userId: string) {
+    const access = await this.prisma.vpnAccess.findUnique({ where: { userId } });
+    if (!access) return { status: 'NOT_PROVISIONED', configured: this.marzban.configured() };
+    const entitled = !!(await this.prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        expiresAt: { gt: new Date() },
+        user: { status: 'ACTIVE' },
+      },
+    }));
+    return {
+      status: access.revoked
+        ? 'REVOKED'
+        : !entitled || access.expiresAt <= new Date()
+          ? 'EXPIRED'
+          : access.status,
+      expiresAt: access.expiresAt,
+      lastSyncedAt: access.lastSyncedAt,
+      configured: this.marzban.configured(),
+    };
+  }
+
+  async syncUser(userId: string) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        await lockUser(tx, userId);
+        const access = await tx.vpnAccess.findUnique({
+          where: { userId },
+          include: { user: { select: { status: true } } },
+        });
+        if (!access) return;
+        const subscription = await tx.subscription.findFirst({
+          where: { userId, status: 'ACTIVE', expiresAt: { gt: new Date() } },
+        });
+        const enabled =
+          access.enabled &&
+          !access.revoked &&
+          !!subscription &&
+          access.expiresAt > new Date() &&
+          access.user.status === 'ACTIVE';
+        try {
+          const result = await this.marzban.sync(access, enabled);
+          await tx.vpnAccess.update({
+            where: { userId },
+            data: {
+              enabled,
+              status: enabled ? 'ACTIVE' : 'DISABLED',
+              syncedRevision: access.revision,
+              encryptedConfig: result ? this.seal(result) : null,
+              lastError: null,
+              lastSyncedAt: new Date(),
+              nextAttemptAt: new Date(Date.now() + 300000),
+              attempts: 0,
+            },
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'VPN synchronization failed';
+          await tx.vpnAccess.update({
+            where: { userId },
+            data: {
+              status: 'ERROR',
+              lastError: message.slice(0, 200),
+              attempts: { increment: 1 },
+              nextAttemptAt: new Date(
+                Date.now() + Math.min(300, 15 * 2 ** Math.min(access.attempts, 5)) * 1000,
+              ),
+            },
+          });
+          this.logger.warn('VPN synchronization failed; retry scheduled for account ' + userId);
+        }
+      },
+      { timeout: 60000, maxWait: 10000 },
+    );
+  }
+  @Cron('*/15 * * * * *')
+  async reconcile() {
+    if (this.running) return;
+    this.running = true;
+    try {
+      const due = await this.prisma.vpnAccess.findMany({
+        where: { nextAttemptAt: { lte: new Date() } },
+        select: { userId: true },
+        take: 20,
+        orderBy: { nextAttemptAt: 'asc' },
+      });
+      for (const access of due) await this.syncUser(access.userId);
+    } finally {
+      this.running = false;
+    }
   }
 }

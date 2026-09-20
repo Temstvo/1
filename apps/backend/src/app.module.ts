@@ -24,6 +24,7 @@ import { ReferralsModule } from './modules/referrals/referrals.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
+import { SubModule } from './modules/sub/sub.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { EmailModule } from './modules/email/email.module';
     HealthModule,
     EmailModule,
     AdminModule,
+    SubModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

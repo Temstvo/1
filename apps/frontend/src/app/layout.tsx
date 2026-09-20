@@ -6,6 +6,7 @@ import '@fontsource/inter/700.css';
 import './globals.css';
 import './site.css';
 import './modern.css';
+import './workspace.css';
 import Providers from './providers';
 
 export const metadata: Metadata = {

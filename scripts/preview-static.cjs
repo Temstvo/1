@@ -12,7 +12,7 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const results = [];
   try {
-    for (const route of ['index', 'demo', 'login']) {
+    for (const route of ['index', 'demo', 'login', 'app']) {
       let html = await fs.readFile(path.join(app, '.next/server/app', route + '.html'), 'utf8');
       html = html
         .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')

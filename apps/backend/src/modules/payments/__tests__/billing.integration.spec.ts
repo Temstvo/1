@@ -4,6 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import request from 'supertest';
 import { randomUUID } from 'crypto';
+import { mkdtemp, writeFile, rm } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import { PrismaService } from '../../../database/prisma.service';
 import { BigIntInterceptor } from '../../../common/interceptors/bigint.interceptor';
 import { GlobalExceptionFilter } from '../../../common/filters/global-exception.filter';
@@ -28,6 +31,8 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
     config: ConfigService;
   const users: string[] = [];
   let planId: string;
+  let profileDirectory: string;
+  const profileUuid = randomUUID();
   const remote = new Map<string, any>();
   const provider = {
     isConfigured: () => true,
@@ -66,6 +71,22 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
     )
       throw new Error('Use a dedicated DATABASE_URL ending in _test with NODE_ENV=test');
     process.env.ENABLE_GUEST_ACCESS = 'true';
+    profileDirectory = await mkdtemp(join(tmpdir(), 'appi-integration-profiles-'));
+    await writeFile(
+      join(profileDirectory, 'profile.json'),
+      JSON.stringify({
+        name: 'Test UK',
+        country: 'United Kingdom',
+        host: 'vpn.example.test',
+        port: 443,
+        uuid: profileUuid,
+        type: 'xhttp',
+        security: 'tls',
+        sni: 'example.test',
+        path: '/tunnel',
+      }),
+    );
+    process.env.SERV_CONFIGS_DIR = profileDirectory;
     const { AppModule } = await import('../../../app.module');
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(YooKassaService)
@@ -128,7 +149,36 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
       if (planId) await db.plan.delete({ where: { id: planId } });
     }
     await app?.close();
+    if (
+      profileDirectory &&
+      profileDirectory.startsWith(join(tmpdir(), 'appi-integration-profiles-'))
+    )
+      await rm(profileDirectory, { recursive: true, force: true });
   }, 30000);
+  it('lists imported metadata publicly but exports credentials only with a session and explicit flag', async () => {
+    config.set('ENABLE_IMPORTED_VPN_ACCESS', 'false');
+    const listing = await request(app.getHttpServer()).get('/api/vpn/imported/servers').expect(200);
+    expect(listing.body.profiles).toHaveLength(1);
+    expect(JSON.stringify(listing.body)).not.toContain(profileUuid);
+    expect(JSON.stringify(listing.body)).not.toContain('vpn.example.test');
+    const path = '/api/vpn/imported/servers/' + listing.body.profiles[0].id + '/config';
+    await request(app.getHttpServer()).get(path).expect(401);
+    const guest = await auth.guest();
+    users.push(guest.user.id);
+    await request(app.getHttpServer())
+      .get(path)
+      .set('Authorization', 'Bearer ' + guest.accessToken)
+      .expect(403);
+    config.set('ENABLE_IMPORTED_VPN_ACCESS', 'true');
+    const exported = await request(app.getHttpServer())
+      .get(path)
+      .set('Authorization', 'Bearer ' + guest.accessToken)
+      .expect(200);
+    expect(exported.headers['cache-control']).toBe('no-store');
+    expect(exported.body.config.outbounds[0].settings.vnext[0].users[0].id).toBe(profileUuid);
+    config.set('ENABLE_IMPORTED_VPN_ACCESS', 'false');
+  });
+
   it('creates an unprivileged guest, saves the same account, rotates tokens and revokes logout', async () => {
     const guest = await request(app.getHttpServer()).post('/api/auth/guest').send({}).expect(201);
     const id = guest.body.user.id;

@@ -152,6 +152,9 @@ export default function Dashboard() {
         </button>
       </div>
       <nav className="dashboard-nav" aria-label="Разделы кабинета">
+        <Link href="/app">
+          <Icon name="globe" /> Серверы Appi
+        </Link>
         <a href="#access">
           <Icon name="shield" /> Мой доступ
         </a>

@@ -19,7 +19,7 @@ export default function Demo() {
         if (e.response?.status !== 401) throw e;
         await api.post('/auth/guest', {});
       }
-      router.push('/dashboard');
+      router.push('/app');
     } catch (e) {
       setError(apiErrorMessage(e));
     } finally {

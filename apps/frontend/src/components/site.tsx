@@ -20,14 +20,15 @@ export function Header() {
             <Link href="/#how">Как подключиться</Link>
             <Link href="/#pricing">Тарифы</Link>
           </nav>
-          <Link href="/dashboard" className="nav-account">
-            Личный кабинет <Icon name="arrow" />
+          <Link href="/app" className="nav-account">
+            Открыть Appi <Icon name="arrow" />
           </Link>
           <details className="mobile-nav">
             <summary aria-label="Открыть меню">
               <Icon name="menu" />
             </summary>
             <nav aria-label="Мобильная навигация">
+              <Link href="/app">Приложение Appi</Link>
               <Link href="/#advantages">Возможности</Link>
               <Link href="/#how">Как подключиться</Link>
               <Link href="/#pricing">Тарифы</Link>

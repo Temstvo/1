@@ -107,11 +107,12 @@ export class ServersController {
     @Query('protocol') protocol?: string,
     @Query('status') status?: string,
   ) {
-    return this.serversService.findAll({
+    const servers = await this.serversService.findAll({
       country,
       protocol,
       status: status as any,
     });
+    return servers.map(({ config, metadata, ...server }) => server);
   }
 
   @Get('countries')
@@ -135,7 +136,8 @@ export class ServersController {
   @ApiResponse({ status: 200, description: 'Server details' })
   @ApiResponse({ status: 404, description: 'Server not found' })
   async findById(@Param('id') id: string) {
-    return this.serversService.findById(id);
+    const { config, metadata, ...server } = await this.serversService.findById(id);
+    return server;
   }
 
   @Get(':id/stats')

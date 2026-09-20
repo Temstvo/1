@@ -100,8 +100,7 @@ export class PaymentsService {
         },
       });
     });
-    if (payment.status !== 'PENDING')
-      throw new ConflictException('Заказ уже завершён. Создайте новый');
+    if (payment.status !== 'PENDING') return this.checkoutResult(payment);
     if (payment.checkoutUrl) return this.checkoutResult(payment);
     if (payment.expiresAt && payment.expiresAt <= new Date())
       throw new ConflictException('Заказ истёк. Создайте новый');
@@ -266,7 +265,13 @@ export class PaymentsService {
             paidAt: now,
           },
         });
-        await queueAccess(tx, payment.userId, expiresAt, BigInt(meta.trafficLimit || '0'));
+        const previousAccess = await tx.vpnAccess.findUnique({ where: { userId: payment.userId } });
+        const purchasedQuota = BigInt(meta.trafficLimit || '0');
+        const totalQuota =
+          purchasedQuota === 0n || previousAccess?.trafficLimit === 0n
+            ? 0n
+            : purchasedQuota + (previousAccess?.trafficLimit || 0n);
+        await queueAccess(tx, payment.userId, expiresAt, totalQuota);
         await tx.auditLog.create({
           data: {
             actorId: payment.userId,

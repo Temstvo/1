@@ -28,7 +28,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message = typeof exResponse === 'string' ? exResponse : (exResponse as any).message;
       errorCode = (exResponse as any).error || 'HTTP_ERROR';
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      status = HttpStatus.BAD_REQUEST;
+      status =
+        exception.code === 'P2002'
+          ? HttpStatus.CONFLICT
+          : exception.code === 'P2025'
+            ? HttpStatus.NOT_FOUND
+            : HttpStatus.BAD_REQUEST;
       message = this.handlePrismaError(exception);
       errorCode = `PRISMA_${exception.code}`;
     } else if (exception instanceof Prisma.PrismaClientValidationError) {
@@ -47,7 +52,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message,
       errorCode,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      path: request.path.replace(/(\/sub\/)[^/]+/, '$1[redacted]'),
     });
   }
 

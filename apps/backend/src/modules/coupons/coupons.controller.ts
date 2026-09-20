@@ -16,7 +16,15 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { IsString, IsNumber, IsOptional, IsEnum, IsArray, IsDateString, Min } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsDateString,
+  Min,
+} from 'class-validator';
 import { CouponType } from '@prisma/client';
 
 class CreateCouponDto {
@@ -170,7 +178,8 @@ export class CouponsController {
   }
 
   @Post('apply')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Apply coupon (increment usage)' })

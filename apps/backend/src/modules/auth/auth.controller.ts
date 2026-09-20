@@ -29,6 +29,12 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post('guest')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  async guest(@Request() req: any) {
+    return this.authService.guest(req.ip, req.headers['user-agent']);
+  }
+
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })

@@ -10,6 +10,7 @@ export class TrafficService {
       where: {
         userId,
         status: 'ACTIVE',
+        expiresAt: { gt: new Date() },
       },
       include: {
         plan: true,
@@ -42,7 +43,8 @@ export class TrafficService {
     return {
       bytesUsed: totalBytesUsed,
       bytesLimit: totalBytesLimit,
-      percentage: totalBytesLimit > BigInt(0) ? Number((totalBytesUsed * BigInt(100)) / totalBytesLimit) : 0,
+      percentage:
+        totalBytesLimit > BigInt(0) ? Number((totalBytesUsed * BigInt(100)) / totalBytesLimit) : 0,
       planName: subscription.plan.name,
     };
   }
@@ -120,7 +122,8 @@ export class TrafficService {
         sessions: totalUsage._count,
       },
       last7Days: {
-        totalBytes: (weeklyUsage._sum.download || BigInt(0)) + (weeklyUsage._sum.upload || BigInt(0)),
+        totalBytes:
+          (weeklyUsage._sum.download || BigInt(0)) + (weeklyUsage._sum.upload || BigInt(0)),
       },
       last24Hours: {
         totalBytes: (dailyUsage._sum.download || BigInt(0)) + (dailyUsage._sum.upload || BigInt(0)),

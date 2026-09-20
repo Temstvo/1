@@ -11,7 +11,7 @@ CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'BANNED', 'SUSPENDED');
 CREATE TYPE "SubscriptionStatus" AS ENUM ('PENDING', 'ACTIVE', 'TRIAL', 'GRACE_PERIOD', 'EXPIRED', 'CANCELLED', 'PAST_DUE', 'SUSPENDED', 'REFUNDED');
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED', 'EXPIRED');
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED');
 
 -- CreateEnum
 CREATE TYPE "PaymentProvider" AS ENUM ('STRIPE', 'LEMON_SQUEEZY', 'TELEGRAM', 'CRYPTOMUS', 'YOOKASSA');
@@ -82,7 +82,6 @@ CREATE TABLE "sessions" (
     "id" UUID NOT NULL,
     "user_id" UUID NOT NULL,
     "token_hash" TEXT NOT NULL,
-    "refresh_token_hash" TEXT,
     "ip" TEXT NOT NULL,
     "user_agent" TEXT,
     "device_name" TEXT,
@@ -169,35 +168,12 @@ CREATE TABLE "payments" (
     "description" TEXT,
     "metadata" JSONB,
     "webhook_verified" BOOLEAN NOT NULL DEFAULT false,
-    "idempotency_key" TEXT,
-    "checkout_url" TEXT,
-    "expires_at" TIMESTAMP(3),
     "refunded_at" TIMESTAMP(3),
     "refund_amount" DECIMAL(10,2),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "vpn_access" (
-    "user_id" UUID NOT NULL,
-    "username" TEXT NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "revoked" BOOLEAN NOT NULL DEFAULT false,
-    "expires_at" TIMESTAMP(3) NOT NULL,
-    "traffic_limit" BIGINT NOT NULL DEFAULT 0,
-    "revision" INTEGER NOT NULL DEFAULT 1,
-    "synced_revision" INTEGER NOT NULL DEFAULT 0,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "encrypted_config" TEXT,
-    "last_error" TEXT,
-    "last_synced_at" TIMESTAMP(3),
-    "next_attempt_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "attempts" INTEGER NOT NULL DEFAULT 0,
-
-    CONSTRAINT "vpn_access_pkey" PRIMARY KEY ("user_id")
 );
 
 -- CreateTable
@@ -458,9 +434,6 @@ CREATE INDEX "users_referral_code_idx" ON "users"("referral_code");
 CREATE UNIQUE INDEX "profiles_user_id_key" ON "profiles"("user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sessions_refresh_token_hash_key" ON "sessions"("refresh_token_hash");
-
--- CreateIndex
 CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
 
 -- CreateIndex
@@ -495,15 +468,6 @@ CREATE INDEX "payments_transaction_id_idx" ON "payments"("transaction_id");
 
 -- CreateIndex
 CREATE INDEX "payments_status_idx" ON "payments"("status");
-
--- CreateIndex
-CREATE UNIQUE INDEX "payments_user_id_idempotency_key_key" ON "payments"("user_id", "idempotency_key");
-
--- CreateIndex
-CREATE UNIQUE INDEX "vpn_access_username_key" ON "vpn_access"("username");
-
--- CreateIndex
-CREATE INDEX "vpn_access_status_next_attempt_at_idx" ON "vpn_access"("status", "next_attempt_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "invoices_payment_id_key" ON "invoices"("payment_id");
@@ -639,9 +603,6 @@ ALTER TABLE "payments" ADD CONSTRAINT "payments_user_id_fkey" FOREIGN KEY ("user
 
 -- AddForeignKey
 ALTER TABLE "payments" ADD CONSTRAINT "payments_subscription_id_fkey" FOREIGN KEY ("subscription_id") REFERENCES "subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "vpn_access" ADD CONSTRAINT "vpn_access_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

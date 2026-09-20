@@ -114,6 +114,21 @@ export class AuthService {
     };
   }
 
+  async guest(ip?: string, userAgent?: string) {
+    if (this.configService.get('ENABLE_GUEST_ACCESS') !== 'true') {
+      throw new UnauthorizedException('Гостевой доступ отключён');
+    }
+    const user = await this.prisma.user.create({
+      data: {
+        email: `guest-${randomUUID()}@guest.invalid`,
+        referralCode: this.generateReferralCode(),
+        profile: { create: { firstName: 'Гость' } },
+      },
+    });
+    const tokens = await this.issueSession(user, ip, userAgent);
+    return { user: this.sanitizeUser(user), ...tokens };
+  }
+
   async login(dto: LoginDto, ip?: string, userAgent?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -131,16 +146,16 @@ export class AuthService {
     const isValidPassword = await this.tokenService.verifyPassword(user.passwordHash, dto.password);
 
     if (!isValidPassword) {
-      const attempts = user.loginAttempts + 1;
-      const lockUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
-
-      await this.prisma.user.update({
+      const failed = await this.prisma.user.update({
         where: { id: user.id },
-        data: {
-          loginAttempts: attempts,
-          lockedUntil: lockUntil,
-        },
+        data: { loginAttempts: { increment: 1 } },
       });
+      const attempts = failed.loginAttempts;
+      if (attempts >= 5)
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { lockedUntil: new Date(Date.now() + 15 * 60 * 1000) },
+        });
 
       await this.prisma.securityEvent.create({
         data: {

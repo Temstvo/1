@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { User } from '@prisma/client';
+import { lockUser } from '../../database/lock-user';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +27,17 @@ export class UsersService {
     });
   }
 
-  async update(id: string, data: { firstName?: string; lastName?: string; phone?: string; country?: string; language?: string; timezone?: string }) {
+  async update(
+    id: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      country?: string;
+      language?: string;
+      timezone?: string;
+    },
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -74,7 +85,37 @@ export class UsersService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    await this.prisma.user.delete({ where: { id } });
+    await this.prisma.$transaction(async (tx) => {
+      await lockUser(tx, id);
+      await tx.session.updateMany({ where: { userId: id }, data: { isActive: false } });
+      await tx.subscription.updateMany({
+        where: { userId: id, status: 'ACTIVE' },
+        data: { status: 'CANCELLED', cancelledAt: new Date(), autoRenew: false },
+      });
+      await tx.vpnAccess.updateMany({
+        where: { userId: id },
+        data: {
+          revoked: true,
+          enabled: false,
+          status: 'PENDING',
+          revision: { increment: 1 },
+          nextAttemptAt: new Date(),
+        },
+      });
+      await tx.profile.deleteMany({ where: { userId: id } });
+      // Keep billing/audit records, anonymize the account and revoke credentials.
+      await tx.user.update({
+        where: { id },
+        data: {
+          email: `deleted-${id}@invalid.local`,
+          passwordHash: null,
+          status: 'INACTIVE',
+          emailVerificationTokenHash: null,
+          passwordResetTokenHash: null,
+          twoFactorSecret: null,
+        },
+      });
+    });
   }
 
   async getDevices(userId: string) {
@@ -99,6 +140,15 @@ export class UsersService {
   async getSessions(userId: string) {
     return this.prisma.session.findMany({
       where: { userId, isActive: true },
+      select: {
+        id: true,
+        ip: true,
+        userAgent: true,
+        createdAt: true,
+        expiresAt: true,
+        lastActiveAt: true,
+        deviceName: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -119,7 +169,13 @@ export class UsersService {
   }
 
   private sanitizeUser(user: User & { profile?: any }) {
-    const { passwordHash, twoFactorSecret, emailVerificationTokenHash, passwordResetTokenHash, ...sanitized } = user as any;
+    const {
+      passwordHash,
+      twoFactorSecret,
+      emailVerificationTokenHash,
+      passwordResetTokenHash,
+      ...sanitized
+    } = user as any;
     return sanitized;
   }
 }

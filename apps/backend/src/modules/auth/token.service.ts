@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { randomBytes, createHash, randomUUID } from 'crypto';
+import { durationSeconds } from '../../config/duration';
 
 export interface JwtPayload {
   sid: string;
@@ -39,10 +40,15 @@ export class TokenService {
 
   async generateTokenPair(
     user: { id: string; email: string; role: string },
-    sid = randomUUID(),
+    sid: string = randomUUID(),
   ): Promise<TokenPair> {
-    const expiresIn = this.configService.get<string>('JWT_EXPIRATION', '15m');
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d');
+    const expiresIn = durationSeconds(
+      this.configService.get<string>('JWT_EXPIRATION', '15m'),
+      3600,
+    );
+    const refreshExpiresIn = durationSeconds(
+      this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d'),
+    );
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         {

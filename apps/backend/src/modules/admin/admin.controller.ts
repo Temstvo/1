@@ -156,8 +156,10 @@ export class AdminController {
           include: { plan: true },
         });
       }
-      if (['extend', 'restore', 'unblock'].includes(dto.action) && sub)
-        await queueAccess(tx, id, sub.expiresAt, sub.plan.trafficLimit);
+      if (['extend', 'restore', 'unblock'].includes(dto.action) && sub) {
+        const access = await tx.vpnAccess.findUnique({ where: { userId: id } });
+        await queueAccess(tx, id, sub.expiresAt, access?.trafficLimit ?? sub.plan.trafficLimit);
+      }
       await tx.auditLog.create({
         data: {
           actorId,

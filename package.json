@@ -20,13 +20,21 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
+    "@eslint/eslintrc": "^3.3.7",
     "@playwright/test": "^1.63.0",
     "embedded-postgres": "18.4.0-beta.17",
     "eslint": "^9.39.5",
-    "husky": "^9.1.0",
-    "lint-staged": "^15.3.0",
-    "prettier": "^3.4.0",
-    "turbo": "^2.3.0"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.9.8",
+    "turbo": "^2.11.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.23",
+      "deepmerge-ts": "^8.0.0",
+      "browserslist": "^4.28.7",
+      "multer": "^2.3.0"
+    }
   }
 }

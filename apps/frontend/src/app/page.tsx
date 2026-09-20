@@ -58,6 +58,9 @@ export default function HomePage() {
             <span className="font-bold text-lg tracking-tight">APPI·VPN</span>
           </Link>
           <div className="hidden md:flex items-center gap-7 text-sm text-gray-400">
+            <Link href="/pricing" className="hover:text-white transition-colors">
+              Тарифы
+            </Link>
             <a href="#download" className="hover:text-white transition-colors">
               Скачать
             </a>
@@ -65,14 +68,17 @@ export default function HomePage() {
               Как подключить
             </a>
           </div>
-          <a
-            href="https://t.me/AppiVPNBot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary px-5 py-2 text-sm"
-          >
-            Открыть бота
-          </a>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="hidden sm:inline text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Войти
+            </Link>
+            <Link href="/pricing" className="btn-primary px-5 py-2 text-sm">
+              Получить VPN
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -87,16 +93,11 @@ export default function HomePage() {
             приложение Happ.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="https://t.me/AppiVPNBot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary px-8 py-4 text-base"
-            >
-              Получить подписку в боте
-            </a>
-            <a href="#download" className="btn-outline px-8 py-4 text-base">
-              Скачать Happ
+            <Link href="/pricing" className="btn-primary px-8 py-4 text-base">
+              Получить VPN
+            </Link>
+            <a href="#how" className="btn-outline px-8 py-4 text-base">
+              Как это работает
             </a>
           </div>
         </div>

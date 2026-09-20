@@ -57,7 +57,7 @@ export class SubscriptionsService {
     if (!sub) throw new NotFoundException('Подписка не найдена');
     return this.payments.createCheckoutSession(userId, sub.planId);
   }
-  @Cron('0 * * * * *')
+  @Cron('0 0 * * * *')
   async checkExpiration() {
     return this.prisma.subscription.updateMany({
       where: {

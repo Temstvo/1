@@ -29,12 +29,24 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post('guest')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  async guest(@Request() req: any) {
+    return this.authService.guest(req.ip, req.headers['user-agent']);
+  }
+
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
   async register(@Body() dto: RegisterDto, @Request() req: any) {
     return this.authService.register(dto, req.ip, req.headers['user-agent']);
+  }
+
+  @Post('claim')
+  @UseGuards(JwtAuthGuard)
+  async claim(@CurrentUser('id') id: string, @Body() dto: RegisterDto) {
+    return this.authService.claimGuest(id, dto);
   }
 
   @Post('login')

@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { TokenService } from './token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TelegramModule } from '../telegram/telegram.module';
+import { durationSeconds } from '../../config/duration';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { TelegramModule } from '../telegram/telegram.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION', '15m'),
+          expiresIn: durationSeconds(configService.get<string>('JWT_EXPIRATION', '15m'), 3600),
         },
       }),
       inject: [ConfigService],

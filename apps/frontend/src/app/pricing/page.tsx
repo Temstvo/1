@@ -91,6 +91,30 @@ export default function PricingPage() {
         <p className="text-gray-400 text-center mt-3 mb-4">
           Оплата через ЮKassa. Подписка активируется автоматически после оплаты.
         </p>
+        <div className="max-w-xl mx-auto mb-10 card p-5 text-center">
+          <div className="font-bold mb-1">Быстрая оплата 219 ₽</div>
+          <p className="text-gray-400 text-sm mb-4">
+            Картой или по СБП — после оплаты напишите в бота, доступ активируем вручную.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <a
+              href="https://paymentt.kassa.ai/?id=332943747&hash=b19d8a97fe5774287761c61501fe9506"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary px-6 py-2.5"
+            >
+              💳 Картой 219 ₽
+            </a>
+            <a
+              href="https://paymentt.kassa.ai/qr/?id=332943802&hash=77b383dbddbc1c54bab31bf81e4ab9d1&"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-outline px-6 py-2.5"
+            >
+              📱 СБП 219 ₽
+            </a>
+          </div>
+        </div>
         {payErr && (
           <div className="max-w-xl mx-auto mb-6 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-center">
             {payErr}

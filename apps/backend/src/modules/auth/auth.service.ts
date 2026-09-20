@@ -129,6 +129,32 @@ export class AuthService {
     return { user: this.sanitizeUser(user), ...tokens };
   }
 
+  async claimGuest(id: string, dto: RegisterDto) {
+    const passwordHash = await this.tokenService.hashPassword(dto.password);
+    const token = this.tokenService.generateEmailVerificationToken();
+    const user = await this.prisma.$transaction(async (tx) => {
+      const changed = await tx.user.updateMany({
+        where: { id, email: { endsWith: '@guest.invalid' }, passwordHash: null, status: 'ACTIVE' },
+        data: {
+          email: dto.email.toLowerCase(),
+          passwordHash,
+          emailVerified: false,
+          emailVerificationTokenHash: this.tokenService.hashToken(token),
+          emailVerificationExpiresAt: new Date(Date.now() + 86400000),
+        },
+      });
+      if (changed.count !== 1) throw new ConflictException('Этот аккаунт уже сохранён');
+      await tx.profile.upsert({
+        where: { userId: id },
+        create: { userId: id, firstName: dto.firstName, lastName: dto.lastName },
+        update: { firstName: dto.firstName, lastName: dto.lastName },
+      });
+      return tx.user.findUniqueOrThrow({ where: { id } });
+    });
+    await this.emailService.sendVerificationEmail(user.email, token);
+    return { user: this.sanitizeUser(user) };
+  }
+
   async login(dto: LoginDto, ip?: string, userAgent?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },

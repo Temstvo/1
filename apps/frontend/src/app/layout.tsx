@@ -4,14 +4,15 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
 import './globals.css';
+import './site.css';
 import Providers from './providers';
 
 const inter = 'inter';
 
 export const metadata: Metadata = {
-  title: 'APPI VPN — бесплатный VPN без ограничений',
+  title: 'Appi VPN — персональное подключение',
   description:
-    'Бесплатный VPN без оплат и лимитов. Серверы выдаёт Telegram-бот, подключение — через Happ.',
+    'Персональный VPN с VLESS Reality. Управляйте подпиской и подключением в одном кабинете. Попробуйте кабинет без регистрации.',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
@@ -31,10 +32,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#8B5CF6',
+  themeColor: '#101714',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

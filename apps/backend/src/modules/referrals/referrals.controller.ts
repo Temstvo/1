@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ReferralsService } from './referrals.service';
@@ -56,10 +57,7 @@ export class ReferralsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Register referral' })
   @ApiResponse({ status: 200, description: 'Referral registered' })
-  async register(
-    @CurrentUser('id') userId: string,
-    @Body() dto: RegisterReferralDto,
-  ) {
+  async register(@CurrentUser('id') userId: string, @Body() dto: RegisterReferralDto) {
     return this.referralsService.registerReferral(dto.referralCode, userId);
   }
 
@@ -70,6 +68,6 @@ export class ReferralsController {
   @ApiOperation({ summary: 'Request referral payout' })
   @ApiResponse({ status: 200, description: 'Payout processed' })
   async payout(@CurrentUser('id') userId: string) {
-    return this.referralsService.payoutPending(userId);
+    throw new ServiceUnavailableException('Выплаты не настроены. Обратитесь в поддержку.');
   }
 }

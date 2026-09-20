@@ -128,7 +128,8 @@ export class ServersController {
   @ApiOperation({ summary: 'Get recommended server' })
   @ApiResponse({ status: 200, description: 'Recommended server' })
   async getRecommended(@CurrentUser('id') userId: string) {
-    return this.serversService.findRecommended(userId);
+    const { config, metadata, ...server } = await this.serversService.findRecommended(userId);
+    return server;
   }
 
   @Get(':id')

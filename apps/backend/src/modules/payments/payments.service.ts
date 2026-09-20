@@ -52,6 +52,8 @@ export class PaymentsService {
       }
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user || user.status !== 'ACTIVE') throw new BadRequestException('Аккаунт недоступен');
+      if (user.email.endsWith('@guest.invalid'))
+        throw new BadRequestException('Перед оплатой сохраните аккаунт: укажите email и пароль');
       const plan = await tx.plan.findUnique({ where: { id: planId } });
       if (!plan?.isActive) throw new NotFoundException('Тариф недоступен');
       if (plan.currency !== 'RUB' || plan.price.lte(0))
@@ -197,7 +199,10 @@ export class PaymentsService {
               : reason === 'canceled_by_merchant' || reason === 'canceled_by_user'
                 ? 'CANCELLED'
                 : 'FAILED';
-          if (payment.status === 'PENDING') {
+          if (
+            payment.status === 'PENDING' ||
+            (payment.status === 'EXPIRED' && !payment.webhookVerified)
+          ) {
             await tx.payment.update({
               where: { id: payment.id },
               data: { status, webhookVerified: true, transactionId: remote.id },

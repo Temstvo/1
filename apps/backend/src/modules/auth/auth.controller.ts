@@ -43,6 +43,12 @@ export class AuthController {
     return this.authService.register(dto, req.ip, req.headers['user-agent']);
   }
 
+  @Post('claim')
+  @UseGuards(JwtAuthGuard)
+  async claim(@CurrentUser('id') id: string, @Body() dto: RegisterDto) {
+    return this.authService.claimGuest(id, dto);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })

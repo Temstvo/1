@@ -5,6 +5,7 @@ import Link from 'next/link';
 import api, { apiErrorMessage } from '@/lib/api';
 import { Shell } from '@/components/site';
 import Pricing, { Plan } from '@/components/pricing';
+import { Icon } from '@/components/icon';
 type User = { id: string; email: string; role: string; profile?: { firstName?: string } };
 type Subscription = { status: string; expiresAt: string; plan: { name: string } };
 type Payment = { id: string; status: string; amount: string; currency: string; createdAt: string };
@@ -150,6 +151,22 @@ export default function Dashboard() {
           Выйти
         </button>
       </div>
+      <nav className="dashboard-nav" aria-label="Разделы кабинета">
+        <a href="#access">
+          <Icon name="shield" /> Мой доступ
+        </a>
+        <a href="#plans">
+          <Icon name="spark" /> Тарифы
+        </a>
+        <a href="#payments">
+          <Icon name="lock" /> Платежи
+        </a>
+        {guest && (
+          <a href="#save-account">
+            <Icon name="key" /> Сохранить аккаунт
+          </a>
+        )}
+      </nav>
       {error && (
         <p className="notice error" role="alert">
           {error}
@@ -164,9 +181,11 @@ export default function Dashboard() {
         <p role="status">Загружаем ваш кабинет…</p>
       ) : (
         <>
-          <div className="dashboard-grid">
+          <div className="dashboard-grid" id="access">
             <section className="card">
-              <p className="eyebrow">ПОДПИСКА</p>
+              <p className="eyebrow">
+                <Icon name="spark" /> ПОДПИСКА
+              </p>
               <h2>{sub?.plan.name || 'Пока без подписки'}</h2>
               <p>
                 {sub ? labels[sub.status] || sub.status : 'Выберите тариф, когда будете готовы.'}
@@ -177,7 +196,9 @@ export default function Dashboard() {
               </a>
             </section>
             <section className="card">
-              <p className="eyebrow">VPN-ДОСТУП</p>
+              <p className="eyebrow">
+                <Icon name="shield" /> VPN-ДОСТУП
+              </p>
               <h2>{vpn ? labels[vpn.status] || vpn.status : 'Статус недоступен'}</h2>
               <p>
                 {vpn?.configured
@@ -261,9 +282,9 @@ export default function Dashboard() {
             <h2>Ваш следующий период</h2>
             <p>Оставшийся оплаченный срок сохраняется при продлении.</p>
             {busy && <p role="status">Выполняем запрос…</p>}
-            <Pricing choose={checkout} />
+            <Pricing choose={checkout} disabled={busy} />
           </section>
-          <section className="card">
+          <section className="card" id="payments">
             <h2>История платежей</h2>
             {payments.length ? (
               <div className="table-scroll">
@@ -293,7 +314,14 @@ export default function Dashboard() {
                 </table>
               </div>
             ) : (
-              <p>Платежей пока нет. Здесь появятся ваши реальные заказы.</p>
+              <div className="empty-state">
+                <span>
+                  <Icon name="lock" />
+                </span>
+                <p>
+                  <strong>Здесь пока тихо.</strong>Ваши платежи появятся после первого заказа.
+                </p>
+              </div>
             )}
           </section>
           {user && ['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (

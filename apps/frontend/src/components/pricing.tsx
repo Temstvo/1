@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api, { apiErrorMessage } from '@/lib/api';
+import { Icon } from './icon';
 export type Plan = {
   id: string;
   name: string;
@@ -13,7 +14,13 @@ export type Plan = {
   deviceLimit: number;
   trafficLimit: number | string;
 };
-export default function Pricing({ choose }: { choose?: (plan: Plan) => void }) {
+export default function Pricing({
+  choose,
+  disabled = false,
+}: {
+  choose?: (plan: Plan) => void;
+  disabled?: boolean;
+}) {
   const [plans, setPlans] = useState<Plan[]>([]),
     [error, setError] = useState(''),
     [loading, setLoading] = useState(true);
@@ -56,7 +63,7 @@ export default function Pricing({ choose }: { choose?: (plan: Plan) => void }) {
         <article className={'price-card ' + (i === 1 ? 'featured' : '')} key={p.id}>
           <div className="price-top">
             <span>{p.name}</span>
-            {i === 1 && <span className="pill">Дольше вместе</span>}
+            {i === 1 && <span className="pill">Больше времени</span>}
           </div>
           <h3>
             {p.duration} <span>дней доступа</span>
@@ -80,12 +87,12 @@ export default function Pricing({ choose }: { choose?: (plan: Plan) => void }) {
             <li>Без автоматических списаний</li>
           </ul>
           {choose ? (
-            <button className="button wide" onClick={() => choose(p)}>
-              Выбрать тариф ↗
+            <button className="button wide" disabled={disabled} onClick={() => choose(p)}>
+              Выбрать тариф <Icon name="arrow" />
             </button>
           ) : (
-            <Link className="button wide" href="/dashboard">
-              Выбрать тариф ↗
+            <Link className="button wide" href="/demo">
+              Выбрать тариф <Icon name="arrow" />
             </Link>
           )}
         </article>

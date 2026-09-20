@@ -1,182 +1,249 @@
 import Link from 'next/link';
 import { Header, Footer } from '@/components/site';
+import { Icon, IconName } from '@/components/icon';
 import Pricing from '@/components/pricing';
+import ConnectionVisual from '@/components/connection-visual';
+import DeviceGuide from '@/components/device-guide';
+const features: { icon: IconName; title: string; body: string; tag: string }[] = [
+  {
+    icon: 'shield',
+    title: 'Личное — остаётся личным.',
+    body: 'VLESS Reality защищает соединение между вашим устройством и VPN-сервером.',
+    tag: 'VLESS REALITY',
+  },
+  {
+    icon: 'key',
+    title: 'Ваш доступ. Только ваш.',
+    body: 'Персональная конфигурация привязана к аккаунту. Она всегда под рукой в кабинете.',
+    tag: 'ПЕРСОНАЛЬНАЯ КОНФИГУРАЦИЯ',
+  },
+  {
+    icon: 'spark',
+    title: 'Без неприятных сюрпризов.',
+    body: 'Стоимость и срок известны до оплаты. Продлевайте подписку, когда это нужно вам.',
+    tag: 'БЕЗ АВТОСПИСАНИЙ',
+  },
+];
+const questions = [
+  [
+    'Можно попробовать без регистрации?',
+    'Да. Откройте гостевой кабинет, посмотрите реальные тарифы и интерфейс управления. Гостевой вход не активирует VPN. Для оплаты сохраните аккаунт, добавив email и пароль.',
+  ],
+  [
+    'Как подключить VPN?',
+    'После подтверждённой оплаты конфигурация появится в кабинете. Установите клиент с поддержкой VLESS Reality и импортируйте персональную ссылку. Затем включите подключение в клиенте.',
+  ],
+  [
+    'Подойдёт ли моё устройство?',
+    'Сервис использует VLESS Reality. Нужен совместимый VPN-клиент для Windows, macOS, Linux, Android или iOS. Сам сайт управляет доступом, а подключение выполняет установленное приложение.',
+  ],
+  [
+    'Что будет, когда закончится подписка?',
+    'Доступ истекает на VPN-сервере. При продлении к подписке добавляется оплаченный период, а оставшееся оплаченное время сохраняется.',
+  ],
+  [
+    'Будут автоматические списания?',
+    'Нет. Вы самостоятельно выбираете и оплачиваете следующий период. Сохранение аккаунта или гостевой вход не создают платёж.',
+  ],
+];
 export default function Home() {
   return (
     <>
       <Header />
-      <main>
+      <main id="main-content" className="landing">
         <section className="hero section">
           <div className="hero-copy">
-            <div className="eyebrow">
-              <span className="live-dot" /> ПРОСТО. ПРИВАТНО. APPI.
+            <div className="hero-badge">
+              <span className="live-dot" /> ВАШ ИНТЕРНЕТ. ВАШИ ПРАВИЛА.
             </div>
             <h1>
               Больше свободы.
               <br />
-              <em>Меньше границ.</em>
+              Меньше{' '}
+              <span className="hero-emphasis">
+                границ.
+                <svg viewBox="0 0 370 15" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M3 10Q170-4 366 7" />
+                </svg>
+              </span>
             </h1>
             <p className="hero-sub">
-              VPN-сервис с быстрым и безопасным подключением. Персональная конфигурация, понятная
-              подписка и всё необходимое в одном кабинете.
+              Всё, что нужно для личного подключения.
+              <br className="desktop-break" /> Понятная подписка. Ваши устройства. Один Appi.
             </p>
             <div className="actions">
-              <Link href="/register" className="button">
-                Получить VPN <span>↗</span>
+              <Link href="/demo" className="button">
+                Попробовать без регистрации <Icon name="arrow" />
               </Link>
-              <Link href="/#how" className="button secondary">
-                Как это работает
+              <Link href="#pricing" className="button secondary">
+                Выбрать тариф
               </Link>
             </div>
-            <Link href="/demo" className="demo-link">
-              Попробовать без регистрации →
-            </Link>
+            <p className="hero-fine">
+              <Icon name="check" /> Знакомство с кабинетом — без email и карты
+            </p>
             <div className="hero-meta">
-              <span>VLESS Reality</span>
+              <span>
+                <Icon name="shield" />
+                VLESS Reality
+              </span>
+              <span>
+                <Icon name="device" />5 платформ
+              </span>
               <span>Без автосписаний</span>
-              <span>Ваши устройства</span>
             </div>
           </div>
-          <div className="orbit-scene" aria-label="Иллюстрация защищённого соединения">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <div className="orbit orbit-three" />
-            <div className="orb">
-              <span>a</span>
-            </div>
-            <div className="floating-label top">↗ Персональное подключение</div>
-            <div className="floating-label bottom">
-              <span className="live-dot" /> Одна ссылка. Ваш доступ.
-            </div>
-            <span className="scene-caption">СВОБОДА БЫТЬ НА СВЯЗИ</span>
+          <ConnectionVisual />
+        </section>
+        <div className="platform-strip">
+          <span>Рядом. На любом экране.</span>
+          <div>
+            <strong>Windows</strong>
+            <strong>macOS</strong>
+            <strong>iOS</strong>
+            <strong>Android</strong>
+            <strong>Linux</strong>
           </div>
-        </section>
-        <section className="platform-strip">
-          <span>Подключайтесь через совместимый клиент</span>
-          <strong>Windows</strong>
-          <strong>macOS</strong>
-          <strong>Linux</strong>
-          <strong>Android</strong>
-          <strong>iOS</strong>
-        </section>
-        <section className="section" id="advantages">
-          <div className="section-heading">
-            <p className="eyebrow">МЕНЬШЕ ЛИШНЕГО</p>
-            <h2>
-              Технологии сложные.
+          <span className="platform-note">
+            Через совместимый VPN-клиент <Icon name="arrow" />
+          </span>
+        </div>
+        <section className="section advantages" id="advantages">
+          <div className="section-heading split-heading">
+            <div>
+              <p className="eyebrow">
+                <span className="section-index">01 /</span> МЕНЬШЕ ЛИШНЕГО
+              </p>
+              <h2>
+                Хороший VPN.
+                <br />
+                <em>Всё просто.</em>
+              </h2>
+            </div>
+            <p>
+              Технологии могут быть сложными.
               <br />
-              Подключение — простое.
-            </h2>
+              Ваш ежедневный опыт — нет.
+            </p>
           </div>
           <div className="features">
-            {[
-              [
-                '01',
-                'Персональный доступ',
-                'Конфигурация создаётся для вашего аккаунта на управляемом VPN-сервере.',
-              ],
-              [
-                '02',
-                'Защищённое соединение',
-                'VLESS Reality помогает защитить соединение между вашим устройством и сервером.',
-              ],
-              [
-                '03',
-                'Все привычные устройства',
-                'Импортируйте подписку в совместимый клиент, например Happ. Установка приложения потребуется отдельно.',
-              ],
-              [
-                '04',
-                'Всё под контролем',
-                'Срок подписки, история платежей и конфигурация всегда доступны в личном кабинете.',
-              ],
-            ].map(([n, h, p]) => (
-              <article className="feature" key={n}>
-                <span className="feature-number">{n} /</span>
-                <h3>{h}</h3>
-                <p>{p}</p>
+            {features.map((f, i) => (
+              <article className={'feature feature-' + i} key={f.title}>
+                <div className="feature-top">
+                  <span className="feature-icon">
+                    <Icon name={f.icon} />
+                  </span>
+                  <span className="feature-number">0{i + 1}</span>
+                </div>
+                <h3>{f.title}</h3>
+                <p>{f.body}</p>
+                <span className="feature-tag">{f.tag}</span>
               </article>
             ))}
           </div>
         </section>
-        <section className="section how-section" id="how">
-          <div>
-            <p className="eyebrow">ОТ АККАУНТА ДО ПОДКЛЮЧЕНИЯ</p>
+        <section className="how-section section" id="how">
+          <div className="how-heading">
+            <p className="eyebrow">
+              <span className="section-index">02 /</span> ПРОСТО НАЧАТЬ
+            </p>
             <h2>
-              Четыре шага.
+              От первого клика
               <br />
-              <em>И вы на связи.</em>
+              <em>до подключения.</em>
             </h2>
+            <p>
+              Четыре понятных шага.
+              <br />
+              Всё остальное — в вашем кабинете.
+            </p>
             <Link className="text-button" href="/demo">
-              Посмотреть кабинет без регистрации ↗
+              Посмотреть, как устроен кабинет <Icon name="arrow" />
             </Link>
+            <div className="how-decoration" aria-hidden="true">
+              <Icon name="globe" />
+              <span>МЕНЬШЕ ГРАНИЦ</span>
+              <Icon name="arrow" />
+            </div>
           </div>
           <ol className="steps">
             {[
               [
-                'Создайте аккаунт',
-                'Или начните с гостевого кабинета — без пароля и формы регистрации.',
+                'Откройте кабинет',
+                'Начните без регистрации. Добавьте email и пароль, когда решите сохранить аккаунт.',
               ],
-              ['Выберите тариф', 'Стоимость и срок известны до оплаты.'],
+              [
+                'Выберите свой тариф',
+                'Определитесь со сроком и объёмом трафика. Все условия видны заранее.',
+              ],
               [
                 'Оплатите через ЮKassa',
-                'Подписка активируется после подтверждения платежа провайдером.',
+                'Подписка активируется после подтверждения оплаты платёжным провайдером.',
               ],
               [
-                'Импортируйте конфигурацию',
-                'Скопируйте ссылку в совместимый VPN-клиент и подключитесь.',
+                'Подключите устройство',
+                'Импортируйте персональную ссылку в совместимый VPN-клиент. Готово к подключению.',
               ],
             ].map(([h, p], i) => (
               <li key={h}>
-                <span>0{i + 1}</span>
+                <span className="step-number">0{i + 1}</span>
                 <div>
                   <h3>{h}</h3>
                   <p>{p}</p>
                 </div>
+                <Icon name="arrow" />
               </li>
             ))}
           </ol>
         </section>
-        <section className="section" id="pricing">
+        <DeviceGuide />
+        <section className="section pricing-section" id="pricing">
           <div className="section-heading centered">
-            <p className="eyebrow">ПОНЯТНАЯ ПОДПИСКА</p>
-            <h2>Выберите свой ритм.</h2>
-            <p>Один платёж. Прозрачный срок. Продление, когда нужно вам.</p>
+            <p className="eyebrow">
+              <span className="section-index">04 /</span> ВАШ ПЛАН НА СВОБОДУ
+            </p>
+            <h2>
+              Подписка под <em>ваш ритм.</em>
+            </h2>
+            <p>Прозрачная цена. Никаких автоматических продлений.</p>
           </div>
           <Pricing />
+          <p className="pricing-footnote">
+            <Icon name="lock" /> Оплата через ЮKassa <span>·</span> Оставшийся срок сохраняется при
+            продлении
+          </p>
         </section>
-        <section className="section faq">
+        <section className="section faq" id="faq">
           <div>
-            <p className="eyebrow">ЕСТЬ ВОПРОСЫ?</p>
-            <h2>Давайте разберёмся.</h2>
+            <p className="eyebrow">
+              <span className="section-index">05 /</span> РАЗБЕРЁМСЯ ВМЕСТЕ
+            </p>
+            <h2>
+              Остались
+              <br />
+              <em>вопросы?</em>
+            </h2>
+            <p>
+              Самое важное — здесь.
+              <br />
+              Остальное можно спросить у нас.
+            </p>
+            <a
+              className="text-button"
+              href="https://t.me/AppiVPNBot"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Написать в Telegram <Icon name="arrow" />
+            </a>
           </div>
-          <div>
-            {[
-              [
-                'Можно попробовать без регистрации?',
-                'Да. Кнопка «Попробовать без регистрации» открывает гостевой кабинет. Он показывает реальные тарифы и состояние временного аккаунта. Гостевой вход сам по себе не создаёт оплаченную подписку или VPN-доступ.',
-              ],
-              [
-                'Как подключиться?',
-                'После подтверждённой оплаты конфигурация появится в кабинете. Установите клиент с поддержкой VLESS Reality, например Happ, и импортируйте персональную ссылку.',
-              ],
-              [
-                'Что происходит после окончания подписки?',
-                'Доступ истекает на VPN-сервере. Оплата продления добавляет срок; оставшееся оплаченное время сохраняется.',
-              ],
-              [
-                'VPN уже работает в браузере?',
-                'Нет. Кабинет управляет подпиской и конфигурацией. Для VPN-подключения требуется отдельный совместимый клиент.',
-              ],
-              [
-                'Будут автоматические списания?',
-                'Нет. Каждый новый срок оплачивается отдельным платежом по вашему запросу.',
-              ],
-            ].map(([q, a]) => (
-              <details key={q}>
+          <div className="faq-list">
+            {questions.map(([q, a], i) => (
+              <details key={q} name="questions">
                 <summary>
-                  {q}
-                  <span>+</span>
+                  <span className="faq-index">0{i + 1}</span>
+                  <span>{q}</span>
+                  <span className="faq-plus">+</span>
                 </summary>
                 <p>{a}</p>
               </details>
@@ -184,11 +251,22 @@ export default function Home() {
           </div>
         </section>
         <section className="closing section">
-          <p className="eyebrow">ВАШ СЛЕДУЮЩИЙ ШАГ</p>
-          <h2>Откройте свой кабинет.</h2>
-          <Link className="button" href="/demo">
-            Попробовать без регистрации ↗
-          </Link>
+          <div className="closing-orbit" aria-hidden="true" />
+          <div>
+            <p className="eyebrow">МАЛЕНЬКИЙ ШАГ. БОЛЬШЕ ВОЗМОЖНОСТЕЙ.</p>
+            <h2>
+              Ваш интернет.
+              <br />
+              <em>На ваших условиях.</em>
+            </h2>
+            <p>Начните с кабинета. Без регистрации и обязательств.</p>
+            <Link className="button" href="/demo">
+              Попробовать Appi <Icon name="arrow" />
+            </Link>
+          </div>
+          <span className="closing-symbol" aria-hidden="true">
+            ↗
+          </span>
         </section>
       </main>
       <Footer />

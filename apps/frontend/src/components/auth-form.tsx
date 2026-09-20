@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api, { apiErrorMessage } from '@/lib/api';
 import { Shell } from './site';
+import { Icon } from './icon';
 export default function AuthForm({ register = false }: { register?: boolean }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -29,6 +31,9 @@ export default function AuthForm({ register = false }: { register?: boolean }) {
   return (
     <Shell>
       <form className="auth-card" onSubmit={submit}>
+        <div className="auth-emblem">
+          <Icon name={register ? 'spark' : 'lock'} />
+        </div>
         <p className="eyebrow">ВАШЕ ПРОСТРАНСТВО</p>
         <h1>{register ? 'Начните с Appi.' : 'С возвращением.'}</h1>
         <p>
@@ -46,14 +51,24 @@ export default function AuthForm({ register = false }: { register?: boolean }) {
         </label>
         <label>
           Пароль
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={register ? 8 : 1}
-            maxLength={128}
-            autoComplete={register ? 'new-password' : 'current-password'}
-          />
+          <span className="password-wrap">
+            <input
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={register ? 8 : 1}
+              maxLength={128}
+              autoComplete={register ? 'new-password' : 'current-password'}
+            />
+            <button
+              type="button"
+              aria-pressed={showPassword}
+              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? 'Скрыть' : 'Показать'}
+            </button>
+          </span>
         </label>
         {register && (
           <p className="fine">

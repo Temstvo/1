@@ -47,8 +47,31 @@ async function main() {
         });
         const page = await context.newPage();
         await page.goto(pathToFileURL(file).href);
+        // loading.tsx produces React streaming boundaries. Assemble already-rendered
+        // completed HTML for the offline snapshot without running application code.
+        await page.evaluate(() => {
+          for (const completed of document.querySelectorAll('div[hidden][id^="S:"]')) {
+            const placeholder = document.getElementById(completed.id.replace('S:', 'B:'));
+            if (!placeholder) continue;
+            let sibling = placeholder.nextSibling;
+            while (
+              sibling &&
+              !(sibling.nodeType === Node.COMMENT_NODE && sibling.nodeValue === '/$')
+            ) {
+              const next = sibling.nextSibling;
+              sibling.remove();
+              sibling = next;
+            }
+            placeholder.replaceWith(...completed.childNodes);
+            completed.remove();
+          }
+        });
+        if (width === 1440) await fs.writeFile(file, await page.content());
+        await page.evaluate(() => document.fonts.load('400 16px Inter', 'Appi Подключение'));
         await page.evaluate(() => document.fonts.ready);
-        if (!(await page.evaluate(() => document.fonts.check('400 16px Inter'))))
+        if (
+          !(await page.evaluate(() => document.fonts.check('400 16px Inter', 'Appi Подключение')))
+        )
           throw new Error('Inter font not loaded');
         const overflow = await page.evaluate(() => ({
           viewport: innerWidth,

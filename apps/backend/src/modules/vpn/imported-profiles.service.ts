@@ -24,6 +24,8 @@ export class ImportedProfilesService implements OnModuleInit {
     );
   }
   list() {
+    if (this.config.get('PILOT_MODE') === 'true')
+      return { profiles: [], downloadEnabled: false, managed: true };
     return {
       profiles: [...this.profiles.values()]
         .map((p) => ({ ...p.summary, availability: 'UNVERIFIED' }))

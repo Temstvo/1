@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { queueAccess } from '../vpn/access-state';
+import { ConfigService } from '@nestjs/config';
 
 class AdminAction {
   @IsIn(['block', 'unblock', 'extend', 'revoke', 'restore']) action: string;
@@ -37,7 +38,35 @@ class AdminAction {
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {}
+
+  @Get('readiness')
+  async readiness() {
+    const [vpnErrors, overdueSync, pendingPayments, tickets] = await Promise.all([
+      this.prisma.vpnAccess.count({ where: { status: 'ERROR' } }),
+      this.prisma.vpnAccess.count({
+        where: { enabled: true, nextAttemptAt: { lt: new Date(Date.now() - 300000) } },
+      }),
+      this.prisma.payment.count({
+        where: { status: 'PENDING', createdAt: { lt: new Date(Date.now() - 1800000) } },
+      }),
+      this.prisma.ticket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
+    ]);
+    return {
+      checkoutEnabled: this.config.get('ENABLE_CHECKOUT') === 'true',
+      testPayments: this.config.get('YOOKASSA_TEST_MODE', 'true') === 'true',
+      trialEnabled: this.config.get('ENABLE_VPN_TRIAL') === 'true',
+      emailConfigured: !!this.config.get('RESEND_API_KEY'),
+      vpnConfigured: !!this.config.get('MARZBAN_URL'),
+      vpnErrors,
+      overdueSync,
+      pendingPayments,
+      tickets,
+    };
+  }
 
   @Get('overview')
   async overview(@Query('page') page = '1') {

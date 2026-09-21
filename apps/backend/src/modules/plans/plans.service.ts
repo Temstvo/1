@@ -2,14 +2,23 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PlansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private config: ConfigService,
+  ) {}
 
   async findAll() {
     return this.prisma.plan.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(this.config.get('PILOT_MODE') === 'true'
+          ? { id: 'b7d6c710-69c4-4a21-b401-000000000001' }
+          : {}),
+      },
       orderBy: { price: 'asc' },
     });
   }

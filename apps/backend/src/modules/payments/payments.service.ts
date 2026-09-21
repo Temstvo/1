@@ -31,6 +31,13 @@ export class PaymentsService {
     provider = 'YOOKASSA',
     key: string = randomUUID(),
   ) {
+    if (this.config.get('ENABLE_CHECKOUT') !== 'true')
+      throw new ServiceUnavailableException('Продажи пока не открыты');
+    if (
+      this.config.get('PILOT_MODE') === 'true' &&
+      planId !== 'b7d6c710-69c4-4a21-b401-000000000001'
+    )
+      throw new BadRequestException('В пилоте доступен один тариф Appi');
     if (provider !== 'YOOKASSA') throw new BadRequestException('Поддерживается только ЮKassa');
     if (!this.yookassa.isConfigured())
       throw new ServiceUnavailableException('Оплата пока не настроена');
@@ -56,6 +63,8 @@ export class PaymentsService {
         throw new BadRequestException('Перед оплатой сохраните аккаунт: укажите email и пароль');
       const plan = await tx.plan.findUnique({ where: { id: planId } });
       if (!plan?.isActive) throw new NotFoundException('Тариф недоступен');
+      if (this.config.get('PILOT_MODE') === 'true' && plan.trafficLimit <= 0n)
+        throw new BadRequestException('Пилотный тариф должен иметь лимит трафика');
       if (plan.currency !== 'RUB' || plan.price.lte(0))
         throw new BadRequestException('Для ЮKassa требуется тариф с положительной ценой в RUB');
       let amount = plan.price;
@@ -163,6 +172,8 @@ export class PaymentsService {
   }
 
   async handleYooKassaWebhook(body: any) {
+    if (body?.type === 'notification' && body.event === 'refund.succeeded')
+      return this.reconcileRefund(body.object?.id);
     if (
       body?.type !== 'notification' ||
       !['payment.succeeded', 'payment.canceled', 'payment.waiting_for_capture'].includes(
@@ -292,6 +303,151 @@ export class PaymentsService {
     );
   }
 
+  async reconcileRefund(id: string) {
+    if (typeof id !== 'string' || !/^[a-zA-Z0-9-]{1,64}$/.test(id))
+      throw new BadRequestException('Некорректный возврат');
+    const refund = await this.yookassa.getRefund(id);
+    if (refund.id !== id || refund.status !== 'succeeded')
+      throw new BadRequestException('Возврат не подтверждён');
+    const remote = await this.yookassa.getPayment(refund.payment_id);
+    const candidate = await this.prisma.payment.findUnique({
+      where: { transactionId: refund.payment_id },
+    });
+    if (!candidate || candidate.provider !== 'YOOKASSA')
+      throw new NotFoundException('Заказ не найден');
+    this.verifyOrder(candidate, remote);
+    // A refund notification may overtake the original payment notification.
+    if (candidate.status !== 'COMPLETED' && candidate.status !== 'REFUNDED')
+      await this.handleYooKassaWebhook({
+        type: 'notification',
+        event: 'payment.succeeded',
+        object: { id: refund.payment_id },
+      });
+    let amount: Prisma.Decimal;
+    try {
+      amount = new Prisma.Decimal(refund.amount.value);
+    } catch {
+      throw new BadRequestException('Некорректная сумма');
+    }
+    if (
+      !amount.isFinite() ||
+      amount.lte(0) ||
+      amount.decimalPlaces() > 2 ||
+      refund.amount.currency !== candidate.currency
+    )
+      throw new BadRequestException('Некорректная сумма возврата');
+    return this.prisma.$transaction(async (tx) => {
+      await lockUser(tx, candidate.userId);
+      if (await tx.refund.findUnique({ where: { id } })) return { received: true, duplicate: true };
+      const payment = await tx.payment.findUniqueOrThrow({ where: { id: candidate.id } });
+      const previous = payment.refundAmount || new Prisma.Decimal(0);
+      const total = previous.plus(amount);
+      if (total.gt(payment.amount)) throw new BadRequestException('Возврат превышает оплату');
+      const meta = payment.metadata as any;
+      if (!Number.isInteger(meta?.duration) || meta.duration < 1)
+        throw new BadRequestException('Нет срока заказа');
+      await tx.refund.create({
+        data: { id, paymentId: payment.id, amount, currency: payment.currency },
+      });
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          refundAmount: total,
+          refundedAt: new Date(),
+          status: total.eq(payment.amount) ? 'REFUNDED' : 'COMPLETED',
+        },
+      });
+      // Subtract only this refund's proportional purchased time, including a superseded renewal.
+      const removedMs = total
+        .div(payment.amount)
+        .mul(meta.duration * 86400000)
+        .floor()
+        .minus(
+          previous
+            .div(payment.amount)
+            .mul(meta.duration * 86400000)
+            .floor(),
+        )
+        .toNumber();
+      const active = await tx.subscription.findFirst({
+        where: { userId: payment.userId, status: 'ACTIVE' },
+        orderBy: { expiresAt: 'desc' },
+      });
+      const access = await tx.vpnAccess.findUnique({ where: { userId: payment.userId } });
+      if (active) {
+        const expiresAt = new Date(Math.max(Date.now(), active.expiresAt.getTime() - removedMs));
+        await tx.subscription.update({
+          where: { id: active.id },
+          data: { expiresAt, status: expiresAt.getTime() <= Date.now() ? 'REFUNDED' : 'ACTIVE' },
+        });
+        if (access) {
+          const quota = new Prisma.Decimal(meta.trafficLimit || '0');
+          const removed = BigInt(
+            total
+              .div(payment.amount)
+              .mul(quota)
+              .floor()
+              .minus(previous.div(payment.amount).mul(quota).floor())
+              .toFixed(0),
+          );
+          // Zero means unlimited at the provider, never use zero for an exhausted finite allowance.
+          const remaining =
+            access.trafficLimit === 0n
+              ? 0n
+              : access.trafficLimit > removed
+                ? access.trafficLimit - removed
+                : 1n;
+          await queueAccess(tx, payment.userId, expiresAt, remaining);
+        }
+      }
+      await tx.auditLog.create({
+        data: {
+          actorId: payment.userId,
+          action: 'REFUND_CONFIRMED',
+          resource: 'PAYMENT',
+          resourceId: payment.id,
+          metadata: { refundId: id, amount: amount.toString() },
+          result: 'success',
+        },
+      });
+      return { received: true };
+    });
+  }
+
+  @Cron('30 */2 * * * *')
+  async reconcilePending() {
+    if (!this.yookassa.isConfigured()) return;
+    const pending = await this.prisma.payment.findMany({
+      where: {
+        provider: 'YOOKASSA',
+        transactionId: { not: null },
+        webhookVerified: false,
+        status: { in: ['PENDING', 'EXPIRED'] },
+        createdAt: { gte: new Date(Date.now() - 7 * 86400000) },
+      },
+      take: 25,
+      orderBy: { updatedAt: 'asc' },
+    });
+    for (const payment of pending) {
+      try {
+        const remote = await this.yookassa.getPayment(payment.transactionId!);
+        if (['succeeded', 'canceled'].includes(remote.status))
+          await this.handleYooKassaWebhook({
+            type: 'notification',
+            event: 'payment.' + remote.status,
+            object: { id: payment.transactionId },
+          });
+        else
+          await this.prisma.payment.update({
+            where: { id: payment.id },
+            data: { updatedAt: new Date() },
+          });
+      } catch {
+        this.logger.warn('Payment reconciliation failed for order ' + payment.id);
+      }
+    }
+  }
+
   findByUserId(userId: string) {
     return this.prisma.payment.findMany({
       where: { userId },
@@ -304,6 +460,7 @@ export class PaymentsService {
         createdAt: true,
         checkoutUrl: true,
         webhookVerified: true,
+        refundAmount: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

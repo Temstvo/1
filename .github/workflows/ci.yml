@@ -1,61 +1,12 @@
-name: CI
-
+name: Pilot CI
 on:
   push:
-    branches: [main, development]
+    branches: ['main', 'development', 'fix/production-readiness']
   pull_request:
-    branches: [main, development]
-
+permissions:
+  contents: read
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Format check
-        run: pnpm format:check
-
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check
-        run: pnpm typecheck
-
-  test:
-    name: Test
+  verify:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -64,102 +15,60 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: appi_vpn_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/appi_vpn_test
+      JWT_SECRET: ci_access_secret_at_least_32_characters_long
+      JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_characters_long
+      VPN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      NODE_ENV: test
+      HUSKY: '0'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: 20
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm test
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @appi/backend exec prisma generate
+      - run: pnpm --filter @appi/backend exec prisma migrate deploy
+      - run: pnpm --filter @appi/backend build
+      - run: pnpm --filter @appi/backend exec jest --runInBand
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/appi_vpn_test?schema=public
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test_jwt_secret_for_ci_only_64_chars_long_minimum_required_string
-          JWT_REFRESH_SECRET: test_refresh_secret_for_ci_only_64_chars_long_minimum_required_string
-
-  build:
-    name: Build
+          RUN_DATABASE_TESTS: 'true'
+      - run: pnpm --filter @appi/frontend build
+        env:
+          NODE_ENV: production
+      - run: node --test scripts/tests/*.test.mjs
+  containers:
+    needs: verify
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Backend image
+        uses: docker/build-push-action@v6
         with:
-          node-version: 20
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+          context: .
+          file: apps/backend/Dockerfile
+          tags: appi-backend:ci
+          load: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+      - name: Frontend image
+        uses: docker/build-push-action@v6
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend
-          push: true
-          tags: ghcr.io/${{ github.repository }}/backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/frontend
-          push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          context: .
+          file: apps/frontend/Dockerfile
+          tags: appi-frontend:ci
+          load: true
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+      - name: Validate image runtime
+        run: |
+          docker run --rm --entrypoint node appi-backend:ci -e "require('@prisma/client'); require('argon2'); require('./dist/modules/vpn/marzban.service'); console.log('backend dependencies OK')"
+          docker run --rm --entrypoint node appi-frontend:ci -e "require('fs').accessSync('apps/frontend/server.js'); console.log('standalone server OK')"

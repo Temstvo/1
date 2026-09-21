@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
+import { TrialService } from './trial.service';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -48,7 +50,22 @@ class CancelDto {
 @ApiTags('subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) {}
+  constructor(
+    private readonly subscriptionsService: SubscriptionsService,
+    private readonly trial: TrialService,
+  ) {}
+
+  @Get('trial')
+  trialOptions() {
+    return this.trial.options();
+  }
+
+  @Post('trial')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  startTrial(@CurrentUser('id') id: string) {
+    return this.trial.start(id);
+  }
 
   @Get('current')
   @UseGuards(JwtAuthGuard)
@@ -65,10 +82,7 @@ export class SubscriptionsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create subscription' })
   @ApiResponse({ status: 201, description: 'Subscription created' })
-  async create(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CreateSubscriptionDto,
-  ) {
+  async create(@CurrentUser('id') userId: string, @Body() dto: CreateSubscriptionDto) {
     return this.subscriptionsService.create(userId, dto);
   }
 
@@ -78,10 +92,7 @@ export class SubscriptionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ status: 200, description: 'Subscription cancelled' })
-  async cancel(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CancelDto,
-  ) {
+  async cancel(@CurrentUser('id') userId: string, @Body() dto: CancelDto) {
     return this.subscriptionsService.cancel(userId, dto.reason);
   }
 
@@ -91,10 +102,7 @@ export class SubscriptionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Change plan' })
   @ApiResponse({ status: 200, description: 'Plan changed' })
-  async changePlan(
-    @CurrentUser('id') userId: string,
-    @Body() dto: ChangePlanDto,
-  ) {
+  async changePlan(@CurrentUser('id') userId: string, @Body() dto: ChangePlanDto) {
     return this.subscriptionsService.changePlan(userId, dto.planId, dto.couponCode);
   }
 
@@ -117,5 +125,4 @@ export class SubscriptionsController {
   async getAll(@Query('userId') userId?: string) {
     return this.subscriptionsService.getAll(userId);
   }
-
 }

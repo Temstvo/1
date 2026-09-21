@@ -78,4 +78,9 @@ export class YooKassaService {
       throw new BadGatewayException('Некорректный ID провайдера');
     return this.request('GET', '/payments/' + encodeURIComponent(id));
   }
+
+  getRefund(id: string) {
+    if (!/^[a-zA-Z0-9-]{1,64}$/.test(id)) throw new BadGatewayException('Некорректный ID возврата');
+    return this.request('GET', '/refunds/' + encodeURIComponent(id));
+  }
 }

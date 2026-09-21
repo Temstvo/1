@@ -250,12 +250,24 @@ model Payment {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscription Subscription? @relation(fields: [subscriptionId], references: [id])
   invoice    Invoice?
+  refunds    Refund[]
 
   @@index([userId])
   @@index([transactionId])
   @@index([status])
   @@unique([userId, idempotencyKey])
   @@map("payments")
+}
+
+model Refund {
+  id String @id
+  paymentId String @map("payment_id") @db.Uuid
+  amount Decimal @db.Decimal(10, 2)
+  currency String
+  createdAt DateTime @default(now()) @map("created_at")
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  @@index([paymentId])
+  @@map("refunds")
 }
 
 // Durable desired state. Provisioning is retried independently of payment delivery.

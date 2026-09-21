@@ -18,6 +18,7 @@ import { YooKassaService } from '../providers/yookassa.service';
 import { PaymentsService } from '../payments.service';
 import { MarzbanService } from '../../vpn/marzban.service';
 import { VpnService } from '../../vpn/vpn.service';
+import { TrialService } from '../../subscriptions/trial.service';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service';
 
 const enabled = process.env.RUN_DATABASE_TESTS === 'true';
@@ -34,7 +35,9 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
   let profileDirectory: string;
   const profileUuid = randomUUID();
   const remote = new Map<string, any>();
+  const refunds = new Map<string, any>();
   const provider = {
+    getRefund: jest.fn(async (id: string) => structuredClone(refunds.get(id))),
     isConfigured: () => true,
     createPayment: jest.fn(async (order: any) => {
       let value = [...remote.values()].find((v) => v.metadata.paymentId === order.id);
@@ -117,6 +120,7 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
     payments = app.get(PaymentsService);
     vpn = app.get(VpnService);
     config = app.get(ConfigService);
+    config.set('ENABLE_CHECKOUT', 'true');
     config.set('MARZBAN_URL', 'https://vpn.example.test');
     config.set('YOOKASSA_SHOP_ID', 'contract-shop');
     config.set('YOOKASSA_TEST_MODE', 'true');
@@ -137,6 +141,7 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
   }, 30000);
   afterAll(async () => {
     if (db) {
+      await db.ticket.deleteMany({ where: { userId: { in: users } } });
       await db.invoice.deleteMany({ where: { userId: { in: users } } });
       await db.payment.deleteMany({ where: { userId: { in: users } } });
       await db.vpnAccess.deleteMany({ where: { userId: { in: users } } });
@@ -313,4 +318,156 @@ integration('Real PostgreSQL: guest, session, billing and VPN lifecycle (provide
     });
     await expect(vpn.getUserConfigs(id)).rejects.toThrow();
   });
+  it('issues one bounded trial per verified account under concurrent requests and expires it', async () => {
+    const result = await auth.register({
+      email: 'trial-' + randomUUID() + '@example.test',
+      password: 'TestPassword42!',
+    });
+    const id = result.user.id;
+    users.push(id);
+    const trial = app.get(TrialService);
+    config.set('ENABLE_VPN_TRIAL', 'true');
+    config.set('TRIAL_HOURS', '24');
+    config.set('TRIAL_TRAFFIC_GB', '1');
+    config.set('TRIAL_DAILY_LIMIT', '50');
+    await expect(trial.start(id)).rejects.toThrow('подтвердите');
+    await db.user.update({ where: { id }, data: { emailVerified: true } });
+    const attempts = await Promise.allSettled([trial.start(id), trial.start(id)]);
+    expect(attempts.filter((a) => a.status === 'fulfilled')).toHaveLength(1);
+    const sub = await db.subscription.findFirstOrThrow({ where: { userId: id } });
+    expect(sub.status).toBe('TRIAL');
+    expect(sub.expiresAt.getTime() - Date.now()).toBeGreaterThan(23 * 3600000);
+    expect(sub.expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(24 * 3600000);
+    expect((await db.vpnAccess.findUniqueOrThrow({ where: { userId: id } })).trafficLimit).toBe(
+      1073741824n,
+    );
+    await vpn.syncUser(id);
+    expect((await vpn.getUserConfigs(id)).subscriptionUrl).toBeTruthy();
+    await db.subscription.update({
+      where: { id: sub.id },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+    await vpn.syncUser(id);
+    expect(marzban.sync.mock.calls.at(-1)?.[1]).toBe(false);
+    await expect(trial.start(id)).rejects.toThrow('первой подписки');
+    await expect(vpn.getUserConfigs(id)).rejects.toThrow();
+    config.set('ENABLE_VPN_TRIAL', 'false');
+  }, 30000);
+
+  it('reconciles a missed payment callback and handles duplicate partial/full refunds exactly once', async () => {
+    const result = await auth.register({
+      email: 'refund-' + randomUUID() + '@example.test',
+      password: 'TestPassword42!',
+    });
+    const id = result.user.id;
+    users.push(id);
+    const order = await payments.createCheckoutSession(id, planId);
+    const value = [...remote.values()].find((v) => v.metadata.paymentId === order.paymentId);
+    value.status = 'succeeded';
+    value.paid = true;
+    await payments.reconcilePending();
+    const original = await db.subscription.findFirstOrThrow({
+      where: { userId: id, status: 'ACTIVE' },
+    });
+    const refundId = randomUUID();
+    refunds.set(refundId, {
+      id: refundId,
+      payment_id: value.id,
+      status: 'pending',
+      amount: { value: '249.50', currency: 'RUB' },
+    });
+    await expect(payments.reconcileRefund(refundId)).rejects.toThrow();
+    refunds.get(refundId).status = 'succeeded';
+    await Promise.all([payments.reconcileRefund(refundId), payments.reconcileRefund(refundId)]);
+    expect(await db.refund.count({ where: { paymentId: order.paymentId } })).toBe(1);
+    const half = await db.subscription.findUniqueOrThrow({ where: { id: original.id } });
+    expect(original.expiresAt.getTime() - half.expiresAt.getTime()).toBe(15 * 86400000);
+    expect((await db.vpnAccess.findUniqueOrThrow({ where: { userId: id } })).trafficLimit).toBe(
+      25000000n,
+    );
+    const finalId = randomUUID();
+    refunds.set(finalId, { ...refunds.get(refundId), id: finalId });
+    await payments.handleYooKassaWebhook({
+      type: 'notification',
+      event: 'refund.succeeded',
+      object: { id: finalId },
+    });
+    expect((await db.payment.findUniqueOrThrow({ where: { id: order.paymentId } })).status).toBe(
+      'REFUNDED',
+    );
+    await vpn.syncUser(id);
+    expect(marzban.sync.mock.calls.at(-1)?.[1]).toBe(false);
+    await expect(vpn.getUserConfigs(id)).rejects.toThrow();
+    const extraId = randomUUID();
+    refunds.set(extraId, { ...refunds.get(refundId), id: extraId });
+    await expect(payments.reconcileRefund(extraId)).rejects.toThrow('превышает');
+  }, 30000);
+
+  it('consumes a reset token atomically and revokes every existing session', async () => {
+    const result = await auth.register({
+      email: 'reset-' + randomUUID() + '@example.test',
+      password: 'TestPassword42!',
+    });
+    const id = result.user.id;
+    users.push(id);
+    const token = randomUUID();
+    await db.user.update({
+      where: { id },
+      data: {
+        passwordResetTokenHash: app.get(TokenService).hashToken(token),
+        passwordResetExpiresAt: new Date(Date.now() + 60000),
+        loginAttempts: 6,
+        lockedUntil: new Date(Date.now() + 60000),
+      },
+    });
+    const reset = await Promise.allSettled([
+      auth.resetPassword(token, 'ChangedPassword42!'),
+      auth.resetPassword(token, 'OtherPassword42!'),
+    ]);
+    expect(reset.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(await db.session.count({ where: { userId: id, isActive: true } })).toBe(0);
+    const saved = await db.user.findUniqueOrThrow({ where: { id } });
+    expect(saved.passwordResetTokenHash).toBeNull();
+    expect(saved.lockedUntil).toBeNull();
+    await expect(auth.resetPassword(token, 'AgainPassword42!')).rejects.toThrow();
+  }, 30000);
+
+  it('keeps support tickets private and denies customer access to the staff queue', async () => {
+    const account = await auth.register({
+      email: 'support-' + randomUUID() + '@example.test',
+      password: 'TestPassword42!',
+    });
+    users.push(account.user.id);
+    const api = request(app.getHttpServer());
+    const ticket = await api
+      .post('/api/support/tickets')
+      .set('Authorization', 'Bearer ' + account.accessToken)
+      .send({ subject: 'Connection issue', message: 'Cannot connect on Android' })
+      .expect(201);
+    await api
+      .get('/api/support/admin/tickets')
+      .set('Authorization', 'Bearer ' + account.accessToken)
+      .expect(403);
+    const other = await auth.guest();
+    users.push(other.user.id);
+    await api
+      .get('/api/support/tickets/' + ticket.body.id)
+      .set('Authorization', 'Bearer ' + other.accessToken)
+      .expect(404);
+    await api
+      .post('/api/support/tickets/' + ticket.body.id + '/messages')
+      .set('Authorization', 'Bearer ' + other.accessToken)
+      .send({ message: 'Unauthorized reply' })
+      .expect(404);
+    const detail = await api
+      .get('/api/support/tickets/' + ticket.body.id)
+      .set('Authorization', 'Bearer ' + account.accessToken)
+      .expect(200);
+    expect(detail.body.messages[0].isStaff).toBe(false);
+    await api
+      .post('/api/support/tickets/' + ticket.body.id + '/messages')
+      .set('Authorization', 'Bearer ' + account.accessToken)
+      .send({ message: 'Forged role', isStaff: true })
+      .expect(400);
+  }, 30000);
 });

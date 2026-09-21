@@ -16,7 +16,7 @@ export class SubscriptionsService {
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     });
-    if (current?.status === 'ACTIVE' && current.expiresAt <= new Date())
+    if (current && ['ACTIVE', 'TRIAL'].includes(current.status) && current.expiresAt <= new Date())
       return { ...current, status: 'EXPIRED' };
     return current;
   }
@@ -26,7 +26,9 @@ export class SubscriptionsService {
   async cancel(userId: string, reason?: string) {
     return this.prisma.$transaction(async (tx) => {
       await lockUser(tx, userId);
-      const sub = await tx.subscription.findFirst({ where: { userId, status: 'ACTIVE' } });
+      const sub = await tx.subscription.findFirst({
+        where: { userId, status: { in: ['ACTIVE', 'TRIAL'] } },
+      });
       if (!sub) throw new NotFoundException('Нет активной подписки');
       await tx.vpnAccess.updateMany({
         where: { userId },

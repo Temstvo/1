@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/dist
+.git
+.local
+serv-configs
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+backups
+coverage
+**/coverage
+**/test-results
+**/playwright-report

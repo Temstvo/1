@@ -120,8 +120,9 @@ export class MarzbanService {
     if (
       !data ||
       data.username !== access.username ||
-      data.status !== 'active' ||
-      data.expire !== body.expire
+      !['active', 'limited'].includes(data.status) ||
+      data.expire !== body.expire ||
+      data.data_limit !== body.data_limit
     )
       throw new Error('VPN desired state not acknowledged');
     const links = validateLinks(data.links);
@@ -133,6 +134,10 @@ export class MarzbanService {
       (this.config.get('NODE_ENV') === 'production' && subscriptionUrl.protocol !== 'https:')
     )
       throw new Error('Invalid VPN subscription URL');
-    return { links, subscriptionUrl: subscriptionUrl.toString() };
+    return {
+      links,
+      subscriptionUrl: subscriptionUrl.toString(),
+      limited: data.status === 'limited',
+    };
   }
 }

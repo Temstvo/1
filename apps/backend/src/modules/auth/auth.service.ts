@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { lockUser } from '../../database/lock-user';
 import { TokenService } from './token.service';
 import { EmailService } from '../email/email.service';
 import { TelegramNotifyService } from '../telegram/telegram-notify.service';
@@ -355,12 +356,33 @@ export class AuthService {
     this.logger.log(`Email verified: ${user.email}`);
   }
 
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.emailVerified) return { message: 'Email уже подтверждён' };
+    if (user.email.endsWith('@guest.invalid'))
+      throw new ConflictException('Сначала сохраните аккаунт');
+    const token = this.tokenService.generateEmailVerificationToken();
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerificationTokenHash: this.tokenService.hashToken(token),
+        emailVerificationExpiresAt: new Date(Date.now() + 86400000),
+      },
+    });
+    const delivered = await this.emailService.sendVerificationEmail(user.email, token);
+    return {
+      message: delivered
+        ? 'Письмо отправлено'
+        : 'Письмо не отправлено. Повторите позже или обратитесь в поддержку.',
+    };
+  }
+
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
-    if (!user) {
+    if (!user || user.status !== 'ACTIVE' || user.email.endsWith('@guest.invalid')) {
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
@@ -400,18 +422,26 @@ export class AuthService {
 
     const passwordHash = await this.tokenService.hashPassword(newPassword);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash,
-        passwordResetTokenHash: null,
-        passwordResetExpiresAt: null,
-      },
-    });
-
-    await this.prisma.session.updateMany({
-      where: { userId: user.id },
-      data: { isActive: false },
+    await this.prisma.$transaction(async (tx) => {
+      await lockUser(tx, user.id);
+      const changed = await tx.user.updateMany({
+        where: {
+          id: user.id,
+          status: 'ACTIVE',
+          passwordResetTokenHash: tokenHash,
+          passwordResetExpiresAt: { gt: new Date() },
+        },
+        data: {
+          passwordHash,
+          passwordResetTokenHash: null,
+          passwordResetExpiresAt: null,
+          loginAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+      if (changed.count !== 1)
+        throw new UnauthorizedException('Ссылка уже использована или истекла');
+      await tx.session.updateMany({ where: { userId: user.id }, data: { isActive: false } });
     });
 
     await this.prisma.auditLog.create({

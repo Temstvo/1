@@ -46,7 +46,7 @@ export class VpnService {
       where: {
         userId,
         user: { status: 'ACTIVE' },
-        status: 'ACTIVE',
+        status: { in: ['ACTIVE', 'TRIAL'] },
         expiresAt: { gt: new Date() },
       },
       include: { plan: true },
@@ -59,6 +59,8 @@ export class VpnService {
     await this.entitlement(userId);
     const access = await this.prisma.vpnAccess.findUnique({ where: { userId } });
     if (access?.revoked || !access?.enabled) throw new ForbiddenException('VPN-доступ отозван');
+    if (access.status === 'LIMITED')
+      throw new ForbiddenException('Лимит трафика исчерпан. Продлите подписку.');
     if (
       access.status !== 'ACTIVE' ||
       access.syncedRevision !== access.revision ||
@@ -79,7 +81,7 @@ export class VpnService {
     const entitled = !!(await this.prisma.subscription.findFirst({
       where: {
         userId,
-        status: 'ACTIVE',
+        status: { in: ['ACTIVE', 'TRIAL'] },
         expiresAt: { gt: new Date() },
         user: { status: 'ACTIVE' },
       },
@@ -106,7 +108,7 @@ export class VpnService {
         });
         if (!access) return;
         const subscription = await tx.subscription.findFirst({
-          where: { userId, status: 'ACTIVE', expiresAt: { gt: new Date() } },
+          where: { userId, status: { in: ['ACTIVE', 'TRIAL'] }, expiresAt: { gt: new Date() } },
         });
         const enabled =
           access.enabled &&
@@ -120,7 +122,7 @@ export class VpnService {
             where: { userId },
             data: {
               enabled,
-              status: enabled ? 'ACTIVE' : 'DISABLED',
+              status: enabled ? (result?.limited ? 'LIMITED' : 'ACTIVE') : 'DISABLED',
               syncedRevision: access.revision,
               encryptedConfig: result ? this.seal(result) : null,
               lastError: null,

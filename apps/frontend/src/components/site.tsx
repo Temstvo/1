@@ -68,9 +68,10 @@ export function Footer() {
           </div>
           <div>
             <span>На связи</span>
-            <a href="https://t.me/AppiVPNBot" target="_blank" rel="noreferrer">
-              Telegram <Icon name="arrow" />
-            </a>
+            <Link href="/support">
+              Поддержка <Icon name="arrow" />
+            </Link>
+            <Link href="/guide">Настройка VPN</Link>
             <Link href="/login">Войти в аккаунт</Link>
           </div>
         </div>

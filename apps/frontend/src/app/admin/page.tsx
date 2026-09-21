@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import api, { apiErrorMessage } from '@/lib/api';
 import { Shell } from '@/components/site';
+import Link from 'next/link';
 type Overview = {
   total: number;
   users: { id: string; email: string; role: string; status: string }[];
@@ -69,6 +70,11 @@ export default function Admin() {
   }
   return (
     <Shell>
+      <p>
+        <Link className="text-button" href="/support">
+          Очередь поддержки ↗
+        </Link>
+      </p>
       <div className="dashboard-heading">
         <h1>Управление сервисом</h1>
         <button className="button secondary" disabled={busy} onClick={load}>

@@ -1,45 +1,64 @@
-'use client';
-
-import { useTranslations } from '@/lib/i18n';
-
-export default function TermsPage() {
-  const { t } = useTranslations();
-
+import Link from 'next/link';
+import { Shell } from '@/components/site';
+export const dynamic = 'force-dynamic';
+export default function Terms() {
+  const operator = process.env.OPERATOR_NAME,
+    details = process.env.OPERATOR_DETAILS,
+    email = process.env.SUPPORT_EMAIL;
   return (
-    <div className="min-h-screen bg-[hsl(222,14%,6%)] py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">{t('terms_title')}</h1>
-        <div className="prose prose-invert max-w-none space-y-6 text-[hsl(222,10%,70%)]">
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s1_title')}</h2>
-            <p>{t('terms_s1_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s2_title')}</h2>
-            <p>{t('terms_s2_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s3_title')}</h2>
-            <p>{t('terms_s3_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s4_title')}</h2>
-            <p>{t('terms_s4_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s5_title')}</h2>
-            <p>{t('terms_s5_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s6_title')}</h2>
-            <p>{t('terms_s6_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('terms_s7_title')}</h2>
-            <p>{t('terms_s7_text')}</p>
-          </section>
-        </div>
-      </div>
-    </div>
+    <Shell>
+      <p className="eyebrow">APPI VPN</p>
+      <h1>Условия сервиса.</h1>
+      <section className="card">
+        <h2>Оператор</h2>
+        <p>{operator || 'Данные оператора ещё не опубликованы. Продажи не открыты.'}</p>
+        {details && <p style={{ whiteSpace: 'pre-wrap' }}>{details}</p>}
+        {email && (
+          <p>
+            Контакт: <a href={'mailto:' + email}>{email}</a>
+          </p>
+        )}
+      </section>
+      <section className="card">
+        <h2>Подписка и оплата</h2>
+        <p>
+          Актуальная цена, срок и объём трафика показаны при выборе тарифа. Доступ выдаётся после
+          подтверждения платежа провайдером. Автоматического списания нет: следующий период
+          оплачивается отдельно. При продлении оставшийся оплаченный срок сохраняется.
+        </p>
+        <p>
+          Подключение выполняется в совместимом VPN-клиенте. Персональная ссылка даёт доступ к вашей
+          подписке — не публикуйте и не передавайте её.
+        </p>
+      </section>
+      <section className="card">
+        <h2>Пробный доступ</h2>
+        <p>
+          Если пробный период включён оператором, его срок и трафик отображаются в кабинете. Он
+          доступен один раз до первой подписки после подтверждения email. Гостевой просмотр
+          приложения сам по себе не даёт VPN-доступа.
+        </p>
+      </section>
+      <section className="card">
+        <h2>Помощь и возвраты</h2>
+        <p>
+          При проблеме с подключением или запросе возврата создайте обращение и укажите номер
+          платежа. Оператор рассматривает обращение и оформляет возврат через платёжного провайдера.
+          Подтверждённая сумма возврата отображается в истории; оплаченный срок и квота уменьшаются
+          пропорционально возвращённой сумме.
+        </p>
+        <Link href="/support" className="button secondary">
+          Написать в поддержку
+        </Link>
+      </section>
+      <section className="card">
+        <h2>Использование сервиса</h2>
+        <p>
+          Не используйте сервис для вмешательства в чужие системы, рассылки спама и нарушения прав
+          других людей. VPN не гарантирует доступность каждого сайта или постоянную скорость во всех
+          сетях. О сбоях сообщайте в поддержку.
+        </p>
+      </section>
+    </Shell>
   );
 }

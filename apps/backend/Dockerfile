@@ -1,45 +1,24 @@
-FROM node:20-alpine AS base
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# ============================================
-# BUILD
-# ============================================
-FROM base AS builder
+FROM node:22-bookworm-slim AS build
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY apps/backend/package.json apps/backend/
-COPY apps/backend/prisma apps/backend/prisma/
-COPY packages/shared/package.json packages/shared/
-
+ENV HUSKY=0
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+COPY . .
 RUN pnpm install --frozen-lockfile
-
-COPY apps/backend/ apps/backend/
-COPY packages/shared/ packages/shared/
-COPY turbo.json .
-
+RUN pnpm --filter @appi/backend exec prisma generate
 RUN pnpm --filter @appi/backend build
-RUN pnpm --filter @appi/backend prisma generate
+RUN pnpm --filter @appi/backend deploy --prod /out
+RUN cd /out && node node_modules/prisma/build/index.js generate
 
-# ============================================
-# PRODUCTION
-# ============================================
-FROM node:20-alpine AS runner
+FROM node:22-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nestjs
-
-COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/apps/backend/node_modules ./node_modules
-
-USER nestjs
-
+ENV NODE_ENV=production PORT=3000
+COPY --from=build --chown=node:node /out/node_modules ./node_modules
+COPY --from=build --chown=node:node /out/dist ./dist
+COPY --from=build --chown=node:node /out/prisma ./prisma
+COPY --from=build --chown=node:node /out/scripts ./scripts
+COPY --from=build --chown=node:node /out/package.json ./package.json
+USER node
 EXPOSE 3000
-
 CMD ["node", "dist/main.js"]

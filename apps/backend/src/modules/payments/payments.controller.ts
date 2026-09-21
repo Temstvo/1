@@ -13,6 +13,8 @@ import {
 import { IsUUID, IsOptional, IsString, MaxLength, IsIn } from 'class-validator';
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { ConfigService } from '@nestjs/config';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 class CheckoutDto {
@@ -22,7 +24,22 @@ class CheckoutDto {
 }
 @Controller('payments')
 export class PaymentsController {
-  constructor(private payments: PaymentsService) {}
+  constructor(
+    private payments: PaymentsService,
+    private config: ConfigService,
+  ) {}
+  @Get('options')
+  options() {
+    return {
+      enabled: this.config.get('ENABLE_CHECKOUT') === 'true',
+      testMode: this.config.get('YOOKASSA_TEST_MODE', 'true') === 'true',
+    };
+  }
+  @Post('refunds/:id/reconcile')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  reconcileRefund(@Param('id') id: string) {
+    return this.payments.reconcileRefund(id);
+  }
   @Post(['checkout', 'checkout/yookassa'])
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)

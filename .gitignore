@@ -68,4 +68,5 @@ supabase-fix-rls.sql
 test-results/
 playwright-report/
 serv-configs/**/*.json
+backups/
 

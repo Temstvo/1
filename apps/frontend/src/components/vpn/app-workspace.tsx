@@ -4,6 +4,7 @@ import Link from 'next/link';
 import api, { apiErrorMessage } from '@/lib/api';
 import { Icon } from '@/components/icon';
 import catalog from '@/data/imported-servers.json';
+import ManagedWorkspace from './managed-workspace';
 type Profile = {
   id: string;
   name: string;
@@ -16,6 +17,7 @@ type Profile = {
   format: string;
 };
 export default function AppWorkspace() {
+  const [managed, setManaged] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>(catalog),
     [selected, setSelected] = useState<string>(catalog[0]?.id || ''),
     [query, setQuery] = useState(''),
@@ -31,6 +33,7 @@ export default function AppWorkspace() {
     setError('');
     try {
       const { data } = await api.get('/vpn/imported/servers');
+      setManaged(data.managed === true);
       setProfiles(data.profiles);
       setEnabled(data.downloadEnabled);
       setSelected((current) =>
@@ -102,6 +105,7 @@ export default function AppWorkspace() {
       setBusy(false);
     }
   }
+  if (managed) return <ManagedWorkspace />;
   return (
     <>
       <div className="app-heading">

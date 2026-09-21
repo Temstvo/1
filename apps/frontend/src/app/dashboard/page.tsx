@@ -6,11 +6,26 @@ import api, { apiErrorMessage } from '@/lib/api';
 import { Shell } from '@/components/site';
 import Pricing, { Plan } from '@/components/pricing';
 import { Icon } from '@/components/icon';
-type User = { id: string; email: string; role: string; profile?: { firstName?: string } };
+type User = {
+  id: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  profile?: { firstName?: string };
+};
 type Subscription = { status: string; expiresAt: string; plan: { name: string } };
-type Payment = { id: string; status: string; amount: string; currency: string; createdAt: string };
+type Payment = {
+  id: string;
+  status: string;
+  amount: string;
+  currency: string;
+  createdAt: string;
+  refundAmount?: string | null;
+};
 const labels: Record<string, string> = {
   ACTIVE: 'Активна',
+  TRIAL: 'Пробный период',
+  LIMITED: 'Трафик закончился',
   PENDING: 'Ожидает подтверждения',
   COMPLETED: 'Оплачен',
   FAILED: 'Ошибка оплаты',
@@ -33,6 +48,13 @@ export default function Dashboard() {
     [loaded, setLoaded] = useState(false),
     [config, setConfig] = useState(''),
     [message, setMessage] = useState('');
+  const [trial, setTrial] = useState<{ enabled: boolean; hours: number; trafficGb: number } | null>(
+    null,
+  );
+  const [checkoutOptions, setCheckoutOptions] = useState<{
+    enabled: boolean;
+    testMode: boolean;
+  } | null>(null);
   const guest = !!user?.email.endsWith('@guest.invalid');
   async function load() {
     setError('');
@@ -43,10 +65,14 @@ export default function Dashboard() {
         api.get('/subscriptions/current'),
         api.get('/vpn/status'),
         api.get('/payments'),
+        api.get('/subscriptions/trial'),
+        api.get('/payments/options'),
       ]);
       setSub(results[0].data);
       setVpn(results[1].data);
       setPayments(results[2].data);
+      setTrial(results[3].data);
+      setCheckoutOptions(results[4].data);
     } catch (e: any) {
       if (e.response?.status === 401) router.replace('/login');
       else setError(apiErrorMessage(e));
@@ -135,6 +161,21 @@ export default function Dashboard() {
       setBusy(false);
     }
   }
+  async function accountAction(path: string) {
+    setBusy(true);
+    setError('');
+    try {
+      const { data } = await api.post(path);
+      setMessage(
+        data.message || 'Пробный период начат. Конфигурация появится после настройки сервера.',
+      );
+      await load();
+    } catch (e) {
+      setError(apiErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <Shell>
       <div className="dashboard-heading">
@@ -152,6 +193,8 @@ export default function Dashboard() {
         </button>
       </div>
       <nav className="dashboard-nav" aria-label="Разделы кабинета">
+        <Link href="/support">Поддержка</Link>
+        <Link href="/guide">Инструкция</Link>
         <Link href="/app">
           <Icon name="globe" /> Серверы Appi
         </Link>
@@ -184,6 +227,42 @@ export default function Dashboard() {
         <p role="status">Загружаем ваш кабинет…</p>
       ) : (
         <>
+          {!guest && user && !user.emailVerified && (
+            <section className="notice">
+              <p>Подтвердите email по ссылке из письма. Это потребуется для пробного VPN.</p>
+              <button
+                className="button secondary"
+                disabled={busy}
+                onClick={() => accountAction('/auth/resend-verification')}
+              >
+                Отправить письмо ещё раз
+              </button>
+            </section>
+          )}
+          {!sub && trial?.enabled && (
+            <section className="card">
+              <p className="eyebrow">ПОПРОБУЙТЕ ПЕРЕД ПОКУПКОЙ</p>
+              <h2>
+                {trial.hours} ч · {trial.trafficGb} ГиБ
+              </h2>
+              <p>
+                Один пробный период на подтверждённый аккаунт. Без оплаты и автоматического
+                списания.
+              </p>
+              <button
+                className="button"
+                disabled={busy || guest || !user?.emailVerified}
+                onClick={() => accountAction('/subscriptions/trial')}
+              >
+                Начать пробный период
+              </button>
+              {(guest || !user?.emailVerified) && (
+                <p className="fine">
+                  Сохраните аккаунт и подтвердите email, чтобы получить персональный ключ.
+                </p>
+              )}
+            </section>
+          )}
           <div className="dashboard-grid" id="access">
             <section className="card">
               <p className="eyebrow">
@@ -285,7 +364,16 @@ export default function Dashboard() {
             <h2>Ваш следующий период</h2>
             <p>Оставшийся оплаченный срок сохраняется при продлении.</p>
             {busy && <p role="status">Выполняем запрос…</p>}
-            <Pricing choose={checkout} disabled={busy} />
+            {checkoutOptions && (
+              <p className="notice">
+                {!checkoutOptions.enabled
+                  ? 'Продажи ещё не открыты. Можно осмотреться и обратиться в поддержку.'
+                  : checkoutOptions.testMode
+                    ? 'Тестовый режим оплаты. Это проверка сервиса, а не покупка боевого доступа.'
+                    : 'Оплата через ЮKassa. Автоматического списания нет.'}
+              </p>
+            )}
+            <Pricing choose={checkout} disabled={busy || !checkoutOptions?.enabled} />
           </section>
           <section className="card" id="payments">
             <h2>История платежей</h2>
@@ -305,6 +393,12 @@ export default function Dashboard() {
                         <td>{new Date(p.createdAt).toLocaleDateString('ru-RU')}</td>
                         <td>
                           {p.amount} {p.currency}
+                          {p.refundAmount && (
+                            <small>
+                              {' '}
+                              · Возвращено {p.refundAmount} {p.currency}
+                            </small>
+                          )}
                         </td>
                         <td>
                           <Link href={'/checkout/success?paymentId=' + p.id}>

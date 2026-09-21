@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { resolve } from 'path';
 
 const isTauri = process.env.NEXT_PUBLIC_TAURI === 'true';
 
@@ -12,6 +13,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  ...(process.env.BUILD_STANDALONE === 'true'
+    ? { output: 'standalone', outputFileTracingRoot: resolve(__dirname, '../..') }
+    : {}),
   ...(isTauri ? { output: 'export', images: { unoptimized: true } } : {}),
   async headers() {
     return [

@@ -24,6 +24,7 @@ describe('Marzban adapter contract', () => {
         username: 'appi_contract',
         status: 'active',
         expire: 2000000000,
+        data_limit: 1000000,
         links: [link],
         subscription_url: '/sub/contract',
       },

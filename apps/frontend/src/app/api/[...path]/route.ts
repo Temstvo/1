@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isIP } from 'net';
 export const dynamic = 'force-dynamic';
-const allowed = new Set(['auth', 'users', 'plans', 'payments', 'subscriptions', 'vpn', 'admin']);
+const allowed = new Set([
+  'auth',
+  'users',
+  'plans',
+  'payments',
+  'subscriptions',
+  'vpn',
+  'admin',
+  'support',
+]);
 async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   if (
@@ -17,6 +27,10 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   }
   const route = path.join('/');
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (process.env.TRUST_PROXY === '1') {
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim();
+    if (clientIp && isIP(clientIp)) headers['X-Forwarded-For'] = clientIp;
+  }
   const token = req.cookies.get('appi_access')?.value;
   if (token) headers.Authorization = 'Bearer ' + token;
   const key = req.headers.get('idempotency-key');

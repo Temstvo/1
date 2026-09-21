@@ -1,45 +1,52 @@
-'use client';
-
-import { useTranslations } from '@/lib/i18n';
-
-export default function PrivacyPage() {
-  const { t } = useTranslations();
-
+import Link from 'next/link';
+import { Shell } from '@/components/site';
+export const dynamic = 'force-dynamic';
+export default function Privacy() {
   return (
-    <div className="min-h-screen bg-[hsl(222,14%,6%)] py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">{t('privacy_title')}</h1>
-        <div className="prose prose-invert max-w-none space-y-6 text-[hsl(222,10%,70%)]">
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s1_title')}</h2>
-            <p>{t('privacy_s1_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s2_title')}</h2>
-            <p>{t('privacy_s2_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s3_title')}</h2>
-            <p>{t('privacy_s3_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s4_title')}</h2>
-            <p>{t('privacy_s4_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s5_title')}</h2>
-            <p>{t('privacy_s5_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s6_title')}</h2>
-            <p>{t('privacy_s6_text')}</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">{t('privacy_s7_title')}</h2>
-            <p>{t('privacy_s7_text')}</p>
-          </section>
+    <Shell>
+      <p className="eyebrow">APPI VPN</p>
+      <h1>Данные и конфиденциальность.</h1>
+      <section className="card">
+        <h2>Что хранит приложение</h2>
+        <p>
+          Email, хеш пароля, данные профиля, сессии входа, IP и сведения об устройстве при входе,
+          история подписок и платежей, обращения в поддержку и события безопасности. VPN-провайдер
+          хранит техническое состояние персонального доступа, его срок и объём использованного
+          трафика.
+        </p>
+        <p>
+          Платёжные данные карты вводятся у платёжного провайдера. Приложение получает
+          идентификатор, сумму и статус платежа.
+        </p>
+      </section>
+      <section className="card">
+        <h2>Для чего нужны эти данные</h2>
+        <p>
+          Для входа и восстановления аккаунта, выдачи и отключения VPN, учёта оплаты, защиты от
+          злоупотреблений и ответа на обращения. Почтовому сервису передаются адрес и содержание
+          служебного письма.
+        </p>
+      </section>
+      <section className="card">
+        <h2>Защита доступа</h2>
+        <p>
+          Сессии сайта используют служебные cookies. Конфигурации VPN хранятся в базе в
+          зашифрованном виде. Не публикуйте персональную ссылку, пароль или ссылку восстановления.
+        </p>
+      </section>
+      <section className="card">
+        <h2>Вопросы о данных</h2>
+        <p>
+          Для уточнения обработки, исправления или удаления данных обратитесь к оператору. Реквизиты
+          и контакт оператора опубликованы в условиях сервиса.
+        </p>
+        <div className="actions">
+          <Link className="button secondary" href="/support">
+            Поддержка
+          </Link>
+          <Link href="/terms">Оператор и условия</Link>
         </div>
-      </div>
-    </div>
+      </section>
+    </Shell>
   );
 }

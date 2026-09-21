@@ -72,3 +72,18 @@ jobs:
         run: |
           docker run --rm --entrypoint node appi-backend:ci -e "require('@prisma/client'); require('argon2'); require('./dist/modules/vpn/marzban.service'); console.log('backend dependencies OK')"
           docker run --rm --entrypoint node appi-frontend:ci -e "require('fs').accessSync('apps/frontend/server.js'); console.log('standalone server OK')"
+      - name: Boot the production stack and exercise the BFF
+        env:
+          RELEASE_TAG: ci
+        run: |
+          node scripts/init-production-env.mjs
+          docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
+          docker compose --env-file .env.production -f docker-compose.prod.yml up -d --wait backend frontend
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend node scripts/pilot-plan.cjs
+          docker compose --env-file .env.production -f docker-compose.prod.yml exec -T frontend node < scripts/container-smoke.cjs
+          docker run --rm -e APP_DOMAIN=app.example.com -v "$PWD/docker/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+      - name: Container diagnostics on failure
+        if: failure()
+        env:
+          RELEASE_TAG: ci
+        run: docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=80

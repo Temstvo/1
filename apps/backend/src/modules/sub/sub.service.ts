@@ -42,8 +42,8 @@ export class SubService {
     });
   }
 
-  /** Активные конфиги из free_vpn_configs для Happ-подписки (без sync-стека). */
-  async getActiveConfigLines(limit = 250): Promise<string[]> {
+  /** Активные конфиги из free_vpn_configs для Happ-подписки (без sync-стека). Лимит 50 — ТСПУ режет >10 КБ. */
+  async getActiveConfigLines(limit = 50): Promise<string[]> {
     const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
       `SELECT uri FROM free_vpn_configs WHERE is_active = true AND uri IS NOT NULL AND uri <> ''
        ORDER BY latency NULLS LAST LIMIT $1`,

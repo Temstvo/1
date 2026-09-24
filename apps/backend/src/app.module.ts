@@ -25,6 +25,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
 import { SubModule } from './modules/sub/sub.module';
+import { AggregatorModule } from './modules/aggregator/aggregator.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SubModule } from './modules/sub/sub.module';
     EmailModule,
     AdminModule,
     SubModule,
+    AggregatorModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

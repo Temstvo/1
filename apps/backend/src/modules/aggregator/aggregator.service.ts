@@ -68,35 +68,84 @@ export class AggregatorService {
     return nodes;
   }
 
-  // 3. morpheusadam — бандлы, уже отфильтрованы по reachability
+  // 3. morpheusadam — бандлы + каталог subs/all.txt (по твоей ссылке)
   async fetchMorpheus(limit = 50): Promise<NormalizedNode[]> {
     const urls = [
       'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/best.txt',
       'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/vless.txt',
+      'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/all.txt', // каталог подписок — парсим как ссылки
     ];
     const seen = new Set<string>();
     const nodes: NormalizedNode[] = [];
     for (const url of urls) {
       try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        const headers: any = { 'User-Agent': 'Mozilla/5.0' };
+        const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
         if (!res.ok) continue;
         const text = await res.text();
-        for (const line of text.split('\n')) {
-          const uri = line.trim();
-          if (!uri.startsWith('vless://') || seen.has(uri)) continue;
-          seen.add(uri);
-          const u = this.parseVless(uri);
-          if (!u) continue;
-          nodes.push({
-            uri,
-            host: u.host,
-            port: u.port,
-            protocol: 'VLESS',
-            country: 'Unknown',
-            countryCode: 'XX',
-            source: 'morpheusadam',
-          });
-          if (nodes.length >= limit) break;
+        const isCatalog = url.endsWith('/subs/all.txt');
+        if (isCatalog) {
+          // all.txt — список подписок, берём топ-3
+          const links = text
+            .split('\n')
+            .map((l) => l.trim())
+            .filter((l) => l.startsWith('https://'))
+            .slice(0, 3);
+          for (const link of links) {
+            try {
+              const rr = await fetch(link, { headers, signal: AbortSignal.timeout(10000) });
+              if (!rr.ok) continue;
+              const tt = await rr.text();
+              for (const line of tt.split('\n')) {
+                let uri = line.trim();
+                // base64 bundle?
+                if (!uri.startsWith('vless://') && uri.length > 100 && !uri.includes('://')) {
+                  try {
+                    uri = Buffer.from(uri, 'base64').toString('utf8').trim();
+                  } catch {}
+                }
+                if (!uri.startsWith('vless://') || seen.has(uri)) continue;
+                seen.add(uri);
+                const u = this.parseVless(uri);
+                if (!u) continue;
+                nodes.push({
+                  uri,
+                  host: u.host,
+                  port: u.port,
+                  protocol: 'VLESS',
+                  country: 'Unknown',
+                  countryCode: 'XX',
+                  source: 'morpheusadam/catalog',
+                });
+                if (nodes.length >= limit) break;
+              }
+              if (nodes.length >= limit) break;
+            } catch {}
+          }
+        } else {
+          for (const line of text.split('\n')) {
+            let uri = line.trim();
+            if (!uri) continue;
+            if (!uri.startsWith('vless://') && uri.length > 100 && !uri.includes('://')) {
+              try {
+                uri = Buffer.from(uri, 'base64').toString('utf8').trim();
+              } catch {}
+            }
+            if (!uri.startsWith('vless://') || seen.has(uri)) continue;
+            seen.add(uri);
+            const u = this.parseVless(uri);
+            if (!u) continue;
+            nodes.push({
+              uri,
+              host: u.host,
+              port: u.port,
+              protocol: 'VLESS',
+              country: 'Unknown',
+              countryCode: 'XX',
+              source: 'morpheusadam',
+            });
+            if (nodes.length >= limit) break;
+          }
         }
         if (nodes.length >= limit) break;
       } catch (e: any) {
@@ -162,38 +211,42 @@ export class AggregatorService {
   async upsertNodes(nodes: NormalizedNode[]): Promise<number> {
     let upserted = 0;
     for (const n of nodes) {
-      try {
-        // Дедуп по uri (уникальный endpoint)
-        const existing: any[] = await (this.prisma as any).$queryRawUnsafe(
-          `SELECT id FROM free_vpn_configs WHERE uri = $1 LIMIT 1`,
-          n.uri,
-        );
-        if (existing.length > 0) {
-          await (this.prisma as any).$executeRawUnsafe(
-            `UPDATE free_vpn_configs SET is_active = true, latency = COALESCE($2, latency), updated_at = now() WHERE uri = $1`,
-            n.uri,
-            n.latency ?? null,
-          );
-        } else {
+      const { Client } = require('pg');
+      const cfg: any = {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 15000,
+      };
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const client = new Client(cfg);
+        client.on('error', () => {});
+        try {
+          await client.connect();
           const id = this.hashUri(n.uri);
-          await (this.prisma as any).$executeRawUnsafe(
+          await client.query(
             `INSERT INTO free_vpn_configs (id, protocol, uri, label, country, country_code, server, list_type, is_active, latency)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $9)
-             ON CONFLICT (id) DO UPDATE SET is_active = true, latency = COALESCE(EXCLUDED.latency, free_vpn_configs.latency), updated_at = now()`,
-            id,
-            n.protocol,
-            n.uri,
-            `${n.country} ${n.host}`.slice(0, 120),
-            n.country,
-            n.countryCode,
-            n.host,
-            n.source,
-            n.latency ?? null,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9)
+             ON CONFLICT (id) DO UPDATE SET is_active=true, latency=COALESCE(EXCLUDED.latency, free_vpn_configs.latency), updated_at=now()`,
+            [
+              id,
+              n.protocol,
+              n.uri,
+              `${n.country} ${n.host}`.slice(0, 120),
+              n.country,
+              n.countryCode,
+              n.host,
+              n.source,
+              n.latency ?? null,
+            ],
           );
+          await client.end().catch(() => {});
+          upserted++;
+          break;
+        } catch (e: any) {
+          await client.end().catch(() => {});
+          if (attempt === 3) this.logger.warn(`upsert ${n.host}: ${e.message.slice(0, 120)}`);
+          else await new Promise((r) => setTimeout(r, 800 * attempt));
         }
-        upserted++;
-      } catch (e: any) {
-        this.logger.warn(`upsert ${n.host}: ${e.message.slice(0, 120)}`);
       }
     }
     return upserted;

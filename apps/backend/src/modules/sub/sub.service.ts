@@ -42,22 +42,42 @@ export class SubService {
     });
   }
 
-  /** Только живые ноды (probe TCP <3.5с). Свежие и быстрые — в топе. */
+  private cache: { lines: string[]; at: number } | null = null;
+
+  /** Только живые (is_active). Свежие агрегатора — в топе, быстро. Кэш 60с — Happ часто дергает подписку. */
   async getActiveConfigLines(limit = 50): Promise<string[]> {
+    const now = Date.now();
+    if (this.cache && now - this.cache.at < 60_000 && this.cache.lines.length === limit)
+      return this.cache.lines;
     const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
-      `SELECT uri FROM free_vpn_configs
-       WHERE is_active = true AND uri LIKE 'vless://%' AND latency IS NOT NULL
-       ORDER BY latency ASC, updated_at DESC LIMIT $1`,
+      `SELECT uri, country, country_code, server FROM free_vpn_configs
+       WHERE is_active = true AND uri LIKE 'vless://%'
+       ORDER BY updated_at DESC LIMIT $1`,
       Math.max(1, Math.min(1000, limit)),
     );
-    // Fallback: если живых с latency нет (первый прогон), отдаём любые активные
-    if (rows.length === 0) {
-      const fallback: any[] = await (this.prisma as any).$queryRawUnsafe(
-        `SELECT uri FROM free_vpn_configs WHERE is_active = true AND uri LIKE 'vless://%' ORDER BY updated_at DESC LIMIT $1`,
-        Math.max(1, Math.min(1000, limit)),
+    const lines = rows
+      .map((r) => {
+        let uri = String(r.uri);
+        if (!uri.includes('#')) {
+          const flag = this.flag(r.country_code || 'XX');
+          const name = r.country && r.country !== 'Unknown' ? r.country : r.server || 'VPN';
+          uri = `${uri}#${encodeURIComponent(`${flag} ${name}`)}`;
+        }
+        return uri;
+      })
+      .filter(Boolean);
+    this.cache = { lines, at: now };
+    return lines;
+  }
+
+  private flag(code: string): string {
+    if (!code || code.length !== 2) return '🌐';
+    try {
+      return String.fromCodePoint(
+        ...[...code.toUpperCase()].map((c) => 0x1f1e6 - 65 + c.charCodeAt(0)),
       );
-      return fallback.map((r) => String(r.uri)).filter(Boolean);
+    } catch {
+      return '🌐';
     }
-    return rows.map((r) => String(r.uri)).filter(Boolean);
   }
 }

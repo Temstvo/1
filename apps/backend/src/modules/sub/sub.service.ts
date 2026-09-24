@@ -42,13 +42,22 @@ export class SubService {
     });
   }
 
-  /** Активные конфиги из free_vpn_configs для Happ-подписки. Свежие агрегатора — в топе. */
+  /** Только живые ноды (probe TCP <3.5с). Свежие и быстрые — в топе. */
   async getActiveConfigLines(limit = 50): Promise<string[]> {
     const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
-      `SELECT uri FROM free_vpn_configs WHERE is_active = true AND uri IS NOT NULL AND uri <> ''
-       ORDER BY updated_at DESC, latency NULLS LAST LIMIT $1`,
+      `SELECT uri FROM free_vpn_configs
+       WHERE is_active = true AND uri LIKE 'vless://%' AND latency IS NOT NULL
+       ORDER BY latency ASC, updated_at DESC LIMIT $1`,
       Math.max(1, Math.min(1000, limit)),
     );
+    // Fallback: если живых с latency нет (первый прогон), отдаём любые активные
+    if (rows.length === 0) {
+      const fallback: any[] = await (this.prisma as any).$queryRawUnsafe(
+        `SELECT uri FROM free_vpn_configs WHERE is_active = true AND uri LIKE 'vless://%' ORDER BY updated_at DESC LIMIT $1`,
+        Math.max(1, Math.min(1000, limit)),
+      );
+      return fallback.map((r) => String(r.uri)).filter(Boolean);
+    }
     return rows.map((r) => String(r.uri)).filter(Boolean);
   }
 }

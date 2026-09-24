@@ -208,6 +208,43 @@ export class AggregatorService {
     return null;
   }
 
+  private async probe(host: string, port: number, timeoutMs = 4000): Promise<number | null> {
+    const net = require('net');
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const sock = net.createConnection({ host, port, timeout: timeoutMs }, () => {
+        const ms = Date.now() - start;
+        sock.destroy();
+        resolve(ms);
+      });
+      sock.on('error', () => {
+        sock.destroy();
+        resolve(null);
+      });
+      sock.on('timeout', () => {
+        sock.destroy();
+        resolve(null);
+      });
+    });
+  }
+
+  async filterLive(nodes: NormalizedNode[]): Promise<NormalizedNode[]> {
+    const live: NormalizedNode[] = [];
+    // параллельно по 10
+    for (let i = 0; i < nodes.length; i += 10) {
+      const batch = nodes.slice(i, i + 10);
+      const results = await Promise.all(
+        batch.map(async (n) => {
+          const ms = await this.probe(n.host, n.port, 3500);
+          if (ms === null) return null;
+          return { ...n, latency: ms };
+        }),
+      );
+      for (const r of results) if (r) live.push(r);
+    }
+    return live;
+  }
+
   async upsertNodes(nodes: NormalizedNode[]): Promise<number> {
     let upserted = 0;
     for (const n of nodes) {
@@ -265,24 +302,27 @@ export class AggregatorService {
     const result = { publicvpnlist: 0, morpheus: 0, vpngate: 0 };
     if (apiKey) {
       try {
-        const nodes = await this.fetchPublicVPNList(apiKey, 40);
-        result.publicvpnlist = await this.upsertNodes(nodes);
-        this.logger.log(`PublicVPNList: ${nodes.length} fetched, ${result.publicvpnlist} upserted`);
+        const raw = await this.fetchPublicVPNList(apiKey, 40);
+        const live = await this.filterLive(raw);
+        this.logger.log(`PublicVPNList: ${raw.length} fetched, ${live.length} live`);
+        result.publicvpnlist = await this.upsertNodes(live);
       } catch (e: any) {
         this.logger.warn(`PublicVPNList: ${e.message}`);
       }
     }
     try {
-      const nodes = await this.fetchMorpheus(40);
-      result.morpheus = await this.upsertNodes(nodes);
-      this.logger.log(`morpheusadam: ${result.morpheus} upserted`);
+      const raw = await this.fetchMorpheus(60);
+      const live = await this.filterLive(raw);
+      this.logger.log(`morpheusadam: ${raw.length} fetched, ${live.length} live`);
+      result.morpheus = await this.upsertNodes(live);
     } catch (e: any) {
       this.logger.warn(`morpheusadam: ${e.message}`);
     }
     try {
-      const nodes = await this.fetchVPNGate(10);
-      result.vpngate = await this.upsertNodes(nodes);
-      this.logger.log(`VPNGate: ${result.vpngate} upserted`);
+      const raw = await this.fetchVPNGate(10);
+      const live = await this.filterLive(raw);
+      result.vpngate = await this.upsertNodes(live);
+      this.logger.log(`VPNGate: ${raw.length} fetched, ${live.length} live`);
     } catch (e: any) {
       this.logger.warn(`VPNGate: ${e.message}`);
     }

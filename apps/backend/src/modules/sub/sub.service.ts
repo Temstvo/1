@@ -42,11 +42,11 @@ export class SubService {
     });
   }
 
-  /** Активные конфиги из free_vpn_configs для Happ-подписки (без sync-стека). Лимит 50 — ТСПУ режет >10 КБ. */
+  /** Активные конфиги из free_vpn_configs для Happ-подписки. Свежие агрегатора — в топе. */
   async getActiveConfigLines(limit = 50): Promise<string[]> {
     const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
       `SELECT uri FROM free_vpn_configs WHERE is_active = true AND uri IS NOT NULL AND uri <> ''
-       ORDER BY latency NULLS LAST LIMIT $1`,
+       ORDER BY updated_at DESC, latency NULLS LAST LIMIT $1`,
       Math.max(1, Math.min(1000, limit)),
     );
     return rows.map((r) => String(r.uri)).filter(Boolean);

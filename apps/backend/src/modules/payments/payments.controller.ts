@@ -51,6 +51,14 @@ export class PaymentsController {
   one(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.payments.findById(id, userId);
   }
+  @Post('bot-checkout')
+  @HttpCode(200)
+  botCheckout(@Body() body: { telegramId: string; planId: string }) {
+    if (!body?.telegramId || !body?.planId)
+      throw new BadRequestException('telegramId and planId required');
+    return this.payments.createBotCheckout(String(body.telegramId), String(body.planId));
+  }
+
   @Post('webhook/yookassa')
   @HttpCode(200)
   webhook(@Body() body: unknown) {

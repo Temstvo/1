@@ -146,11 +146,12 @@ export class PaymentsService {
     const meta = payment.metadata as any;
     let matches = false;
     try {
+      const expectedUserId = meta.telegramId ? String(meta.telegramId) : payment.userId;
       matches =
         new Prisma.Decimal(remote.amount.value).eq(payment.amount) &&
         remote.amount.currency === payment.currency &&
         remote.metadata.paymentId === payment.id &&
-        remote.metadata.userId === payment.userId &&
+        String(remote.metadata.userId) === String(expectedUserId) &&
         remote.metadata.planId === meta.planId &&
         (!payment.transactionId || payment.transactionId === remote.id) &&
         remote.recipient?.account_id === this.config.get('YOOKASSA_SHOP_ID') &&
@@ -217,6 +218,45 @@ export class PaymentsService {
         const meta = payment.metadata as any;
         if (!Number.isInteger(meta.duration) || meta.duration < 1)
           throw new BadRequestException('В заказе отсутствует срок тарифа');
+        // Бот-покупка: продлеваем sub_links по telegramId, а не подписку юзера
+        if (meta.telegramId) {
+          const telegramId = String(meta.telegramId);
+          const nowBot = new Date();
+          const upd: any =
+            await tx.$executeRaw`UPDATE sub_links SET expires_at = GREATEST(expires_at, now()) + make_interval(days => ${meta.duration}::int), updated_at = now() WHERE telegram_id = ${telegramId}`;
+          if (upd === 0) {
+            const token = require('crypto').randomBytes(12).toString('base64url');
+            const label = `${telegramId}__${Math.floor(100000 + Math.random() * 900000)}`;
+            const expiresAt = new Date(Date.now() + meta.duration * 86400000);
+            await tx.$executeRaw`INSERT INTO sub_links (id, token, telegram_id, label, expires_at, traffic_used) VALUES (gen_random_uuid(), ${token.slice(0, 3) + '-' + token.slice(3)}, ${telegramId}, ${label}, ${expiresAt}, 0)`;
+          }
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: { status: 'COMPLETED', webhookVerified: true, transactionId: remote.id },
+          });
+          await tx.invoice.create({
+            data: {
+              userId: payment.userId,
+              paymentId: payment.id,
+              number: 'APPI-' + payment.id,
+              subtotal: payment.amount,
+              total: payment.amount,
+              currency: payment.currency,
+              dueDate: nowBot,
+              paidAt: nowBot,
+            },
+          });
+          await tx.auditLog.create({
+            data: {
+              actorId: payment.userId,
+              action: 'PAYMENT_CONFIRMED_BOT',
+              resource: 'PAYMENT',
+              resourceId: payment.id,
+              result: 'success',
+            },
+          });
+          return { received: true };
+        }
         const plan = await tx.plan.findUnique({ where: { id: meta.planId } });
         if (!plan) throw new BadRequestException('Тариф заказа не найден');
         const now = new Date();
@@ -315,6 +355,56 @@ export class PaymentsService {
     });
     if (!p) throw new NotFoundException('Платёж не найден');
     return p;
+  }
+
+  private static readonly BOT_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+  async createBotCheckout(telegramId: string, planId: string) {
+    if (!this.yookassa.isConfigured())
+      throw new ServiceUnavailableException('Оплата пока не настроена');
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan?.isActive) throw new NotFoundException('Тариф недоступен');
+    const key = `bot_${telegramId}_${planId}`.slice(0, 64);
+    const existing = await this.prisma.payment.findFirst({
+      where: { idempotencyKey: key, status: 'PENDING', expiresAt: { gt: new Date() } },
+    });
+    if (existing?.checkoutUrl) return this.checkoutResult(existing);
+    const amount = plan.price;
+    const payment = await this.prisma.payment.create({
+      data: {
+        userId: PaymentsService.BOT_USER_ID,
+        provider: 'YOOKASSA',
+        amount,
+        currency: plan.currency,
+        idempotencyKey: key,
+        description: 'APPI VPN (bot) — ' + plan.name,
+        expiresAt: new Date(Date.now() + 24 * 3600000),
+        metadata: {
+          planId,
+          telegramId,
+          duration: plan.duration,
+          trafficLimit: plan.trafficLimit.toString(),
+        },
+      },
+    });
+    // Создаём внешний платёж
+    const remote: any = await this.yookassa.createPayment({
+      id: payment.id,
+      amount: (payment.amount as any).toFixed(2),
+      currency: payment.currency,
+      description: payment.description!,
+      userId: telegramId,
+      planId,
+      email: `tg_${telegramId}@bot.local`,
+    });
+    this.verifyOrder(payment, remote);
+    const checkoutUrl = remote.confirmation?.confirmation_url;
+    if (!checkoutUrl) throw new ServiceUnavailableException('Провайдер не вернул ссылку');
+    const updated = await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { transactionId: remote.id, checkoutUrl },
+    });
+    return this.checkoutResult(updated);
   }
 
   @Cron('0 */5 * * * *')

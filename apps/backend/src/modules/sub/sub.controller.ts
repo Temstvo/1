@@ -128,7 +128,7 @@ code.url{word-break:break-all;background:rgba(13,26,51,.9);border:1px solid rgba
 </style>
 </head><body>
 <div class="wrap">
-  <div class="hero"><h1>APPI VPN & MikuVPN</h1><p>Одна ссылка — 243 сервера. Включая 8 MikuVPN как на скрине. Без оплат и лимитов.</p></div>
+  <div class="hero"><h1>APPI VPN</h1><p>Одна ссылка — все живые серверы. Без оплат и лимитов.</p></div>
   <div class="header"><div class="logo"><i></i> Subscription — ${link.label}</div><div class="actions"><button class="iconbtn" onclick="navigator.clipboard.writeText('${subUrl}')" title="Копировать ссылку">🔗</button><a class="iconbtn" href="https://t.me/AppiVPNBot" title="Чат">💬</a></div></div>
 
   <div class="card">
@@ -204,7 +204,7 @@ setPlatform('Windows');
   }
 
   @Get('sub/miku/:token')
-  @ApiOperation({ summary: 'MikuVPN — alias to main (одна ссылка на всё)' })
+  @ApiOperation({ summary: 'Legacy alias to main' })
   async getMikuSub(
     @Param('token') token: string,
     @Req() req: Request,

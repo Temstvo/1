@@ -26,9 +26,19 @@ export class BotUpdate implements OnModuleInit {
     this.registerHandlers();
   }
 
-  private async api(path: string, options: { method?: string; body?: any } = {}) {
+  private botSecret(): string {
+    return this.configService.get<string>('BOT_API_SECRET', '');
+  }
+
+  private async api(
+    path: string,
+    options: { method?: string; body?: any; headers?: Record<string, string> } = {},
+  ) {
     const { method = 'GET', body } = options;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    };
     const res = await fetch(`${this.backendUrl}/api${path}`, {
       method,
       headers,
@@ -595,18 +605,20 @@ export class BotUpdate implements OnModuleInit {
       const tgId = String((ctx.from as any)?.id || '0');
       const stars = Number(pay.total_amount || 0);
       if (payload.startsWith('premium_30_')) {
-        await this.api('/growth/premium/grant', {
+        await this.api('/sub-links/extend', {
           method: 'POST',
-          body: { telegramId: tgId, days: 30, stars, source: 'stars' },
-        }).catch(() => null);
+          headers: { 'x-bot-secret': this.botSecret() },
+          body: { telegramId: tgId, days: 30 },
+        });
         await ctx.reply(
           '⭐ Premium активирован на 30 дней! Спасибо за поддержку.\nПроверь «🔗 Моя подписка» — срок продлён.',
         );
       } else if (payload.startsWith('donate_')) {
-        await this.api('/growth/premium/grant', {
+        await this.api('/sub-links/extend', {
           method: 'POST',
-          body: { telegramId: tgId, days: 1, stars, source: 'donate' },
-        }).catch(() => null);
+          headers: { 'x-bot-secret': this.botSecret() },
+          body: { telegramId: tgId, days: 1 },
+        });
         await ctx.reply('💛 Спасибо за донат! Тебе начислен +1 день подписки.');
       }
     } catch (e: any) {

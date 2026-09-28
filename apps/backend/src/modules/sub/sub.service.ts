@@ -40,6 +40,29 @@ export class SubService {
     return (this.prisma as any).subLink.findUnique({ where: { token } });
   }
 
+  /** Продлить самую свежую ссылку юзера на N дней (для Stars-оплат из бота). */
+  async extendSub(telegramId: string, days: number) {
+    const d = Math.max(1, Math.floor(days));
+    let link = await (this.prisma as any).subLink.findFirst({
+      where: { telegramId: String(telegramId) },
+      orderBy: { expiresAt: 'desc' },
+    });
+    if (!link) link = await this.getOrCreate(String(telegramId));
+    const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
+      `UPDATE sub_links SET expires_at = GREATEST(expires_at, now()) + make_interval(days => $2::int),
+        updated_at = now() WHERE id = $1 RETURNING token, label, expires_at, traffic_used`,
+      link.id,
+      d,
+    );
+    const r = rows?.[0] || link;
+    return {
+      token: r.token,
+      label: r.label,
+      expiresAt: new Date(r.expires_at).toISOString(),
+      trafficUsed: r.traffic_used?.toString?.() || '0',
+    };
+  }
+
   async getByTelegramId(telegramId: string) {
     return (this.prisma as any).subLink.findFirst({
       where: { telegramId },

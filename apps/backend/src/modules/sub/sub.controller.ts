@@ -6,8 +6,10 @@ import {
   Body,
   Res,
   Req,
+  Headers,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Response, Request } from 'express';
@@ -145,6 +147,19 @@ function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.cli
     res.setHeader('Profile-Update-Interval', '1');
     res.setHeader('Subscription-User-Info', 'upload=0; download=0; total=0; expire=4102444800');
     return lines.join('\n');
+  }
+
+  @Post('sub-links/extend')
+  @ApiOperation({ summary: 'Extend user sub by N days (bot server-side, shared secret)' })
+  async extendSub(
+    @Body() body: { telegramId: string; days: number },
+    @Headers('x-bot-secret') secret: string,
+  ) {
+    const expected = process.env.BOT_API_SECRET || '';
+    if (!expected || secret !== expected) throw new ForbiddenException('Forbidden');
+    if (!body?.telegramId || !body?.days)
+      throw new HttpException('telegramId and days required', HttpStatus.BAD_REQUEST);
+    return this.subService.extendSub(String(body.telegramId), Number(body.days));
   }
 
   @Get('sub/:token')

@@ -85,60 +85,22 @@ export class BotUpdate implements OnModuleInit {
     bot.action('menu:instructions', (ctx) => this.handleInstructions(ctx));
     bot.action('menu:status', (ctx) => this.handleStatus(ctx));
     bot.action('menu:help', (ctx) => this.handleHelpAction(ctx));
-    bot.action('menu:info', (ctx) => this.handleInfo(ctx));
-    bot.action('menu:referral', (ctx) => this.handleReferral(ctx));
     bot.action('menu:premium', (ctx) => this.handlePremium(ctx));
     bot.action('menu:extend', (ctx) => this.handleExtend(ctx));
     bot.action(/^stars:(.+)$/, (ctx) => this.handleStarsBuy(ctx));
     bot.action(/^getconfig:(.+)$/, (ctx) => this.handleGetConfig(ctx));
     bot.action(/^configlist:(.+)$/, (ctx) => this.handleConfigList(ctx));
-    bot.action('menu:mtproto', (ctx) => this.handleMtproto(ctx));
     bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
     bot.on('successful_payment', (ctx) => this.handleSuccessPayment(ctx));
   }
 
   private async handleStart(ctx: Context) {
-    // Покупка из лендинга: /start buy_<planId>
+    // С лендинга: /start buy_<planId> — оплата только Stars
     try {
       const p2 = String((ctx as any).startPayload || '');
       if (p2.indexOf('buy_') === 0) {
-        const planId = p2.slice(4);
-        const tgId2 = String((ctx.from as any).id || '');
-        try {
-          const data: any = await this.api('/payments/bot-checkout', {
-            method: 'POST',
-            body: { telegramId: tgId2, planId },
-          });
-          await ctx.reply(
-            '💳 Оплата ' + data.amount + ' ' + data.currency + '\nНажми чтобы оплатить:',
-            {
-              reply_markup: {
-                inline_keyboard: [[{ text: '💳 Оплатить', url: data.confirmationUrl }]],
-              },
-            },
-          );
-          return;
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          await ctx.reply('❌ Не удалось создать платёж: ' + msg);
-          return;
-        }
-      }
-    } catch {}
-    // Реферальный deep-link: /start ref_<tgId>
-    try {
-      const payload = String((ctx as any).startPayload || '');
-      const me = String((ctx.from as any)?.id || '0');
-      if (payload.startsWith('ref_')) {
-        const res: any = await this.api('/growth/referral', {
-          method: 'POST',
-          body: { telegramId: me, refCode: payload },
-        }).catch(() => null);
-        if (res?.isNew) {
-          await ctx.reply(
-            '🎁 Ты пришёл по приглашению — тебе начислено +5 дней подписки!\nПригласившему тоже +7 дней.',
-          );
-        }
+        await this.sendPremiumOptions(ctx);
+        return;
       }
     } catch {}
     const infoText =
@@ -335,14 +297,12 @@ export class BotUpdate implements OnModuleInit {
           `Username: ${username}\n` +
           premLine +
           `Подписка: ${data.label}\n` +
-          `Истекает: ${exp}\n` +
-          `Приглашено друзей: ${stats?.referrals ?? 0}\n\n` +
+          `Истекает: ${exp}\n\n` +
           `Бесплатный VPN без регистрации.`,
         {
           reply_markup: {
             inline_keyboard: [
               [{ text: '🔗 Моя подписка', callback_data: 'menu:mysubscription' }],
-              [{ text: '🎁 Пригласи друга', callback_data: 'menu:referral' }],
               [backButton],
             ],
           },
@@ -439,113 +399,34 @@ export class BotUpdate implements OnModuleInit {
     );
   }
 
-  private async handleInfo(ctx: Context) {
-    await ctx.answerCbQuery();
-    await this.editOrReply(
-      ctx,
-      'ℹ️ APPI VPN\n\n' +
-        'Бесплатный VPN-сервис для доступа к заблокированным ресурсам.\n\n' +
-        '• Сотни серверов по всему миру\n' +
-        '• Без лимитов и оплат\n' +
-        '• Автоматическое обновление конфигов\n' +
-        '• Поддержка VLESS, Hysteria2, Trojan, Shadowsocks\n\n' +
-        '🤖 Бот: @AppiVPNBot',
-      { reply_markup: { inline_keyboard: [[backButton]] } },
-    );
-  }
-
-  private async handleMtproto(ctx: Context) {
-    await ctx.answerCbQuery();
-    try {
-      const res = await fetch(
-        'https://raw.githubusercontent.com/dubblebyte/free-mtproto-proxies/main/all_proxies.txt',
-      );
-      const text = await res.text();
-      const lines = text.split('\n').filter((l) => l.startsWith('https://t.me/proxy?'));
-      if (lines.length === 0) {
-        await this.editOrReply(ctx, '⏳ Прокси обновляются. Попробуйте позже.', {
-          reply_markup: { inline_keyboard: [[backButton]] },
-        });
-        return;
-      }
-      const pick = lines[0];
-      const url = new URL(pick);
-      const server = url.searchParams.get('server');
-      const port = url.searchParams.get('port');
-      await this.editOrReply(
-        ctx,
-        `🛡 Прокси MTProto\n\n` +
-          `Быстрый способ открыть Telegram, если он заблокирован.\n` +
-          `Это не VPN — работает только внутри Telegram.\n\n` +
-          `Сервер: ${server}\n` +
-          `Порт: ${port}\n\n` +
-          `Нажми «Подключить прокси» — Telegram сам предложит его включить.`,
-        {
-          reply_markup: {
-            inline_keyboard: [[{ text: '🛡 Подключить прокси', url: pick }], [backButton]],
-          },
-        },
-      );
-    } catch (e: any) {
-      await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
-        reply_markup: { inline_keyboard: [[backButton]] },
-      });
-    }
-  }
-
   private async growthStats(tgId: string): Promise<any> {
     return this.api(`/growth/stats/${tgId}`).catch(() => null);
   }
 
-  private async handleReferral(ctx: Context) {
-    await ctx.answerCbQuery();
-    const tgId = String((ctx.from as any)?.id || '0');
-    const stats = await this.growthStats(tgId);
-    const count = stats?.referrals ?? 0;
-    const link = `https://t.me/AppiVPNBot?start=ref_${tgId}`;
-    await this.editOrReply(
-      ctx,
-      `🎁 Пригласи друга\n\n` +
-        `Твоя ссылка:\n${link}\n\n` +
-        `Приглашено: ${count}\n\n` +
-        `За каждого друга:\n` +
-        `• тебе +7 дней подписки\n` +
-        `• другу +5 дней подписки\n\n` +
-        `Поделись ссылкой — бонусы начисляются автоматически.`,
-      { reply_markup: { inline_keyboard: [[backButton]] } },
-    );
-  }
-
   private async handlePremium(ctx: Context) {
     await ctx.answerCbQuery();
-    const tgId = String((ctx.from as any)?.id || '0');
-    const stats = await this.growthStats(tgId);
-    const premLine = stats?.isPremium
-      ? `⭐ Premium активен до ${new Date(stats.premiumUntil).toLocaleDateString('ru-RU')}\n\n`
-      : '';
-    await this.editOrReply(
-      ctx,
+    await this.sendPremiumOptions(ctx, true);
+  }
+
+  private async sendPremiumOptions(ctx: Context, edit = false) {
+    const text =
       `⭐ Premium\n\n` +
-        premLine +
-        `Что даёт:\n` +
-        `• подписка 30 дней вместо 2\n` +
-        `• приоритетные серверы\n` +
-        `• поддержка проекта\n\n` +
-        `Оплата — Telegram Stars (встроенная валюта Telegram):`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '⭐ Premium 30 дней — 149 ⭐', callback_data: 'stars:premium_30' }],
-            [
-              { text: '💛 Донат 15 ⭐', callback_data: 'stars:donate_15' },
-              { text: '💛 Донат 50 ⭐', callback_data: 'stars:donate_50' },
-            ],
-            [{ text: '💛 Донат 150 ⭐', callback_data: 'stars:donate_150' }],
-            [backButton],
-          ],
-        },
+      `Оплата — Telegram Stars (покупаются в Telegram за пару нажатий).\n` +
+      `Каждый платёж продлевает твою подписку и поддерживает проект.`;
+    const extra = {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '⭐ Premium 30 дней — 149 ⭐', callback_data: 'stars:premium_30' }],
+          [{ text: '💛 Донат 50 ⭐', callback_data: 'stars:donate_50' }],
+          ...(edit ? [[backButton]] : []),
+        ],
       },
-    );
+    };
+    if (edit) {
+      await this.editOrReply(ctx, text, extra);
+    } else {
+      await ctx.reply(text, extra);
+    }
   }
 
   private async handleStarsBuy(ctx: any) {
@@ -560,23 +441,11 @@ export class BotUpdate implements OnModuleInit {
           amount: 149,
           payload: `premium_30_${tgId}`,
         },
-        donate_15: {
-          title: 'Донат APPI VPN',
-          desc: 'Поддержка проекта +1 день подписки',
-          amount: 15,
-          payload: `donate_15_${tgId}`,
-        },
         donate_50: {
           title: 'Донат APPI VPN',
           desc: 'Поддержка проекта +1 день подписки',
           amount: 50,
           payload: `donate_50_${tgId}`,
-        },
-        donate_150: {
-          title: 'Донат APPI VPN',
-          desc: 'Поддержка проекта +1 день подписки',
-          amount: 150,
-          payload: `donate_150_${tgId}`,
         },
       };
     const offer = offers[kind];

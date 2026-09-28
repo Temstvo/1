@@ -50,7 +50,91 @@ export class SubController {
     const lines = await this.subService.getActiveConfigLines();
     if (isBrowser) {
       const subUrl = `${(process.env.SUB_LINK_BASE_URL || process.env.BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '')}/sub/free`;
-      const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APPI VPN — FREE</title><style>body{margin:0;font-family:system-ui;background:#070b14;color:#d6e1ff;min-height:100vh;display:grid;place-items:center;padding:24px} .c{max-width:600px;background:#111c33;border:1px solid #1e3466;border-radius:16px;padding:24px;text-align:center} a{color:#38bdf8} code{word-break:break-all;background:#0d1a33;border:1px solid #1e3466;padding:10px;border-radius:10px;display:block;margin:12px 0;color:#93c5fd;font-size:12px} .btn{display:inline-block;background:#12301a;border:1px solid #1a7a3a;color:#bbf7d0;border-radius:10px;padding:10px 16px;cursor:pointer}</style></head><body><div class="c"><h1>APPI VPN — FREE</h1><p>Вечная подписка без токена. Копируй и вставляй в Happ.</p><code>${subUrl}</code><button class="btn" onclick="navigator.clipboard.writeText('${subUrl}');this.textContent='Скопировано!'">Скопировать</button><p><a href="https://t.me/AppiVPNBot">Бот</a></p></div></body></html>`;
+      const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APPI VPN — FREE</title><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%237c3aed%22/><text x=%2250%22 y=%2268%22 font-size=%2248%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>A</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:#0a0a0a;color:#f5f5f5;min-height:100vh;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(800px 420px at 50% -8%,rgba(124,58,237,.28),transparent 60%),radial-gradient(600px 380px at 90% 100%,rgba(124,58,237,.10),transparent 60%)}
+a{color:#a78bfa;text-decoration:none}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.2px}
+.brand .mark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:grid;place-items:center;font-size:19px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(124,58,237,.45)}
+.status{display:inline-flex;align-items:center;gap:7px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.45);color:#c4b5fd;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}
+.status .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.hero{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px 24px;text-align:center;margin-bottom:14px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.hero .tag{display:inline-block;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#c4b5fd;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600;margin-bottom:14px}
+.hero h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.5px}
+.hero h1 span{background:linear-gradient(90deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:10px 0 0 0;color:#9ca3af;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 12px;text-align:center}
+.stat .k{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.stat .v{font-weight:800;font-size:14px;word-break:break-all}
+.card{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:22px;margin-bottom:14px}
+.card h2{margin:0 0 6px 0;font-size:17px;font-weight:800}
+.card .sub{color:#9ca3af;font-size:13px;margin-bottom:14px}
+.urlbox{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#a78bfa;word-break:break-all;margin:12px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:700;cursor:pointer;transition:.15s;border:none;font-size:14px}
+.btn-primary{background:#7c3aed;color:#fff;padding:13px 28px;box-shadow:0 8px 24px rgba(124,58,237,.4)}
+.btn-primary:hover{background:#8b5cf6;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:#fff;padding:10px 20px}
+.btn-ghost:hover{background:rgba(255,255,255,.06)}
+.btn-block{width:100%}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chip{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.12);color:#9ca3af;cursor:pointer;background:transparent}
+.chip.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.step{display:flex;gap:14px;padding:14px 0;border-top:1px solid rgba(255,255,255,.06)}
+.step:first-of-type{border-top:none}
+.step .num{flex:0 0 36px;height:36px;border-radius:12px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);color:#c4b5fd;display:grid;place-items:center;font-weight:800;font-size:14px}
+.step .t{font-weight:700;font-size:14px}
+.step .d{color:#9ca3af;font-size:13px;margin-top:4px}
+.dlbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.footer{text-align:center;color:#6b7280;font-size:12px;margin-top:6px}
+.toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:12px 24px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(124,58,237,.5);z-index:99}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.hero h1{font-size:24px}.wrap{padding:14px 12px 32px}}
+</style>
+</head><body>
+<div class="wrap">
+  <div class="nav"><div class="brand"><span class="mark">A</span>APPI·VPN</div><span class="status"><span class="dot"></span>Активна ∞</span></div>
+  <div class="hero">
+    <span class="tag">FREE SUBSCRIPTION · БЕЗ ТОКЕНА</span>
+    <h1>Твой VPN <span>готов</span></h1>
+    <p>50 живых серверов · пинг до 50 мс · обновление каждый час</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">Профиль</div><div class="v">FREE</div></div>
+    <div class="stat"><div class="k">Срок</div><div class="v">∞ навсегда</div></div>
+    <div class="stat"><div class="k">Трафик</div><div class="v">0 / ∞</div></div>
+  </div>
+  <div class="card">
+    <h2>Подключить за минуту</h2>
+    <div class="sub">Скопируй ссылку и вставь в Happ: Профили → + → Из буфера</div>
+    <div class="urlbox" id="urlCode">${subUrl}</div>
+    <button class="btn btn-primary btn-block" onclick="copyUrl()">Скопировать подписку</button>
+  </div>
+  <div class="card">
+    <h2>Приложение Happ</h2>
+    <div class="sub">Выбери платформу и установи</div>
+    <div class="chips" id="chips"></div>
+    <div class="dlbtns" id="installBtns"></div>
+    <div class="step"><div class="num">01</div><div><div class="t">Установи Happ</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
+    <div class="step"><div class="num">02</div><div><div class="t">Добавь подписку</div><div class="d">Профили → + → Из буфера → вставь ссылку</div></div></div>
+    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми большую кнопку в Happ. Не зашло — смени сервер в списке</div></div></div>
+  </div>
+  <div class="footer">APPI VPN · <a href="https://t.me/AppiVPNBot">Бот @AppiVPNBot</a> · <a href="${subUrl}">Прямая ссылка</a></div>
+</div>
+<div class="toast" id="toast">Скопировано!</div>
+<script>
+var subUrl='${subUrl}';
+var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
+function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
+function copyUrl(){navigator.clipboard.writeText(subUrl).then(function(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);});}
+(function(){var box=document.getElementById('chips');Object.keys(dl).forEach(function(p,i){var b=document.createElement('button');b.className='chip'+(i===0?' active':'');b.textContent=p;b.onclick=function(){setPlatform(p);};box.appendChild(b);});setPlatform('Windows');})();
+</script>
+</body></html>`;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return html;
     }
@@ -85,98 +169,89 @@ export class SubController {
       // Вечная подписка — показываем «∞» в UI
       const traffic = (Number(link.trafficUsed) / 1024 / 1024 / 1024).toFixed(2);
       const subUrl = `${(process.env.SUB_LINK_BASE_URL || process.env.BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '')}/sub/${link.token}`;
-      const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APPI VPN — ${link.label}</title><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+      const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>APPI VPN — ${link.label}</title><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2242%22 fill=%22%237c3aed%22/><text x=%2250%22 y=%2268%22 font-size=%2248%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>A</text></svg>">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-*{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#070b14;color:#d6e1ff;min-height:100vh;position:relative;overflow-x:hidden}
-body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(900px 500px at 50% -10%, rgba(59,130,246,.20), transparent 60%), radial-gradient(700px 400px at 95% 95%, rgba(34,211,238,.12), transparent 60%), linear-gradient(180deg,#070b14,#0a1020)}
-a{color:#38bdf8;text-decoration:none}
-.wrap{max-width:780px;margin:0 auto;padding:24px 16px}
-.hero{position:relative;overflow:hidden;border-radius:20px;padding:22px;border:1px solid rgba(59,130,246,.25);background:linear-gradient(135deg,rgba(17,28,51,.98) 0%, rgba(11,20,40,.98) 55%, rgba(14,42,26,.9) 100%);box-shadow:0 16px 50px rgba(0,0,0,.5);margin-bottom:16px}
-.hero:before{content:"";position:absolute;inset:-1px;border-radius:20px;background:linear-gradient(90deg,rgba(59,130,246,.35),rgba(34,211,238,.18),transparent);opacity:.6;z-index:-1}
-.hero h1{margin:0;font-size:22px;font-weight:800;letter-spacing:.3px;background:linear-gradient(90deg,#60a5fa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{margin:8px 0 0 0;color:#93a4c1;font-size:13px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.logo{color:#60a5fa;font-weight:800;letter-spacing:.4px;display:flex;gap:10px;align-items:center;font-size:15px}
-.logo i{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#3b82ff 0%,#06b6d4 100%);display:inline-block;box-shadow:0 4px 12px rgba(59,130,246,.4)}
-.actions{display:flex;gap:10px}
-.iconbtn{width:38px;height:38px;border-radius:12px;background:rgba(14,26,46,.9);border:1px solid rgba(30,52,102,.9);display:grid;place-items:center;color:#93a4c1;cursor:pointer;backdrop-filter:blur(8px);transition:.15s}
-.iconbtn:hover{border-color:#38bdf8;color:#e6efff;transform:translateY(-1px)}
-.card{background:linear-gradient(180deg,rgba(17,28,51,.96),rgba(11,20,40,.98));border:1px solid rgba(27,46,85,.9);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(12px)}
-.title{font-weight:800;margin:0 0 14px 0;display:flex;align-items:center;gap:10px;font-size:15px;letter-spacing:.2px}
-.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(14,42,26,.9);border:1px solid #1a7a3a;color:#4ade80;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pill{background:rgba(13,26,51,.9);border:1px solid rgba(30,52,102,.85);border-radius:16px;padding:16px;position:relative;overflow:hidden}
-.pill:before{content:"";position:absolute;inset:0;border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);pointer-events:none}
-.pill.green{background:linear-gradient(180deg,rgba(14,42,26,.95),rgba(10,30,20,.9));border-color:rgba(26,122,58,.9)}
-.pill.red{background:linear-gradient(180deg,rgba(42,18,32,.9),rgba(32,14,24,.9));border-color:rgba(107,26,26,.9)}
-.pill.gold{background:linear-gradient(180deg,rgba(42,35,14,.9),rgba(32,26,10,.9));border-color:rgba(107,90,26,.9)}
-.pill .k{font-size:11px;letter-spacing:.7px;color:#8aa0c6;text-transform:uppercase;margin-bottom:8px;display:flex;gap:6px;align-items:center;font-weight:600}
-.pill .v{font-weight:800;color:#f0f6ff;word-break:break-all;font-size:14px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-.tab{background:rgba(13,26,51,.9);border:1px solid rgba(30,52,102,.85);border-radius:12px;padding:9px 14px;color:#8aa0c6;cursor:pointer;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;transition:.15s}
-.tab:hover{border-color:#38bdf8;color:#e6efff}
-.tab.active{background:linear-gradient(180deg,rgba(14,42,26,.95),rgba(16,48,30,.9));border-color:#1a7a3a;color:#dcfce7;box-shadow:0 4px 12px rgba(34,197,94,.15)}
-.step{display:flex;gap:14px;background:rgba(13,26,51,.85);border:1px solid rgba(30,52,102,.8);border-radius:16px;padding:16px;margin-top:12px;transition:.15s}
-.step:hover{border-color:rgba(56,189,248,.4);background:rgba(13,26,51,.95)}
-.step .ic{width:40px;height:40px;border-radius:12px;background:linear-gradient(180deg,#0e1a2e,#0a1224);border:1px solid rgba(27,46,85,.9);display:grid;place-items:center;flex:0 0 40px;font-size:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-.btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,#0e2a1a,#0c2215);border:1px solid #1a7a3a;color:#bbf7d0;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;box-shadow:0 4px 12px rgba(34,197,94,.12)}
-.btn:hover{transform:translateY(-1px);border-color:#22c55e;box-shadow:0 6px 16px rgba(34,197,94,.2)}
-.btn.primary{background:linear-gradient(180deg,#12301a,#0f2815)}
-code.url{word-break:break-all;background:rgba(13,26,51,.9);border:1px solid rgba(30,52,102,.85);padding:12px;border-radius:12px;display:block;margin:12px 0;color:#93c5fd;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-@media(max-width:640px){.grid{grid-template-columns:1fr} .wrap{padding:20px 12px}}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:#0a0a0a;color:#f5f5f5;min-height:100vh;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(800px 420px at 50% -8%,rgba(124,58,237,.28),transparent 60%),radial-gradient(600px 380px at 90% 100%,rgba(124,58,237,.10),transparent 60%)}
+a{color:#a78bfa;text-decoration:none}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:.2px}
+.brand .mark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:grid;place-items:center;font-size:19px;font-weight:800;color:#fff;box-shadow:0 6px 20px rgba(124,58,237,.45)}
+.status{display:inline-flex;align-items:center;gap:7px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.45);color:#c4b5fd;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}
+.status .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.hero{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px 24px;text-align:center;margin-bottom:14px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.hero .tag{display:inline-block;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#c4b5fd;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600;margin-bottom:14px}
+.hero h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.5px}
+.hero h1 span{background:linear-gradient(90deg,#a78bfa,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:10px 0 0 0;color:#9ca3af;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 12px;text-align:center}
+.stat .k{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.stat .v{font-weight:800;font-size:14px;word-break:break-all}
+.card{background:#141416;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:22px;margin-bottom:14px}
+.card h2{margin:0 0 6px 0;font-size:17px;font-weight:800}
+.card .sub{color:#9ca3af;font-size:13px;margin-bottom:14px}
+.urlbox{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#a78bfa;word-break:break-all;margin:12px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:700;cursor:pointer;transition:.15s;border:none;font-size:14px}
+.btn-primary{background:#7c3aed;color:#fff;padding:13px 28px;box-shadow:0 8px 24px rgba(124,58,237,.4)}
+.btn-primary:hover{background:#8b5cf6;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:#fff;padding:10px 20px}
+.btn-ghost:hover{background:rgba(255,255,255,.06)}
+.btn-block{width:100%}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chip{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.12);color:#9ca3af;cursor:pointer;background:transparent}
+.chip.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.step{display:flex;gap:14px;padding:14px 0;border-top:1px solid rgba(255,255,255,.06)}
+.step:first-of-type{border-top:none}
+.step .num{flex:0 0 36px;height:36px;border-radius:12px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);color:#c4b5fd;display:grid;place-items:center;font-weight:800;font-size:14px}
+.step .t{font-weight:700;font-size:14px}
+.step .d{color:#9ca3af;font-size:13px;margin-top:4px}
+.dlbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.footer{text-align:center;color:#6b7280;font-size:12px;margin-top:6px}
+.toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7c3aed;color:#fff;padding:12px 24px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(124,58,237,.5);z-index:99}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.hero h1{font-size:24px}.wrap{padding:14px 12px 32px}}
 </style>
 </head><body>
 <div class="wrap">
-  <div class="hero"><h1>APPI VPN</h1><p>Одна ссылка — все живые серверы. Без оплат и лимитов.</p></div>
-  <div class="header"><div class="logo"><i></i> Subscription — ${link.label}</div><div class="actions"><button class="iconbtn" onclick="navigator.clipboard.writeText('${subUrl}')" title="Копировать ссылку">🔗</button><a class="iconbtn" href="https://t.me/AppiVPNBot" title="Чат">💬</a></div></div>
-
-  <div class="card">
-     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:28px;height:28px;border-radius:50%;background:#12301a;border:1px solid #1a7a3a;display:grid;place-items:center;color:#5ee17b">✓</div><div><div style="font-weight:800">${link.label}</div><div style="font-size:12px;color:#5ee17b">Без срока действия ∞</div></div></div>
-     <div class="grid">
-       <div class="pill"><div class="k">👤 Имя пользователя</div><div class="v">${link.label}</div></div>
-       <div class="pill green"><div class="k">✓ Статус</div><div class="v">Активна</div></div>
-       <div class="pill red"><div class="k">📅 Истекает</div><div class="v">Никогда ∞</div></div>
-       <div class="pill gold"><div class="k">⇅ Трафик</div><div class="v">${traffic} GiB / ∞</div></div>
-     </div>
-   </div>
-
-   <div class="card" id="installCard">
-    <div class="title">Установка — Happ
-      <span style="margin-left:auto;display:flex;gap:8px">
-        <select id="platform" onchange="setPlatform(this.value)" style="background:#0d1a33;border:1px solid #1e3466;color:#cfe0ff;border-radius:10px;padding:6px 10px;font-size:13px">
-          <option value="Windows" selected>Windows</option><option value="macOS">macOS</option><option value="Linux">Linux</option><option value="Android">Android</option><option value="iOS">iOS</option>
-        </select>
-      </span>
-    </div>
-
-    <div class="step" id="stepInstall"><div class="ic">⬇️</div><div><div style="font-weight:700">Установка приложения</div><div id="installDesc" style="color:#8aa0c6;font-size:13px;margin:6px 0">Выберите подходящую версию для вашего устройства, нажмите на кнопку ниже и установите приложение.</div><div id="installBtns" style="display:flex;gap:8px;flex-wrap:wrap"></div></div></div>
-
-    <div class="step"><div class="ic">☁️</div><div><div style="font-weight:700">Добавление подписки</div><div style="color:#8aa0c6;font-size:13px;margin:6px 0">Нажмите кнопку ниже, чтобы скопировать ссылку, затем в Happ: Профили → + → Из буфера</div><button class="btn primary" onclick="copyUrl()">＋ Скопировать подписку</button><code class="url" id="urlCode">${subUrl}</code></div></div>
-
-    <div class="step"><div class="ic">⚙️</div><div><div style="font-weight:700">Если подписка не добавилась</div><div style="color:#8aa0c6;font-size:13px">В Happ перейдите в Профили, нажмите +, выберите «Добавить из буфера», вставьте скопированную ссылку и нажмите Добавить.</div></div></div>
-
-    <div class="step"><div class="ic">✓</div><div><div style="font-weight:700">Подключение и использование</div><div style="color:#8aa0c6;font-size:13px">Выберите добавленный профиль, нажмите кнопку подключения. В разделе Прокси можно сменить сервер.</div></div></div>
+  <div class="nav"><div class="brand"><span class="mark">A</span>APPI·VPN</div><span class="status"><span class="dot"></span>Активна ∞</span></div>
+  <div class="hero">
+    <span class="tag">PERSONAL SUBSCRIPTION · БЕЗ ТОКЕНА</span>
+    <h1>Твой VPN <span>готов</span></h1>
+    <p>50 живых серверов · пинг до 50 мс · обновление каждый час</p>
   </div>
-
-  <div style="text-align:center;color:#6b7a9a;font-size:12px;margin:12px 0">APPI VPN • <a href="https://t.me/AppiVPNBot">Открыть бота @AppiVPNBot</a> • <a href="${subUrl}">Прямая ссылка</a> • <span id="toast" style="display:none;background:#12301a;border:1px solid #1a7a3a;color:#4ade80;padding:6px 10px;border-radius:8px;margin-left:8px">Скопировано!</span></div>
+  <div class="stats">
+    <div class="stat"><div class="k">Профиль</div><div class="v">${link.label}</div></div>
+    <div class="stat"><div class="k">Срок</div><div class="v">∞ навсегда</div></div>
+    <div class="stat"><div class="k">Трафик</div><div class="v">${traffic} / ∞</div></div>
+  </div>
+  <div class="card">
+    <h2>Подключить за минуту</h2>
+    <div class="sub">Скопируй ссылку и вставь в Happ: Профили → + → Из буфера</div>
+    <div class="urlbox" id="urlCode">${subUrl}</div>
+    <button class="btn btn-primary btn-block" onclick="copyUrl()">Скопировать подписку</button>
+  </div>
+  <div class="card">
+    <h2>Приложение Happ</h2>
+    <div class="sub">Выбери платформу и установи</div>
+    <div class="chips" id="chips"></div>
+    <div class="dlbtns" id="installBtns"></div>
+    <div class="step"><div class="num">01</div><div><div class="t">Установи Happ</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
+    <div class="step"><div class="num">02</div><div><div class="t">Добавь подписку</div><div class="d">Профили → + → Из буфера → вставь ссылку</div></div></div>
+    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми большую кнопку в Happ. Не зашло — смени сервер в списке</div></div></div>
+  </div>
+  <div class="footer">APPI VPN · <a href="https://t.me/AppiVPNBot">Бот @AppiVPNBot</a> · <a href="${subUrl}">Прямая ссылка</a></div>
 </div>
+<div class="toast" id="toast">Скопировано!</div>
 <script>
-const subUrl='${subUrl}';
-const dl={
-  Windows:[['https://www.happ.su/main','Windows (Установщик)']],
-  macOS:[['https://www.happ.su/main','macOS']],
-  Linux:[['https://www.happ.su/main','Linux']],
-  Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android (Google Play)']],
-  iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS (App Store)']]
-};
-function setPlatform(p){
-  const box=document.getElementById('installBtns'); box.innerHTML='';
-  for(const [href,text] of (dl[p]||dl['Windows'])){ const a=document.createElement('a'); a.className='btn'; a.href=href; a.target='_blank'; a.rel='noopener'; a.textContent=text; box.appendChild(a); }
-}
-function copyUrl(){ navigator.clipboard.writeText(subUrl).then(()=>showToast('Скопировано!')); }
-function showToast(t){ const el=document.getElementById('toast'); el.textContent=t; el.style.display='inline-block'; setTimeout(()=>el.style.display='none',2000); }
-setPlatform('Windows');
+var subUrl='${subUrl}';
+var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
+function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
+function copyUrl(){navigator.clipboard.writeText(subUrl).then(function(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);});}
+(function(){var box=document.getElementById('chips');Object.keys(dl).forEach(function(p,i){var b=document.createElement('button');b.className='chip'+(i===0?' active':'');b.textContent=p;b.onclick=function(){setPlatform(p);};box.appendChild(b);});setPlatform('Windows');})();
 </script>
 </body></html>`;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');

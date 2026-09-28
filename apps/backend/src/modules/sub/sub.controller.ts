@@ -131,7 +131,9 @@ a{color:#a78bfa;text-decoration:none}
 var subUrl='${subUrl}';
 var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
 function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
-function copyUrl(){navigator.clipboard.writeText(subUrl).then(function(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);});}
+function showToast(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
+function copyLegacy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showToast();}catch(e){prompt('Скопируй ссылку вручную:',t);}document.body.removeChild(ta);}
+function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(subUrl).then(showToast,function(){copyLegacy(subUrl);});}else{copyLegacy(subUrl);}}
 (function(){var box=document.getElementById('chips');Object.keys(dl).forEach(function(p,i){var b=document.createElement('button');b.className='chip'+(i===0?' active':'');b.textContent=p;b.onclick=function(){setPlatform(p);};box.appendChild(b);});setPlatform('Windows');})();
 </script>
 </body></html>`;
@@ -250,7 +252,9 @@ a{color:#a78bfa;text-decoration:none}
 var subUrl='${subUrl}';
 var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
 function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
-function copyUrl(){navigator.clipboard.writeText(subUrl).then(function(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);});}
+function showToast(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
+function copyLegacy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showToast();}catch(e){prompt('Скопируй ссылку вручную:',t);}document.body.removeChild(ta);}
+function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(subUrl).then(showToast,function(){copyLegacy(subUrl);});}else{copyLegacy(subUrl);}}
 (function(){var box=document.getElementById('chips');Object.keys(dl).forEach(function(p,i){var b=document.createElement('button');b.className='chip'+(i===0?' active':'');b.textContent=p;b.onclick=function(){setPlatform(p);};box.appendChild(b);});setPlatform('Windows');})();
 </script>
 </body></html>`;

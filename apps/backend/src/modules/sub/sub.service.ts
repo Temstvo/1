@@ -42,19 +42,28 @@ export class SubService {
     });
   }
 
-  private cache: { lines: string[]; at: number } | null = null;
+  private cache: { lines: string[]; at: number; limit: number } | null = null;
 
-  /** Только живые (is_active). Свежие агрегатора — в топе, быстро. Кэш 60с — Happ часто дергает подписку. */
+  /** Только пинг<50мс. Быстрые — в топе, кэш 60с. Fallback — любые живые. */
   async getActiveConfigLines(limit = 50): Promise<string[]> {
     const now = Date.now();
-    if (this.cache && now - this.cache.at < 60_000 && this.cache.lines.length === limit)
+    if (this.cache && now - this.cache.at < 60_000 && this.cache.limit === limit)
       return this.cache.lines;
-    const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
+    const lim = Math.max(1, Math.min(1000, limit));
+    let rows: any[] = await (this.prisma as any).$queryRawUnsafe(
       `SELECT uri, country, country_code, server FROM free_vpn_configs
-       WHERE is_active = true AND uri LIKE 'vless://%'
-       ORDER BY updated_at DESC LIMIT $1`,
-      Math.max(1, Math.min(1000, limit)),
+       WHERE is_active = true AND uri LIKE 'vless://%' AND latency IS NOT NULL AND latency < 50
+       ORDER BY latency ASC, updated_at DESC LIMIT $1`,
+      lim,
     );
+    if (rows.length < 10) {
+      rows = await (this.prisma as any).$queryRawUnsafe(
+        `SELECT uri, country, country_code, server FROM free_vpn_configs
+         WHERE is_active = true AND uri LIKE 'vless://%'
+         ORDER BY latency NULLS LAST, updated_at DESC LIMIT $1`,
+        lim,
+      );
+    }
     const lines = rows
       .map((r) => {
         let uri = String(r.uri);
@@ -66,7 +75,7 @@ export class SubService {
         return uri;
       })
       .filter(Boolean);
-    this.cache = { lines, at: now };
+    this.cache = { lines, at: now, limit };
     return lines;
   }
 

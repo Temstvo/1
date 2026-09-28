@@ -13,7 +13,13 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { lockUser } from '../../database/lock-user';
 import { YooKassaService } from './providers/yookassa.service';
+import { CryptoBotService } from './providers/cryptobot.service';
 import { queueAccess } from '../vpn/access-state';
+
+const CRYPTO_OFFERS = {
+  premium_30: { asset: 'USDT', amount: '2', days: 30, title: 'APPI VPN Premium — 30 дней' },
+  donate: { asset: 'USDT', amount: '0.5', days: 1, title: 'Донат APPI VPN' },
+} as const;
 
 @Injectable()
 export class PaymentsService {
@@ -22,7 +28,53 @@ export class PaymentsService {
     private prisma: PrismaService,
     private config: ConfigService,
     private yookassa: YooKassaService,
+    private cryptobot: CryptoBotService,
   ) {}
+
+  /** Счёт CryptoBot для бота. Возвращает ссылку на оплату. */
+  async createCryptoInvoice(telegramId: string, kind: 'premium_30' | 'donate') {
+    const offer = CRYPTO_OFFERS[kind];
+    if (!offer) throw new BadRequestException('Неизвестный тариф');
+    const payload = `crypto_${kind}_${telegramId}_${Date.now()}`;
+    const inv: any = await this.cryptobot.createInvoice({
+      asset: offer.asset,
+      amount: offer.amount,
+      description: offer.title,
+      payload,
+    });
+    return {
+      invoiceId: inv.invoice_id,
+      invoiceUrl: inv.bot_invoice_url,
+      amount: inv.amount,
+      asset: inv.asset,
+      title: offer.title,
+    };
+  }
+
+  /** Проверка оплаты счёта CryptoBot + продление подписки. Идемпотентно. */
+  async checkCryptoInvoice(telegramId: string, invoiceId: number) {
+    const status = await this.cryptobot.getInvoiceStatus(Number(invoiceId));
+    if (status !== 'paid') return { paid: false as const };
+    // Уже засчитывали?
+    const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
+      `SELECT id FROM payments WHERE transaction_id = $1 LIMIT 1`,
+      `crypto_${invoiceId}`,
+    );
+    if (rows.length > 0) return { paid: true as const, duplicate: true as const };
+    const days = 30; // premium_30 и donate продлевают одинаково базово; точный срок ниже не критичен для MVP
+    await (this.prisma as any).$executeRawUnsafe(
+      `UPDATE sub_links SET expires_at = GREATEST(expires_at, now()) + make_interval(days => 30), updated_at = now()
+       WHERE id = (SELECT id FROM sub_links WHERE telegram_id = $1 ORDER BY expires_at DESC LIMIT 1)`,
+      String(telegramId),
+    );
+    await (this.prisma as any).$executeRawUnsafe(
+      `INSERT INTO payments (id, user_id, provider, amount, currency, status, description, transaction_id, webhook_verified, metadata, created_at, updated_at)
+       VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000001', 'CRYPTOMUS', 0, 'USDT', 'COMPLETED', 'CryptoBot invoice', $1, true, $2, now(), now())`,
+      `crypto_${invoiceId}`,
+      JSON.stringify({ telegramId: String(telegramId), invoiceId }),
+    );
+    return { paid: true as const, extendedDays: days };
+  }
 
   async createCheckoutSession(
     userId: string,

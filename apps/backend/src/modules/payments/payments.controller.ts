@@ -64,4 +64,20 @@ export class PaymentsController {
   webhook(@Body() body: unknown) {
     return this.payments.handleYooKassaWebhook(body);
   }
+
+  @Post('bot-crypto')
+  @HttpCode(200)
+  botCrypto(@Body() body: { telegramId: string; kind: 'premium_30' | 'donate' }) {
+    if (!body?.telegramId || !['premium_30', 'donate'].includes(body.kind))
+      throw new BadRequestException('telegramId and kind required');
+    return this.payments.createCryptoInvoice(String(body.telegramId), body.kind);
+  }
+
+  @Post('bot-crypto/check')
+  @HttpCode(200)
+  botCryptoCheck(@Body() body: { telegramId: string; invoiceId: number }) {
+    if (!body?.telegramId || !body?.invoiceId)
+      throw new BadRequestException('telegramId and invoiceId required');
+    return this.payments.checkCryptoInvoice(String(body.telegramId), Number(body.invoiceId));
+  }
 }

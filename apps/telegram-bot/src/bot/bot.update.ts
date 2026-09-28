@@ -88,6 +88,8 @@ export class BotUpdate implements OnModuleInit {
     bot.action('menu:premium', (ctx) => this.handlePremium(ctx));
     bot.action('menu:extend', (ctx) => this.handleExtend(ctx));
     bot.action(/^stars:(.+)$/, (ctx) => this.handleStarsBuy(ctx));
+    bot.action(/^crypto:(.+)$/, (ctx) => this.handleCryptoBuy(ctx));
+    bot.action(/^check:(\d+)$/, (ctx) => this.handleCryptoCheck(ctx));
     bot.action(/^getconfig:(.+)$/, (ctx) => this.handleGetConfig(ctx));
     bot.action(/^configlist:(.+)$/, (ctx) => this.handleConfigList(ctx));
     bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
@@ -411,13 +413,19 @@ export class BotUpdate implements OnModuleInit {
   private async sendPremiumOptions(ctx: Context, edit = false) {
     const text =
       `⭐ Premium\n\n` +
-      `Оплата — Telegram Stars (покупаются в Telegram за пару нажатий).\n` +
+      `1️⃣ Telegram Stars — оплата в 1 тап прямо здесь.\n` +
+      `Звёзды дешевле всего брать через @PremiumBot или Fragment (оплата СБП/картой), а не через App Store (+30%).\n\n` +
+      `2️⃣ Крипта (USDT) — через @CryptoBot, без Stars.\n\n` +
       `Каждый платёж продлевает твою подписку и поддерживает проект.`;
     const extra = {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '⭐ Premium 30 дней — 149 ⭐', callback_data: 'stars:premium_30' }],
-          [{ text: '💛 Донат 50 ⭐', callback_data: 'stars:donate_50' }],
+          [{ text: '⭐ Premium 30 дней — 99 ⭐', callback_data: 'stars:premium_30' }],
+          [{ text: '💛 Донат 25 ⭐', callback_data: 'stars:donate_25' }],
+          [
+            { text: '💎 Premium 2 USDT', callback_data: 'crypto:premium_30' },
+            { text: '💎 Донат 0.5 USDT', callback_data: 'crypto:donate' },
+          ],
           ...(edit ? [[backButton]] : []),
         ],
       },
@@ -438,14 +446,14 @@ export class BotUpdate implements OnModuleInit {
         premium_30: {
           title: 'APPI VPN Premium — 30 дней',
           desc: 'Подписка 30 дней + приоритетные серверы',
-          amount: 149,
+          amount: 99,
           payload: `premium_30_${tgId}`,
         },
-        donate_50: {
+        donate_25: {
           title: 'Донат APPI VPN',
           desc: 'Поддержка проекта +1 день подписки',
-          amount: 50,
-          payload: `donate_50_${tgId}`,
+          amount: 25,
+          payload: `donate_25_${tgId}`,
         },
       };
     const offer = offers[kind];
@@ -495,6 +503,76 @@ export class BotUpdate implements OnModuleInit {
     }
   }
 
+  private async handleCryptoBuy(ctx: any) {
+    const kind = String(ctx.match?.[1] || '');
+    if (kind !== 'premium_30' && kind !== 'donate') return;
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    try {
+      const inv: any = await this.api('/payments/bot-crypto', {
+        method: 'POST',
+        body: { telegramId: tgId, kind },
+      });
+      await ctx.reply(
+        `💎 ${inv.title}\n${inv.amount} ${inv.asset}\n\nОплати в @CryptoBot, затем нажми проверку:`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: `💎 Оплатить ${inv.amount} ${inv.asset}`, url: inv.invoiceUrl }],
+              [{ text: '✅ Я оплатил — проверить', callback_data: `check:${inv.invoiceId}` }],
+              [backButton],
+            ],
+          },
+        },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Крипто-оплата пока недоступна: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleCryptoCheck(ctx: any) {
+    const invoiceId = Number(ctx.match?.[1] || 0);
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    try {
+      const res: any = await this.api('/payments/bot-crypto/check', {
+        method: 'POST',
+        body: { telegramId: tgId, invoiceId },
+      });
+      if (res?.paid) {
+        await this.editOrReply(
+          ctx,
+          '✅ Оплата подтверждена! Подписка продлена на 30 дней. Проверь «🔗 Моя подписка».',
+          { reply_markup: { inline_keyboard: [[backButton]] } },
+        );
+      } else {
+        await ctx
+          .answerCbQuery('⏳ Платёж пока не найден. Оплати и попробуй ещё раз.', {
+            show_alert: false,
+          })
+          .catch(() => {});
+        await this.editOrReply(
+          ctx,
+          '⏳ Оплата ещё не пришла. Нажми проверку ещё раз через минуту.',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔄 Проверить снова', callback_data: `check:${invoiceId}` }],
+                [backButton],
+              ],
+            },
+          },
+        );
+      }
+    } catch (e: any) {
+      await this.editOrReply(ctx, `❌ Ошибка проверки: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
   private async handleExtend(ctx: Context) {
     await ctx.answerCbQuery();
     const tgId = String((ctx.from as any)?.id || '0');
@@ -512,8 +590,9 @@ export class BotUpdate implements OnModuleInit {
         );
         return;
       }
-      const res: any = await this.api('/growth/extend', {
+      const res: any = await this.api('/sub-links/extend', {
         method: 'POST',
+        headers: { 'x-bot-secret': this.botSecret() },
         body: { telegramId: tgId, days: 2 },
       });
       const exp = res?.expiresAt ? new Date(res.expiresAt).toLocaleDateString('ru-RU') : '';

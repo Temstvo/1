@@ -4,7 +4,12 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class SubService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {
+    // Прогрев кэша при старте, чтобы первый хит Happ не ждал пулер
+    setTimeout(() => {
+      this.getActiveConfigLines(50).catch(() => {});
+    }, 8000);
+  }
 
   private genToken(): string {
     const raw = crypto.randomBytes(12).toString('base64url'); // 16 chars
@@ -44,26 +49,18 @@ export class SubService {
 
   private cache: { lines: string[]; at: number; limit: number } | null = null;
 
-  /** Только пинг<50мс. Быстрые — в топе, кэш 60с. Fallback — любые живые. */
+  /** Живые ноды, свежие в топе. Кэш 5 мин — Happ дёргает часто, БД через пулер медленная. */
   async getActiveConfigLines(limit = 50): Promise<string[]> {
     const now = Date.now();
-    if (this.cache && now - this.cache.at < 60_000 && this.cache.limit === limit)
+    if (this.cache && now - this.cache.at < 300_000 && this.cache.limit === limit)
       return this.cache.lines;
     const lim = Math.max(1, Math.min(1000, limit));
-    let rows: any[] = await (this.prisma as any).$queryRawUnsafe(
+    const rows: any[] = await (this.prisma as any).$queryRawUnsafe(
       `SELECT uri, country, country_code, server FROM free_vpn_configs
-       WHERE is_active = true AND uri LIKE 'vless://%' AND latency IS NOT NULL AND latency < 50
-       ORDER BY latency ASC, updated_at DESC LIMIT $1`,
+       WHERE is_active = true AND uri LIKE 'vless://%'
+       ORDER BY updated_at DESC LIMIT $1`,
       lim,
     );
-    if (rows.length < 10) {
-      rows = await (this.prisma as any).$queryRawUnsafe(
-        `SELECT uri, country, country_code, server FROM free_vpn_configs
-         WHERE is_active = true AND uri LIKE 'vless://%'
-         ORDER BY latency NULLS LAST, updated_at DESC LIMIT $1`,
-        lim,
-      );
-    }
     const lines = rows
       .map((r) => {
         let uri = String(r.uri);

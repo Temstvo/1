@@ -73,6 +73,8 @@ export class AggregatorService {
     const urls = [
       'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/best.txt',
       'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/vless.txt',
+      'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/reality.txt',
+      'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/bundles/iran.txt',
       'https://raw.githubusercontent.com/morpheusadam/v2ray-config/main/subs/all.txt', // каталог подписок — парсим как ссылки
     ];
     const seen = new Set<string>();
@@ -198,7 +200,9 @@ export class AggregatorService {
     return nodes.slice(0, limit);
   }
 
-  // 2. VPN Gate — CSV OpenVPN (https://www.vpngate.net/api/iphone/)
+  // 2/5. VPN Gate + ip8 — OpenVPN-only, Happ его не ест (только VLESS/VMess/Trojan/SS/Hysteria2).
+  // Оставлен заглушкой: vpngate.net блочится из РФ, ip8 отдаёт только IP без .ovpn-файлов.
+  // CSV OpenVPN (https://www.vpngate.net/api/iphone/)
   async fetchVPNGate(limit = 20): Promise<NormalizedNode[]> {
     const url = 'https://www.vpngate.net/api/iphone/';
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });

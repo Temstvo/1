@@ -31,6 +31,47 @@ export class PaymentsService {
     private cryptobot: CryptoBotService,
   ) {}
 
+  /** Ручная заявка: юзер перевёл напрямую, ждёт подтверждения админа. */
+  async createManualClaim(telegramId: string, kind: 'premium_30' | 'donate') {
+    const days = kind === 'premium_30' ? 30 : 1;
+    const label = kind === 'premium_30' ? 'Premium 30 дней (перевод)' : 'Донат (перевод)';
+    const created: any[] = await (this.prisma as any).$queryRawUnsafe(
+      `INSERT INTO payments (id, user_id, provider, amount, currency, status, description, transaction_id, webhook_verified, metadata, created_at, updated_at)
+       VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000001', 'TELEGRAM', 0, 'RUB', 'PENDING', $1, $2, false, $3, now(), now())
+       RETURNING id, created_at`,
+      label,
+      `manual_${telegramId}_${Date.now()}`,
+      JSON.stringify({ telegramId: String(telegramId), kind, days }),
+    );
+    return { claimId: created[0].id, days, label };
+  }
+
+  /** Подтверждение ручной заявки админом. Идемпотентно. */
+  async approveManualClaim(claimId: string) {
+    const found: any[] = await (this.prisma as any).$queryRawUnsafe(
+      `SELECT id, status, metadata FROM payments WHERE id = $1::uuid LIMIT 1`,
+      claimId,
+    );
+    if (found.length === 0) throw new NotFoundException('Заявка не найдена');
+    const p = found[0];
+    if (p.status === 'COMPLETED') return { approved: true as const, duplicate: true as const };
+    if (p.status !== 'PENDING') throw new BadRequestException('Заявка уже обработана');
+    const meta = typeof p.metadata === 'string' ? JSON.parse(p.metadata) : p.metadata;
+    const telegramId = String(meta.telegramId);
+    const days = Math.max(1, Number(meta.days) || 30);
+    await (this.prisma as any).$executeRawUnsafe(
+      `UPDATE sub_links SET expires_at = GREATEST(expires_at, now()) + make_interval(days => $2::int), updated_at = now()
+       WHERE id = (SELECT id FROM sub_links WHERE telegram_id = $1 ORDER BY expires_at DESC LIMIT 1)`,
+      telegramId,
+      days,
+    );
+    await (this.prisma as any).$executeRawUnsafe(
+      `UPDATE payments SET status = 'COMPLETED', webhook_verified = true, updated_at = now() WHERE id = $1::uuid`,
+      claimId,
+    );
+    return { approved: true as const, telegramId, days };
+  }
+
   /** Счёт CryptoBot для бота. Возвращает ссылку на оплату. */
   async createCryptoInvoice(telegramId: string, kind: 'premium_30' | 'donate') {
     const offer = CRYPTO_OFFERS[kind];

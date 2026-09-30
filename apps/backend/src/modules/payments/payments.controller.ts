@@ -80,4 +80,21 @@ export class PaymentsController {
       throw new BadRequestException('telegramId and invoiceId required');
     return this.payments.checkCryptoInvoice(String(body.telegramId), Number(body.invoiceId));
   }
+
+  @Post('bot-manual')
+  @HttpCode(200)
+  botManual(@Body() body: { telegramId: string; kind: 'premium_30' | 'donate' }) {
+    if (!body?.telegramId || !['premium_30', 'donate'].includes(body.kind))
+      throw new BadRequestException('telegramId and kind required');
+    return this.payments.createManualClaim(String(body.telegramId), body.kind);
+  }
+
+  @Post('bot-manual/approve')
+  @HttpCode(200)
+  botManualApprove(@Body() body: { claimId: string; secret: string }) {
+    const expected = process.env.BOT_API_SECRET || '';
+    if (!expected || body?.secret !== expected) throw new BadRequestException('Forbidden');
+    if (!body?.claimId) throw new BadRequestException('claimId required');
+    return this.payments.approveManualClaim(String(body.claimId));
+  }
 }

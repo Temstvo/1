@@ -90,6 +90,9 @@ export class BotUpdate implements OnModuleInit {
     bot.action(/^stars:(.+)$/, (ctx) => this.handleStarsBuy(ctx));
     bot.action(/^crypto:(.+)$/, (ctx) => this.handleCryptoBuy(ctx));
     bot.action(/^check:(\d+)$/, (ctx) => this.handleCryptoCheck(ctx));
+    bot.action(/^manual:(.+)$/, (ctx) => this.handleManualBuy(ctx));
+    bot.action(/^done:(.+)$/, (ctx) => this.handleManualDone(ctx));
+    bot.action(/^approve:(.+)$/, (ctx) => this.handleManualApprove(ctx));
     bot.action(/^getconfig:(.+)$/, (ctx) => this.handleGetConfig(ctx));
     bot.action(/^configlist:(.+)$/, (ctx) => this.handleConfigList(ctx));
     bot.on('pre_checkout_query', (ctx) => ctx.answerPreCheckoutQuery(true));
@@ -411,11 +414,13 @@ export class BotUpdate implements OnModuleInit {
   }
 
   private async sendPremiumOptions(ctx: Context, edit = false) {
+    const manualDetails = this.manualDetails();
     const text =
       `⭐ Premium\n\n` +
       `1️⃣ Telegram Stars — оплата в 1 тап прямо здесь.\n` +
       `Звёзды дешевле всего брать через @PremiumBot или Fragment (оплата СБП/картой), а не через App Store (+30%).\n\n` +
       `2️⃣ Крипта (USDT) — через @CryptoBot, без Stars.\n\n` +
+      (manualDetails ? `3️⃣ Перевод напрямую — карта/СБП, подтверждаю вручную.\n\n` : ``) +
       `Каждый платёж продлевает твою подписку и поддерживает проект.`;
     const extra = {
       reply_markup: {
@@ -426,6 +431,12 @@ export class BotUpdate implements OnModuleInit {
             { text: '💎 Premium 2 USDT', callback_data: 'crypto:premium_30' },
             { text: '💎 Донат 0.5 USDT', callback_data: 'crypto:donate' },
           ],
+          ...(manualDetails
+            ? [
+                [{ text: '💳 Premium переводом 219 ₽', callback_data: 'manual:premium_30' }],
+                [{ text: '💳 Донат переводом', callback_data: 'manual:donate' }],
+              ]
+            : []),
           ...(edit ? [[backButton]] : []),
         ],
       },
@@ -568,6 +579,117 @@ export class BotUpdate implements OnModuleInit {
       }
     } catch (e: any) {
       await this.editOrReply(ctx, `❌ Ошибка проверки: ${e.message}`, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private manualDetails(): string {
+    return this.configService.get<string>('MANUAL_PAY_DETAILS', '');
+  }
+
+  private adminId(): string {
+    return this.configService.get<string>('ADMIN_TELEGRAM_ID', '1262369931');
+  }
+
+  private async handleManualBuy(ctx: any) {
+    const kind = String(ctx.match?.[1] || '');
+    if (kind !== 'premium_30' && kind !== 'donate') return;
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    try {
+      const claim: any = await this.api('/payments/bot-manual', {
+        method: 'POST',
+        body: { telegramId: tgId, kind },
+      });
+      await ctx.reply(
+        '💳 Переведи ' +
+          (kind === 'premium_30' ? '219 ₽' : 'любую сумму') +
+          ' сюда:' +
+          '\n\n' +
+          this.manualDetails() +
+          '\n\nПотом нажми кнопку ниже:',
+
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '✅ Я оплатил', callback_data: 'done:' + claim.claimId }],
+              [backButton],
+            ],
+          },
+        },
+      );
+    } catch (e: any) {
+      await this.editOrReply(ctx, '❌ Ошибка: ' + e.message, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleManualDone(ctx: any) {
+    const claimId = String(ctx.match?.[1] || '');
+    await ctx.answerCbQuery();
+    const tgId = String((ctx.from as any)?.id || '0');
+    const uname = (ctx.from as any)?.username ? '@' + (ctx.from as any).username : tgId;
+    try {
+      await this.botService
+        .getBot()
+        .telegram.sendMessage(
+          Number(this.adminId()),
+          '💰 Новая оплата переводом' +
+            '\nОт: ' +
+            uname +
+            ' (' +
+            tgId +
+            ')' +
+            '\nЗаявка: ' +
+            claimId +
+            '\nПроверь поступление и подтверди:',
+          {
+            reply_markup: {
+              inline_keyboard: [[{ text: '✅ Подтвердить', callback_data: 'approve:' + claimId }]],
+            },
+          },
+        );
+      await this.editOrReply(ctx, '⏳ Заявка отправлена! Подтвердим в течение пары часов.', {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    } catch (e: any) {
+      await this.editOrReply(ctx, '❌ Ошибка: ' + e.message, {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+    }
+  }
+
+  private async handleManualApprove(ctx: any) {
+    const claimId = String(ctx.match?.[1] || '');
+    await ctx.answerCbQuery();
+    if (String((ctx.from as any)?.id || '') !== String(this.adminId())) {
+      await this.editOrReply(ctx, '⛔ Только для администратора.', {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+      return;
+    }
+    try {
+      const res: any = await this.api('/payments/bot-manual/approve', {
+        method: 'POST',
+        body: { claimId, secret: this.botSecret() },
+      });
+      await this.editOrReply(ctx, '✅ Подтверждено: ' + res.telegramId + ' +' + res.days + ' дн.', {
+        reply_markup: { inline_keyboard: [[backButton]] },
+      });
+      try {
+        await this.botService
+          .getBot()
+          .telegram.sendMessage(
+            Number(res.telegramId),
+            '✅ Оплата подтверждена! Подписка продлена на ' +
+              res.days +
+              ' дн. Проверь «🔗 Моя подписка».',
+          );
+      } catch {}
+    } catch (e: any) {
+      await this.editOrReply(ctx, '❌ Ошибка: ' + e.message, {
         reply_markup: { inline_keyboard: [[backButton]] },
       });
     }

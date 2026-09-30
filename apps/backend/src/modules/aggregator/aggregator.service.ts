@@ -155,6 +155,49 @@ export class AggregatorService {
     return nodes.slice(0, limit);
   }
 
+  // pog7x — почасовое зеркало 25 коллекций (githubmirror/1..25.txt, ветка master)
+  async fetchPog7x(limit = 60): Promise<NormalizedNode[]> {
+    const seen = new Set<string>();
+    const nodes: NormalizedNode[] = [];
+    for (let i = 1; i <= 25 && nodes.length < limit; i++) {
+      const url = `https://raw.githubusercontent.com/pog7x/vpn-configs/refs/heads/master/githubmirror/${i}.txt`;
+      try {
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!res.ok) continue;
+        const text = await res.text();
+        for (const line of text.split('\n')) {
+          let uri = line.trim();
+          if (!uri) continue;
+          if (!uri.startsWith('vless://') && uri.length > 100 && !uri.includes('://')) {
+            try {
+              uri = Buffer.from(uri, 'base64').toString('utf8').trim();
+            } catch {}
+          }
+          if (!uri.startsWith('vless://') || seen.has(uri)) continue;
+          seen.add(uri);
+          const u = this.parseVless(uri);
+          if (!u) continue;
+          nodes.push({
+            uri,
+            host: u.host,
+            port: u.port,
+            protocol: 'VLESS',
+            country: 'Unknown',
+            countryCode: 'XX',
+            source: 'pog7x',
+          });
+          if (nodes.length >= limit) break;
+        }
+      } catch (e: any) {
+        this.logger.warn(`pog7x ${i}.txt: ${e.message.slice(0, 80)}`);
+      }
+    }
+    return nodes.slice(0, limit);
+  }
+
   // 2. VPN Gate — CSV OpenVPN (https://www.vpngate.net/api/iphone/)
   async fetchVPNGate(limit = 20): Promise<NormalizedNode[]> {
     const url = 'https://www.vpngate.net/api/iphone/';
@@ -298,8 +341,8 @@ export class AggregatorService {
 
   async runOnce(
     apiKey?: string,
-  ): Promise<{ publicvpnlist: number; morpheus: number; vpngate: number }> {
-    const result = { publicvpnlist: 0, morpheus: 0, vpngate: 0 };
+  ): Promise<{ publicvpnlist: number; morpheus: number; pog7x: number; vpngate: number }> {
+    const result = { publicvpnlist: 0, morpheus: 0, pog7x: 0, vpngate: 0 };
     if (apiKey) {
       try {
         const raw = await this.fetchPublicVPNList(apiKey, 40);
@@ -317,6 +360,14 @@ export class AggregatorService {
       result.morpheus = await this.upsertNodes(live);
     } catch (e: any) {
       this.logger.warn(`morpheusadam: ${e.message}`);
+    }
+    try {
+      const raw = await this.fetchPog7x(60);
+      const live = await this.filterLive(raw);
+      this.logger.log(`pog7x: ${raw.length} fetched, ${live.length} live`);
+      result.pog7x = await this.upsertNodes(live);
+    } catch (e: any) {
+      this.logger.warn(`pog7x: ${e.message}`);
     }
     try {
       const raw = await this.fetchVPNGate(10);

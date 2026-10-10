@@ -46,6 +46,7 @@ export class SubController {
       accept.includes('text/html') &&
       !ua.includes('clash') &&
       !ua.includes('happ') &&
+      !ua.includes('amnezia') &&
       !ua.includes('sing-box') &&
       !ua.includes('v2ray') &&
       !ua.includes('shadowrocket');
@@ -113,25 +114,25 @@ a{color:#a78bfa;text-decoration:none}
   </div>
   <div class="card">
     <h2>Подключить за минуту</h2>
-    <div class="sub">Скопируй ссылку и вставь в Happ: Профили → + → Из буфера</div>
+    <div class="sub">Для Amnezia скопируй ключ с этой страницы (кнопка ниже) → Insert the key. Для sing-box/v2rayN/Clash — вставь ссылку-подписку.</div>
     <div class="urlbox" id="urlCode">${subUrl}</div>
     <button class="btn btn-primary btn-block" onclick="copyUrl()">Скопировать подписку</button>
   </div>
   <div class="card">
-    <h2>Приложение Happ</h2>
+    <h2>Приложение Amnezia</h2>
     <div class="sub">Выбери платформу и установи</div>
     <div class="chips" id="chips"></div>
     <div class="dlbtns" id="installBtns"></div>
-    <div class="step"><div class="num">01</div><div><div class="t">Установи Happ</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
-    <div class="step"><div class="num">02</div><div><div class="t">Добавь подписку</div><div class="d">Профили → + → Из буфера → вставь ссылку</div></div></div>
-    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми большую кнопку в Happ. Не зашло — смени сервер в списке</div></div></div>
+    <div class="step"><div class="num">01</div><div><div class="t">Установи Amnezia</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
+    <div class="step"><div class="num">02</div><div><div class="t">Вставь ключ</div><div class="d">Amnezia → «Insert the key» → вставь vless://-ключ → Continue</div></div></div>
+    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми кнопку подключения. Не зашло — запроси другие ключи в боте</div></div></div>
   </div>
   <div class="footer">APPI VPN · <a href="https://t.me/AppiVPNBot">Бот @AppiVPNBot</a> · <a href="${subUrl}">Прямая ссылка</a></div>
 </div>
 <div class="toast" id="toast">Скопировано!</div>
 <script>
 var subUrl='${subUrl}';
-var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
+var dl={Windows:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','Windows']],macOS:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','macOS']],Linux:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','Linux']],Android:[['https://play.google.com/store/apps/details?id=org.amnezia.vpn','Android'],['https://github.com/amnezia-vpn/amnezia-client/releases/latest','APK (GitHub)']],iOS:[['https://apps.apple.com/us/app/amneziavpn/id1600529900','iOS']]};
 function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
 function showToast(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
 function copyLegacy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showToast();}catch(e){prompt('Скопируй ссылку вручную:',t);}document.body.removeChild(ta);}
@@ -163,7 +164,9 @@ function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.cli
   }
 
   @Get('sub/:token')
-  @ApiOperation({ summary: 'Personal subscription (Happ/Clash) or browser HTML like AllCrash' })
+  @ApiOperation({
+    summary: 'Personal subscription (Amnezia keys page / sing-box/v2rayN/Clash) or browser HTML',
+  })
   async getSub(
     @Param('token') token: string,
     @Req() req: Request,
@@ -178,6 +181,7 @@ function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.cli
       accept.includes('text/html') &&
       !ua.includes('clash') &&
       !ua.includes('happ') &&
+      !ua.includes('amnezia') &&
       !ua.includes('sing-box') &&
       !ua.includes('v2ray') &&
       !ua.includes('shadowrocket');
@@ -247,25 +251,25 @@ a{color:#a78bfa;text-decoration:none}
   </div>
   <div class="card">
     <h2>Подключить за минуту</h2>
-    <div class="sub">Скопируй ссылку и вставь в Happ: Профили → + → Из буфера</div>
+    <div class="sub">Для Amnezia скопируй ключ с этой страницы (кнопка ниже) → Insert the key. Для sing-box/v2rayN/Clash — вставь ссылку-подписку.</div>
     <div class="urlbox" id="urlCode">${subUrl}</div>
     <button class="btn btn-primary btn-block" onclick="copyUrl()">Скопировать подписку</button>
   </div>
   <div class="card">
-    <h2>Приложение Happ</h2>
+    <h2>Приложение Amnezia</h2>
     <div class="sub">Выбери платформу и установи</div>
     <div class="chips" id="chips"></div>
     <div class="dlbtns" id="installBtns"></div>
-    <div class="step"><div class="num">01</div><div><div class="t">Установи Happ</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
-    <div class="step"><div class="num">02</div><div><div class="t">Добавь подписку</div><div class="d">Профили → + → Из буфера → вставь ссылку</div></div></div>
-    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми большую кнопку в Happ. Не зашло — смени сервер в списке</div></div></div>
+    <div class="step"><div class="num">01</div><div><div class="t">Установи Amnezia</div><div class="d">Кнопка выше — официальный сайт и сторы</div></div></div>
+    <div class="step"><div class="num">02</div><div><div class="t">Вставь ключ</div><div class="d">Amnezia → «Insert the key» → вставь vless://-ключ → Continue</div></div></div>
+    <div class="step"><div class="num">03</div><div><div class="t">Подключись</div><div class="d">Нажми кнопку подключения. Не зашло — запроси другие ключи в боте</div></div></div>
   </div>
   <div class="footer">APPI VPN · <a href="https://t.me/AppiVPNBot">Бот @AppiVPNBot</a> · <a href="${subUrl}">Прямая ссылка</a></div>
 </div>
 <div class="toast" id="toast">Скопировано!</div>
 <script>
 var subUrl='${subUrl}';
-var dl={Windows:[['https://www.happ.su/main','Windows']],macOS:[['https://www.happ.su/main','macOS']],Linux:[['https://www.happ.su/main','Linux']],Android:[['https://play.google.com/store/apps/details?id=com.happproxy','Android']],iOS:[['https://apps.apple.com/us/app/happ-proxy-utility/id6504287215','iOS']]};
+var dl={Windows:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','Windows']],macOS:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','macOS']],Linux:[['https://github.com/amnezia-vpn/amnezia-client/releases/latest','Linux']],Android:[['https://play.google.com/store/apps/details?id=org.amnezia.vpn','Android'],['https://github.com/amnezia-vpn/amnezia-client/releases/latest','APK (GitHub)']],iOS:[['https://apps.apple.com/us/app/amneziavpn/id1600529900','iOS']]};
 function setPlatform(p){var box=document.getElementById('installBtns');box.innerHTML='';var arr=dl[p]||dl['Windows'];for(var i=0;i<arr.length;i++){var a=document.createElement('a');a.className='btn btn-ghost';a.href=arr[i][0];a.target='_blank';a.rel='noopener';a.textContent='Скачать '+arr[i][1];box.appendChild(a);}var chips=document.getElementById('chips').children;for(var j=0;j<chips.length;j++){chips[j].className='chip'+(chips[j].textContent===p?' active':'');}}
 function showToast(){var el=document.getElementById('toast');el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
 function copyLegacy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');showToast();}catch(e){prompt('Скопируй ссылку вручную:',t);}document.body.removeChild(ta);}
@@ -279,7 +283,7 @@ function copyUrl(){if(navigator.clipboard&&window.isSecureContext){navigator.cli
 
     // VPN-клиент — отдаём plain text с заголовками как у AllCrash
     const lines = await this.subService.getActiveConfigLines();
-    // Вечная подписка: клиенту отдаём expire=2099, чтобы Happ не показывал «истекла»
+    // Вечная подписка: клиенту отдаём expire=4102444800, чтобы клиенты не показывали «истекла»
     const traffic = link.trafficUsed.toString();
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${link.label}.txt"`);

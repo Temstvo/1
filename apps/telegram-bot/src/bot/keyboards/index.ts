@@ -1,5 +1,5 @@
 export const mainMenuKeyboard = [
-  [{ text: '🚀 Импорт в Happ', callback_data: 'menu:subscription' }],
+  [{ text: '🔑 Ключи Amnezia', callback_data: 'menu:subscription' }],
   [{ text: '⭐ Premium', callback_data: 'menu:premium' }],
   [{ text: '🔗 Моя подписка', callback_data: 'menu:mysubscription' }],
   [{ text: '👤 Профиль', callback_data: 'menu:profile' }],

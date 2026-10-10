@@ -3,18 +3,18 @@ import Link from 'next/link';
 const DOWNLOADS: { platform: string; links: { text: string; href: string }[] }[] = [
   {
     platform: 'iOS',
-    links: [
-      { text: 'App Store', href: 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215' },
-      { text: 'TestFlight', href: 'https://testflight.apple.com/join/XMls6Ckd' },
-    ],
+    links: [{ text: 'App Store', href: 'https://apps.apple.com/us/app/amneziavpn/id1600529900' }],
   },
   {
     platform: 'Android',
     links: [
-      { text: 'Google Play', href: 'https://play.google.com/store/apps/details?id=com.happproxy' },
       {
-        text: 'APK',
-        href: 'https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk',
+        text: 'Google Play',
+        href: 'https://play.google.com/store/apps/details?id=org.amnezia.vpn',
+      },
+      {
+        text: 'APK (GitHub)',
+        href: 'https://github.com/amnezia-vpn/amnezia-client/releases/latest',
       },
     ],
   },
@@ -22,26 +22,18 @@ const DOWNLOADS: { platform: string; links: { text: string; href: string }[] }[]
     platform: 'Desktop',
     links: [
       {
-        text: 'Windows x64',
-        href: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe',
+        text: 'Windows / macOS / Linux',
+        href: 'https://github.com/amnezia-vpn/amnezia-client/releases/latest',
       },
-      {
-        text: 'macOS',
-        href: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.macOS.universal.dmg',
-      },
-      {
-        text: 'Linux deb',
-        href: 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.linux.x64.deb',
-      },
+      { text: 'Сайт amnezia.org', href: 'https://amnezia.org' },
     ],
   },
   {
-    platform: 'TV',
+    platform: 'Зеркало',
     links: [
-      { text: 'Android TV', href: 'https://play.google.com/store/apps/details?id=com.happproxy' },
       {
-        text: 'Apple TV',
-        href: 'https://apps.apple.com/us/app/happ-proxy-utility-for-tv/id6748297274',
+        text: 'Сайт-зеркало',
+        href: 'https://storage.googleapis.com/amnezia/amnezia.org',
       },
     ],
   },
@@ -90,7 +82,7 @@ export default function HomePage() {
           </h1>
           <p className="text-lg md:text-xl text-gray-400 mb-9 max-w-xl mx-auto">
             Бесплатный VPN без оплат и лимитов. Серверы выдаёт Telegram-бот, подключение — через
-            приложение Happ.
+            open-source приложение Amnezia.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/pricing" className="btn-primary px-8 py-4 text-base">
@@ -116,17 +108,17 @@ export default function HomePage() {
               {
                 num: '1',
                 title: 'Открой бота',
-                desc: 'Нажми «🚀 Импорт в Happ» — получишь персональную ссылку-подписку.',
+                desc: 'Нажми «🔑 Ключи Amnezia» — получишь рабочие ключи VLESS.',
               },
               {
                 num: '2',
-                title: 'Установи Happ',
-                desc: 'iOS, Android, Windows, macOS, Linux и TV. Ссылки ниже.',
+                title: 'Установи Amnezia',
+                desc: 'iOS, Android, Windows, macOS, Linux. Open-source, ссылки ниже.',
               },
               {
                 num: '3',
                 title: 'Подключись',
-                desc: 'Вставь ссылку в Happ и нажми кнопку подключения.',
+                desc: 'В Amnezia: «Insert the key» → вставь ключ → Connect.',
               },
             ].map((s) => (
               <div key={s.num} className="card p-8">
@@ -145,10 +137,10 @@ export default function HomePage() {
       <section id="download" className="py-20 md:py-24 px-4 md:px-6 border-t border-white/10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Скачать Happ</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Скачать Amnezia</h2>
             <p className="text-gray-400 mt-4 max-w-xl mx-auto">
-              Кроссплатформенное приложение на ядре Xray. Протоколы: VLESS, VMess, Trojan,
-              Shadowsocks, Hysteria2.
+              Кроссплатформенный open-source клиент. Протоколы: VLESS, VMess, Trojan, Shadowsocks,
+              AmneziaWG, WireGuard.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -172,7 +164,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-center text-xs text-gray-600 mt-8">
-            Happ не предоставляет серверы — серверы бесплатно выдаёт бот APPI VPN.
+            Amnezia не предоставляет серверы — серверы бесплатно выдаёт бот APPI VPN.
           </p>
         </div>
       </section>
@@ -206,7 +198,7 @@ export default function HomePage() {
                 </h4>
                 <div className="space-y-2 text-gray-400">
                   <a href="#download" className="block hover:text-white transition-colors">
-                    Скачать Happ
+                    Скачать Amnezia
                   </a>
                   <a href="#how" className="block hover:text-white transition-colors">
                     Как подключить

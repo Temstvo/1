@@ -111,13 +111,13 @@ export class BotUpdate implements OnModuleInit {
     const infoText =
       'Сотни рабочих серверов. Без оплат и лимитов — список обновляется сам.\n\n' +
       'Как подключиться\n\n' +
-      '1️⃣ Установи Happ\n' +
-      'happ.su — iPhone, Android, Windows, Mac\n' +
+      '1️⃣ Установи Amnezia\n' +
+      'amnezia.org — iPhone, Android, Windows, Mac\n' +
       '(подробнее — «📱 Инструкция / приложения»)\n\n' +
-      '2️⃣ Нажми «🚀 Импорт в Happ» внизу\n' +
-      'Подписка добавится в приложение.\n\n' +
-      '3️⃣ В Happ нажми кнопку подключения ✅\n\n' +
-      '💡 Не работает один сервер — выбери другой в списке.';
+      '2️⃣ Нажми «🔑 Ключи Amnezia» внизу\n' +
+      'Получишь рабочие ключи VLESS.\n\n' +
+      '3️⃣ В Amnezia: «Insert the key» → вставь ключ → Connect ✅\n\n' +
+      '💡 Не работает один ключ — запроси другие (🎲 Другие ключи).';
     await ctx.replyWithPhoto('https://i.imgur.com/xXdMEEG.png', {
       caption: infoText,
       reply_markup: { inline_keyboard: mainMenuKeyboard },
@@ -134,25 +134,39 @@ export class BotUpdate implements OnModuleInit {
   private async handleGetSubscription(ctx: Context) {
     await ctx.answerCbQuery();
     try {
-      const tgId = String((ctx.from as any)?.id || (ctx.chat as any)?.id || '0');
-      const data: any = await this.api('/sub-links', {
-        method: 'POST',
-        body: { telegramId: tgId },
-      });
-      const subUrl: string = data.url;
-      const label: string = data.label || tgId;
-      const exp = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString('ru-RU') : '';
+      const res = await fetch(`${this.backendUrl}/sub/free`);
+      if (!res.ok) throw new Error(`backend ${res.status}`);
+      const text = await res.text();
+      const keys = text
+        .split('\n')
+        .map((s) => s.trim())
+        .filter((s) => s.startsWith('vless://'));
+      if (!keys.length) throw new Error('нет живых серверов, попробуй позже');
+      const pool = keys.slice(0, 20);
+      const picked: string[] = [];
+      while (picked.length < Math.min(5, pool.length)) {
+        const k = pool[Math.floor(Math.random() * pool.length)];
+        if (!picked.includes(k)) picked.push(k);
+      }
+      const body = picked.map((k, i) => `${i + 1}. ${k}`).join('\n\n');
       await this.editOrReply(
         ctx,
-        `🌐 Импорт в Happ\n\n` +
-          `Твоя ссылка для Happ:\n\n` +
-          `${subUrl}\n\n` +
-          `ID: ${label} • Истекает: ${exp}\n\n` +
+        `🔑 Ключи Amnezia (${picked.length} шт.)\n\n` +
           `Как добавить:\n` +
-          `1. Скопируй ссылку\n` +
-          `2. Открой Happ → «+» → «Из буфера»\n` +
-          `3. Нажми подключение ✅`,
-        { reply_markup: { inline_keyboard: [[backButton]] } },
+          `1. Открой Amnezia → «Insert the key»\n` +
+          `2. Скопируй ключ и вставь → Continue\n` +
+          `3. Нажми кнопку подключения ✅\n\n` +
+          body +
+          `\n\n🎲 «Другие ключи» — обновить список.\n` +
+          `Ссылка-подписка для других клиентов (sing-box/v2rayN) — «🔗 Моя подписка».`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🎲 Другие ключи', callback_data: 'menu:subscription' }],
+              [backButton],
+            ],
+          },
+        },
       );
     } catch (e: any) {
       await this.editOrReply(ctx, `❌ Ошибка: ${e.message}`, {
@@ -225,7 +239,7 @@ export class BotUpdate implements OnModuleInit {
           `Протокол: ${(config.protocol || '').toUpperCase()}\n` +
           `Сервер: ${config.server || '—'}\n\n` +
           `Ссылка:\n${config.uri}\n\n` +
-          `💡 Скопируйте ссылку выше и вставьте в Happ или другой VPN-клиент.`,
+          `💡 Скопируйте ссылку выше и вставьте в Amnezia («Insert the key») или другой VPN-клиент.`,
         { reply_markup: { inline_keyboard: [[backButton]] } },
       );
     } catch (e: any) {
@@ -259,11 +273,12 @@ export class BotUpdate implements OnModuleInit {
           `Истекает: ${exp.toLocaleDateString('ru-RU')} (через ${daysLeft} дн.)\n` +
           `Трафик: ${traffic} GiB / ∞\n` +
           `Ссылка:\n${data.url}\n\n` +
-          `Нажми «🚀 Импорт в Happ» чтобы скопировать.`,
+          `Ссылка-подписка (для sing-box/v2rayN/Clash).\n` +
+          `Для Amnezia — скопируй её в меню «🌐 Открыть в браузере» (страница со списком ключей) или бери ключи в «🔑 Ключи Amnezia».`,
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: '🚀 Импорт в Happ', callback_data: 'menu:subscription' }],
+              [{ text: '🔑 Ключи Amnezia', callback_data: 'menu:subscription' }],
               [{ text: '🌐 Открыть в браузере', url: data.url }],
               [
                 { text: '🔄 Продлить +2 дня', callback_data: 'menu:extend' },
@@ -325,16 +340,17 @@ export class BotUpdate implements OnModuleInit {
     await this.editOrReply(
       ctx,
       '📱 Инструкция / приложения\n\n' +
-        'Happ — VPN-клиент для всех платформ.\n\n' +
+        'Amnezia — open-source VPN-клиент для всех платформ (форк с поддержкой AmneziaWG/AmneziaVPN протоколов).\n\n' +
         'Скачать:\n' +
-        '• iPhone — https://apps.apple.com/us/app/happ-proxy-utility/id6504287215\n' +
-        '• Android — https://play.google.com/store/apps/details?id=com.happproxy\n' +
-        '• Windows/Mac/Linux — https://www.happ.su/main\n\n' +
+        '• iPhone — https://apps.apple.com/us/app/amneziavpn/id1600529900\n' +
+        '• Android — https://play.google.com/store/apps/details?id=org.amnezia.vpn\n' +
+        '• Windows/Mac/Linux — https://github.com/amnezia-vpn/amnezia-client/releases/latest\n' +
+        '• Сайт — https://amnezia.org (зеркало: https://storage.googleapis.com/amnezia/amnezia.org)\n\n' +
         'Как подключить:\n' +
-        '1. Установи Happ\n' +
-        '2. Нажми «🚀 Импорт в Happ» в главном меню\n' +
-        '3. В Happ нажми кнопку подключения ✅\n\n' +
-        '💡 Не работает один сервер — выбери другой из списка.',
+        '1. Установи Amnezia\n' +
+        '2. Нажми «🔑 Ключи Amnezia» в главном меню\n' +
+        '3. В Amnezia: «Insert the key» → вставь ключ → Continue → Connect ✅\n\n' +
+        '💡 Не работает один ключ — запроси другие (🎲 Другие ключи).',
       { reply_markup: { inline_keyboard: [[backButton]] } },
     );
   }
@@ -343,12 +359,14 @@ export class BotUpdate implements OnModuleInit {
     await ctx.answerCbQuery();
     try {
       const tgId = String((ctx.from as any)?.id || '0');
-      const [health, link, configs] = await Promise.all([
+      const [health, link, subText] = await Promise.all([
         this.api('/health').catch(() => ({ status: 'unknown' })),
         this.api('/sub-links', { method: 'POST', body: { telegramId: tgId } }).catch(() => null),
-        this.api('/vpn-configs/subscription').catch(() => []),
+        fetch(`${this.backendUrl}/sub/free`)
+          .then((r) => r.text())
+          .catch(() => ''),
       ]);
-      const count = Array.isArray(configs) ? configs.length : 0;
+      const count = subText.split('\n').filter((s) => s.startsWith('vless://')).length;
       const label = (link as any)?.label || '—';
       const exp = (link as any)?.expiresAt
         ? new Date((link as any).expiresAt).toLocaleDateString('ru-RU')

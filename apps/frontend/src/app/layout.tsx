@@ -11,7 +11,7 @@ const inter = 'inter';
 export const metadata: Metadata = {
   title: 'APPI VPN — бесплатный VPN без ограничений',
   description:
-    'Бесплатный VPN без оплат и лимитов. Серверы выдаёт Telegram-бот, подключение — через Happ.',
+    'Бесплатный VPN без оплат и лимитов. Серверы выдаёт Telegram-бот, подключение — через Amnezia.',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
